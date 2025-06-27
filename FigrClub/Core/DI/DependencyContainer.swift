@@ -30,7 +30,7 @@ final class DependencyContainer {
         
         // MARK: - Managers
         container.autoregister(AuthManager.self, initializer: AuthManager.init)
-        container.autoregister(NotificationManager.self, initializer: NotificationManager.init)
+        //container.autoregister(NotificationManager.self, initializer: NotificationManager.init)
         
         // MARK: - ViewModels
         // Authentication
@@ -38,13 +38,13 @@ final class DependencyContainer {
         container.autoregister(RegisterViewModel.self, initializer: RegisterViewModel.init)
         
         // Feed
-        container.autoregister(FeedViewModel.self, initializer: FeedViewModel.init)
+        //container.autoregister(FeedViewModel.self, initializer: FeedViewModel.init)
         
         // Marketplace
-        container.autoregister(MarketplaceViewModel.self, initializer: MarketplaceViewModel.init)
+        //container.autoregister(MarketplaceViewModel.self, initializer: MarketplaceViewModel.init)
         
         // Profile
-        container.autoregister(ProfileViewModel.self, initializer: ProfileViewModel.init)
+        //container.autoregister(ProfileViewModel.self, initializer: ProfileViewModel.init)
     }
     
     // MARK: - Resolver Methods
