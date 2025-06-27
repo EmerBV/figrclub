@@ -28,8 +28,6 @@ protocol AuthManagerProtocol: ObservableObject {
     func logout()
     func refreshTokenIfNeeded() async -> Bool
     func getCurrentUser() async -> Result<User, APIError>
-    
-    func loginWithValidation(email: String, password: String) async -> Result<User, AuthValidationError>
 }
 
 // MARK: - Auth Manager Implementation
@@ -53,6 +51,10 @@ final class AuthManager: AuthManagerProtocol {
             return true
         }
         return false
+    }
+    
+    var authStatePublisher: AnyPublisher<AuthState, Never> {
+        $authState.eraseToAnyPublisher()
     }
     
     // MARK: - Private Properties
@@ -271,7 +273,6 @@ final class AuthManager: AuthManagerProtocol {
     private func setErrorState(_ error: APIError) async {
         authState = .error(error)
     }
-    
 }
 
 // MARK: - Convenience Methods
@@ -293,7 +294,6 @@ extension AuthManager {
             return .failure(validationError)
         }
     }
-    
     
     func registerWithValidation(_ request: RegisterRequest) async -> Result<User, AuthValidationError> {
         // Validate input

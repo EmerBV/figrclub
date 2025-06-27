@@ -43,12 +43,18 @@ final class RegisterViewModel: ObservableObject {
     @Published var passwordStrength: PasswordStrength = .weak
     
     // MARK: - Private Properties
-    private let authManager: AuthManagerProtocol
+    private let authManager: AuthManager
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
-    init(authManager: AuthManagerProtocol = DependencyContainer.shared.resolve(AuthManager.self)) {
-        self.authManager = authManager
+    init(authManager: AuthManager? = nil) {
+        // Use provided authManager or get from DI container
+        if let authManager = authManager {
+            self.authManager = authManager
+        } else {
+            self.authManager = DependencyContainer.shared.resolve(AuthManager.self)
+        }
+        
         setupValidation()
         setupAuthStateObserver()
     }
@@ -229,12 +235,15 @@ final class RegisterViewModel: ObservableObject {
     }
     
     private func setupAuthStateObserver() {
-        authManager.objectWillChange
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] in
-                self?.isLoading = self?.authManager.isLoading ?? false
+        authManager.authStatePublisher
+            .map { state in
+                if case .loading = state {
+                    return true
+                }
+                return false
             }
-            .store(in: &cancellables)
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$isLoading)
     }
     
     // MARK: - Validation Methods

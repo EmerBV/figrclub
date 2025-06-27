@@ -187,7 +187,7 @@ final class TokenManager: ObservableObject {
     
     func saveTokensWithBiometrics(accessToken: String, refreshToken: String? = nil, userId: Int) {
         do {
-            let biometricKeychain = keychain.accessibility(.biometryAny)
+            let biometricKeychain = keychain.accessibility(.whenUnlockedThisDeviceOnly, authenticationPolicy: .biometryAny)
             
             try biometricKeychain.set(accessToken, key: accessTokenKey)
             

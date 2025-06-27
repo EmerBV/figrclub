@@ -29,22 +29,33 @@ final class DependencyContainer {
         }.inObjectScope(.container)
         
         // MARK: - Managers
-        container.autoregister(AuthManager.self, initializer: AuthManager.init)
-        //container.autoregister(NotificationManager.self, initializer: NotificationManager.init)
+        container.register(AuthManagerProtocol.self) { resolver in
+            // Create AuthManager on MainActor
+            let apiService = resolver.resolve(APIServiceProtocol.self)!
+            let tokenManager = resolver.resolve(TokenManager.self)!
+            return AuthManager(apiService: apiService, tokenManager: tokenManager)
+        }.inObjectScope(.container)
+        
+        container.register(AuthManager.self) { resolver in
+            resolver.resolve(AuthManagerProtocol.self) as! AuthManager
+        }.inObjectScope(.container)
         
         // MARK: - ViewModels
         // Authentication
-        container.autoregister(LoginViewModel.self, initializer: LoginViewModel.init)
-        container.autoregister(RegisterViewModel.self, initializer: RegisterViewModel.init)
+        container.register(LoginViewModel.self) { resolver in
+            let authManager = resolver.resolve(AuthManager.self)!
+            return LoginViewModel(authManager: authManager)
+        }
         
-        // Feed
-        //container.autoregister(FeedViewModel.self, initializer: FeedViewModel.init)
+        container.register(RegisterViewModel.self) { resolver in
+            let authManager = resolver.resolve(AuthManager.self)!
+            return RegisterViewModel(authManager: authManager)
+        }
         
-        // Marketplace
-        //container.autoregister(MarketplaceViewModel.self, initializer: MarketplaceViewModel.init)
-        
-        // Profile
-        //container.autoregister(ProfileViewModel.self, initializer: ProfileViewModel.init)
+        // Future ViewModels
+        // container.autoregister(FeedViewModel.self, initializer: FeedViewModel.init)
+        // container.autoregister(MarketplaceViewModel.self, initializer: MarketplaceViewModel.init)
+        // container.autoregister(ProfileViewModel.self, initializer: ProfileViewModel.init)
     }
     
     // MARK: - Resolver Methods
