@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 import UserNotifications
 import FirebaseMessaging
 import Combine
@@ -13,6 +14,164 @@ import Combine
 // MARK: - Notification Service
 final class NotificationService: NSObject, ObservableObject {
     static let shared = NotificationService()
+    
+    // MARK: - Published Properties
+    @Published var isAuthorized = false
+    @Published var authorizationStatus: UNAuthorizationStatus = .notDetermined
+    
+    // MARK: - Private Properties
+    private let apiService: APIServiceProtocol = APIService.shared
+    private var cancellables = Set<AnyCancellable>()
+    
+    // MARK: - Initialization
+    override init() {
+        super.init()
+        configure()
+        setupObservers()
+    }
+    
+    // MARK: - Configuration
+    func configure() {
+        UNUserNotificationCenter.current().delegate = self
+        Messaging.messaging().delegate = self
+        
+        getNotificationSettings()
+        
+        Logger.shared.info("NotificationService configured", category: "notifications")
+    }
+    
+    // MARK: - Authorization
+    func requestAuthorization() async -> Bool {
+        do {
+            let granted = try await UNUserNotificationCenter.current()
+                .requestAuthorization(options: [.alert, .badge, .sound])
+            
+            await MainActor.run {
+                isAuthorized = granted
+            }
+            
+            if granted {
+                await MainActor.run {
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
+            }
+            
+            Logger.shared.info("Notification authorization: \(granted)", category: "notifications")
+            return granted
+            
+        } catch {
+            Logger.shared.error("Failed to request authorization", error: error, category: "notifications")
+            return false
+        }
+    }
+    
+    func getNotificationSettings() {
+        UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
+            DispatchQueue.main.async {
+                self?.authorizationStatus = settings.authorizationStatus
+                self?.isAuthorized = settings.authorizationStatus == .authorized
+            }
+            
+            Logger.shared.info("Notification status: \(settings.authorizationStatus.rawValue)", category: "notifications")
+        }
+    }
+    
+    // MARK: - Device Token Management
+    func registerDeviceToken(_ token: String) async {
+        let request = RegisterDeviceTokenRequest(
+            token: token,
+            deviceType: .ios,
+            deviceName: UIDevice.current.name,
+            appVersion: AppConfig.AppInfo.version,
+            osVersion: UIDevice.current.systemVersion
+        )
+        
+        do {
+            let _: DeviceToken = try await apiService
+                .request(endpoint: .registerDeviceToken, body: request)
+                .async()
+            
+            Logger.shared.info("Device token registered successfully", category: "notifications")
+            
+        } catch {
+            Logger.shared.error("Failed to register device token", error: error, category: "notifications")
+        }
+    }
+    
+    // MARK: - Notification Handling
+    func handleNotificationTap(userInfo: [AnyHashable: Any]) {
+        Logger.shared.info("Handling notification tap: \(userInfo)", category: "notifications")
+        
+        // Extract notification data
+        guard let entityType = userInfo["entityType"] as? String,
+              let entityId = userInfo["entityId"] as? Int else {
+            Logger.shared.warning("Invalid notification data", category: "notifications")
+            return
+        }
+        
+        // Navigate based on entity type
+        switch entityType {
+        case "POST":
+            NotificationCenter.default.post(
+                name: .navigateToPost,
+                object: nil,
+                userInfo: ["postId": entityId]
+            )
+        case "USER":
+            NotificationCenter.default.post(
+                name: .navigateToProfile,
+                object: nil,
+                userInfo: ["userId": entityId]
+            )
+        case "MARKETPLACE_ITEM":
+            NotificationCenter.default.post(
+                name: .navigateToMarketplaceItem,
+                object: nil,
+                userInfo: ["itemId": entityId]
+            )
+        case "CONVERSATION":
+            NotificationCenter.default.post(
+                name: .navigateToConversation,
+                object: nil,
+                userInfo: ["conversationId": entityId]
+            )
+        default:
+            Logger.shared.info("Unknown entity type: \(entityType)", category: "notifications")
+        }
+        
+        Analytics.shared.logEvent("notification_tapped", parameters: [
+            "entity_type": entityType,
+            "entity_id": entityId
+        ])
+    }
+    
+    // MARK: - Badge Management
+    func updateBadgeCount(_ count: Int) {
+        DispatchQueue.main.async {
+            UIApplication.shared.applicationIconBadgeNumber = count
+        }
+    }
+    
+    func clearBadge() {
+        updateBadgeCount(0)
+    }
+    
+    // MARK: - Private Methods
+    private func setupObservers() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationDidEnterBackground),
+            name: UIApplication.didEnterBackgroundNotification,
+            object: nil
+        )
+    }
     
     // MARK: - App State Observers
     

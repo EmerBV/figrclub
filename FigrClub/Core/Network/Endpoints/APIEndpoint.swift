@@ -18,10 +18,10 @@ enum APIEndpoint {
     // Users
     case getUserById(Int)
     case updateUser(Int)
-    case getUserStats(Int)
-    case getUserPosts(Int, page: Int, size: Int)
-    case followUser(Int)
-    case unfollowUser(Int)
+    case getUserStats(_ userId: Int)
+    case getUserPosts(_ userId: Int, page: Int = 0, size: Int = 20)
+    case followUser(_ userId: Int)
+    case unfollowUser(_ userId: Int)
     
     // Posts
     case createPost
@@ -29,8 +29,12 @@ enum APIEndpoint {
     case getPost(Int)
     case updatePost(Int)
     case deletePost(Int)
-    case likePost(Int)
-    case unlikePost(Int)
+    case likePost(_ postId: Int)
+    case unlikePost(_ postId: Int)
+    
+    // Comments
+    case getComments(postId: Int, page: Int, size: Int)
+    case createComment
     
     // Marketplace
     case marketplaceItems(page: Int, size: Int)
@@ -53,9 +57,9 @@ enum APIEndpoint {
     case unregisterDeviceToken(String)
     case testNotification
     case getNotifications(page: Int, size: Int)
-    case markNotificationAsRead(Int)
+    case markNotificationAsRead(_ id: Int)
     case markAllNotificationsAsRead
-    case deleteNotification(Int)
+    case deleteNotification(_ id: Int)
     
     // Chat & Messages
     case getConversations(page: Int, size: Int)
@@ -122,6 +126,12 @@ enum APIEndpoint {
             return "/posts/\(id)/like"
         case .unlikePost(let id):
             return "/posts/\(id)/like"
+            
+            // Comments
+        case .getComments(let postId, _, _):
+            return "/posts/\(postId)/comments"
+        case .createComment:
+            return "/comments"
             
             // Marketplace
         case .marketplaceItems:
@@ -213,7 +223,7 @@ enum APIEndpoint {
         switch self {
             // POST methods
         case .register, .login, .refreshToken, .logout,
-                .createPost, .createMarketplaceItem, .createConversation,
+                .createPost, .createComment, .createMarketplaceItem, .createConversation,
                 .sendMessage, .registerDeviceToken, .addToFavorites,
                 .likePost, .followUser, .testNotification, .uploadImage,
                 .uploadVideo, .createReport:
@@ -249,7 +259,8 @@ enum APIEndpoint {
             return ["page": page, "size": size]
             
         case .getUserPosts(_, let page, let size),
-                .getMessages(_, let page, let size):
+                .getMessages(_, let page, let size),
+                .getComments(_, let page, let size):
             return ["page": page, "size": size]
             
         default:

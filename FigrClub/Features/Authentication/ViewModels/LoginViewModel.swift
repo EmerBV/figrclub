@@ -157,27 +157,6 @@ final class LoginViewModel: ObservableObject {
     }
 }
 
-// MARK: - Validation State
-enum ValidationState: Equatable {
-    case idle
-    case valid
-    case invalid(String)
-    
-    var isValid: Bool {
-        if case .valid = self {
-            return true
-        }
-        return false
-    }
-    
-    var errorMessage: String? {
-        if case .invalid(let message) = self {
-            return message
-        }
-        return nil
-    }
-}
-
 // MARK: - Form Field State
 struct FormFieldState {
     let text: String

@@ -162,8 +162,7 @@ final class Analytics {
         setUserProperty(value: subscriptionType, forName: "subscription_type")
     }
     
-    // MARK: - Private Methods
-    private func logEvent(_ name: String, parameters: [String: Any]? = nil) {
+    public func logEvent(_ name: String, parameters: [String: Any]? = nil) {
         guard AppConfig.FeatureFlags.enableAnalytics else { return }
         
         Logger.shared.debug("Analytics event: \(name) with parameters: \(parameters ?? [:])", category: "analytics")

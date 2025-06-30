@@ -465,24 +465,5 @@ struct LegalCheckbox: View {
     }
 }
 
-// MARK: - UserType Extensions
-extension UserType {
-    var displayName: String {
-        switch self {
-        case .regular: return "Usuario Regular"
-        case .premium: return "Usuario Premium"
-        case .seller: return "Vendedor"
-        case .admin: return "Administrador"
-        }
-    }
-    
-    var description: String {
-        switch self {
-        case .regular: return "Acceso básico a todas las funciones"
-        case .premium: return "Funciones avanzadas y contenido exclusivo"
-        case .seller: return "Vende productos en el marketplace"
-        case .admin: return "Administración completa del sistema"
-        }
-    }
-}
+
 

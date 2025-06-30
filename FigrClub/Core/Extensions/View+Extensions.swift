@@ -96,6 +96,8 @@ extension View {
             UINavigationBar.appearance().scrollEdgeAppearance = appearance
         }
     }
+    
+    
 }
 
 #if DEBUG

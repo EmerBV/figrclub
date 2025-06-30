@@ -33,6 +33,20 @@ enum UserType: String, Codable, CaseIterable {
     case admin = "ADMIN"
 }
 
+struct UserStats {
+    let postsCount: Int
+    let followersCount: Int
+    let followingCount: Int
+    let likesReceived: Int
+}
+
+struct UpdateUserRequest: Codable {
+    let firstName: String
+    let lastName: String
+    let username: String
+    let bio: String?
+}
+
 enum SubscriptionType: String, Codable, CaseIterable {
     case free = "FREE"
     case premium = "PREMIUM"
@@ -266,4 +280,25 @@ enum NotificationType: String, Codable, CaseIterable {
     case marketplaceSale = "MARKETPLACE_SALE"
     case marketplaceQuestion = "MARKETPLACE_QUESTION"
     case system = "SYSTEM"
+}
+
+// MARK: - UserType Extensions
+extension UserType {
+    var displayName: String {
+        switch self {
+        case .regular: return "Usuario Regular"
+        case .premium: return "Usuario Premium"
+        case .seller: return "Vendedor"
+        case .admin: return "Administrador"
+        }
+    }
+    
+    var description: String {
+        switch self {
+        case .regular: return "Acceso básico a todas las funciones"
+        case .premium: return "Funciones avanzadas y contenido exclusivo"
+        case .seller: return "Vende productos en el marketplace"
+        case .admin: return "Administración completa del sistema"
+        }
+    }
 }

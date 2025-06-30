@@ -91,11 +91,3 @@ final class CreatePostViewModel: ObservableObject {
         showError = false
     }
 }
-
-// MARK: - Supporting Models
-struct UserStats {
-    let postsCount: Int
-    let followersCount: Int
-    let followingCount: Int
-    let likesReceived: Int
-}

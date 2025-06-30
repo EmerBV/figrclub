@@ -8,7 +8,7 @@
 import Foundation
 
 extension APIEndpoint {
-    
+    /*
     // MARK: - Notifications
     static func getNotifications(page: Int = 0, size: Int = 20) -> APIEndpoint {
         return .getNotifications(page: page, size: size)
@@ -51,4 +51,5 @@ extension APIEndpoint {
     static func unfollowUser(_ userId: Int) -> APIEndpoint {
         return .unfollowUser(userId)
     }
+     */
 }

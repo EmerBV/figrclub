@@ -8,19 +8,7 @@
 import Foundation
 import SwiftUI
 
-extension Color {
-    static let figrPrimary = Color("FigrPrimary")
-    static let figrSecondary = Color("FigrSecondary")
-    static let figrAccent = Color("FigrAccent")
-    static let figrBackground = Color("FigrBackground")
-    static let figrSurface = Color("FigrSurface")
-    static let figrError = Color("FigrError")
-    static let figrSuccess = Color("FigrSuccess")
-    static let figrWarning = Color("FigrWarning")
-    static let figrTextPrimary = Color("FigrTextPrimary")
-    static let figrTextSecondary = Color("FigrTextSecondary")
-    static let figrBorder = Color("FigrBorder")
-    
+extension Color {    
     // Converts Color to UIColor
     var uiColor: UIColor {
         UIColor(self)

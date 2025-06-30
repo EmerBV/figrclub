@@ -22,9 +22,6 @@ final class KingfisherConfig {
         // Configure downloader
         configureDownloaderSettings()
         
-        // Configure image processor
-        configureImageProcessor()
-        
         Logger.shared.info("Kingfisher configured successfully", category: "kingfisher")
     }
     
@@ -39,16 +36,6 @@ final class KingfisherConfig {
         // Disk cache settings
         cache.diskStorage.config.sizeLimit = AppConfig.Cache.imageCacheDiskLimit
         cache.diskStorage.config.expiration = .seconds(AppConfig.Cache.imageCacheExpiration)
-        
-        // Path for disk cache
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let cachePath = documentsPath.appendingPathComponent("ImageCache")
-        
-        do {
-            cache.diskStorage.config.directory = try Folder(path: cachePath.path)
-        } catch {
-            Logger.shared.error("Failed to set cache directory", error: error, category: "kingfisher")
-        }
         
         Logger.shared.info("Image cache configured - Memory: \(AppConfig.Cache.imageCacheMemoryLimit / (1024*1024))MB, Disk: \(AppConfig.Cache.imageCacheDiskLimit / (1024*1024))MB", category: "kingfisher")
     }
@@ -73,17 +60,6 @@ final class KingfisherConfig {
         downloader.processingQueue = .global(qos: .userInitiated)
         
         Logger.shared.info("Image downloader configured", category: "kingfisher")
-    }
-    
-    // MARK: - Image Processor Configuration
-    private func configureImageProcessor() {
-        // Default processors
-        KingfisherManager.shared.defaultOptions = [
-            .processor(ResizingImageProcessor(referenceSize: CGSize(width: 300, height: 300))),
-            .scaleFactor(UIScreen.main.scale),
-            .cacheOriginalImage,
-            .backgroundDecode
-        ]
     }
     
     // MARK: - Custom Modifiers
@@ -192,8 +168,7 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
                 Logger.shared.debug("Image loaded successfully: \(url?.absoluteString ?? "unknown")", category: "kingfisher")
                 Analytics.shared.logEvent("image_loaded", parameters: [
                     "image_type": "\(imageType)",
-                    "cache_type": result.cacheType.rawValue,
-                    "image_size": result.image.size.debugDescription
+                    "cache_type": result.cacheType.rawValue
                 ])
             }
             .onFailure { error in
@@ -201,9 +176,7 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
                 Analytics.shared.logError(error: error, context: "image_loading")
             }
             .fade(duration: 0.25)
-            .configure { view in
-                content(Image(uiImage: view.image ?? UIImage()))
-            }
+            .resizable()
     }
     
     private func processorForType(_ type: ImageType) -> ImageProcessor {
