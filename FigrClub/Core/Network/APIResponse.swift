@@ -15,16 +15,6 @@ struct APIResponse<T: Codable>: Codable {
     let timestamp: String
 }
 
-struct APIError: Error, Codable {
-    let message: String
-    let code: String?
-    let timestamp: String
-    
-    var localizedDescription: String {
-        return message
-    }
-}
-
 // MARK: - HTTP Method
 enum HTTPMethod: String {
     case get = "GET"
