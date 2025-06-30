@@ -23,7 +23,7 @@ final class NotificationsViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
-    init(apiService: APIServiceProtocol = APIService.shared) {
+    nonisolated init(apiService: APIServiceProtocol = APIService.shared) {
         self.apiService = apiService
     }
     
@@ -57,7 +57,7 @@ final class NotificationsViewModel: ObservableObject {
     func markAsRead(_ notification: AppNotification) {
         guard !notification.isRead else { return }
         
-        Task {
+        Task.detached(priority: .userInitiated) {
             do {
                 let _: AppNotification = try await apiService
                     .request(endpoint: .markNotificationAsRead(notification.id), body: nil)

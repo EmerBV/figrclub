@@ -99,22 +99,24 @@ struct MarketplaceItemCard: View {
         isFavorited.toggle()
         HapticManager.shared.impact(.light)
         
-        Task {
+        Task.detached(priority: .userInitiated) {
             do {
                 if isFavorited {
-                    try await APIService.shared
+                    let _: EmptyResponse = try await APIService.shared
                         .request(endpoint: .addToFavorites(item.id), body: nil)
                         .async()
                     
                     Analytics.shared.logItemFavorite(itemId: String(item.id))
                 } else {
-                    try await APIService.shared
+                    let _: EmptyResponse = try await APIService.shared
                         .request(endpoint: .removeFromFavorites(item.id), body: nil)
                         .async()
                 }
             } catch {
                 // Revert optimistic update
-                isFavorited.toggle()
+                await MainActor.run {
+                    isFavorited.toggle()
+                }
                 Logger.shared.error("Failed to toggle favorite", error: error, category: "marketplace")
             }
         }
@@ -142,26 +144,6 @@ struct CategoryChip: View {
                 )
         }
         .buttonStyle(PlainButtonStyle())
-    }
-}
-
-// MARK: - Search Bar
-struct SearchBar: View {
-    @Binding var text: String
-    let placeholder: String
-    
-    var body: some View {
-        HStack {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(.figrTextSecondary)
-            
-            TextField(placeholder, text: $text)
-                .textFieldStyle(PlainTextFieldStyle())
-        }
-        .padding(.horizontal, Spacing.medium)
-        .padding(.vertical, Spacing.small)
-        .background(.figrSurface)
-        .cornerRadius(CornerRadius.medium)
     }
 }
 

@@ -28,7 +28,7 @@ final class LoginViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
-    init(authManager: AuthManager? = nil) {
+    nonisolated init(authManager: AuthManager? = nil) {
         // Use provided authManager or get from DI container
         if let authManager = authManager {
             self.authManager = authManager
@@ -36,8 +36,11 @@ final class LoginViewModel: ObservableObject {
             self.authManager = DependencyContainer.shared.resolve(AuthManager.self)
         }
         
-        setupValidation()
-        setupAuthStateObserver()
+        // Setup must be called on MainActor
+        Task { @MainActor in
+            setupValidation()
+            setupAuthStateObserver()
+        }
     }
     
     // MARK: - Public Methods

@@ -92,23 +92,25 @@ struct PostCardView: View {
         // Haptic feedback
         HapticManager.shared.impact(.light)
         
-        Task {
+        Task.detached(priority: .userInitiated) {
             do {
                 if isLiked {
-                    try await APIService.shared
+                    let _: EmptyResponse = try await APIService.shared
                         .request(endpoint: .likePost(post.id), body: nil)
                         .async()
                     
                     Analytics.shared.logPostLike(postId: String(post.id))
                 } else {
-                    try await APIService.shared
+                    let _: EmptyResponse = try await APIService.shared
                         .request(endpoint: .unlikePost(post.id), body: nil)
                         .async()
                 }
             } catch {
-                // Revert optimistic update
-                isLiked = previousState
-                likesCount = previousCount
+                // Revert optimistic update on MainActor
+                await MainActor.run {
+                    isLiked = previousState
+                    likesCount = previousCount
+                }
                 
                 Logger.shared.error("Failed to toggle like", error: error, category: "social")
             }

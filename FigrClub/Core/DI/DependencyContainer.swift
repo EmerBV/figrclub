@@ -45,53 +45,55 @@ final class DependencyContainer {
             resolver.resolve(AuthManagerProtocol.self) as! AuthManager
         }.inObjectScope(.container)
         
-        /*
-        // MARK: - Repositories (Using autoregistration)
-        container.autoregister(UserRepositoryProtocol.self, initializer: UserRepository.init)
-            .inObjectScope(.container)
-        
-        container.autoregister(PostRepositoryProtocol.self, initializer: PostRepository.init)
-            .inObjectScope(.container)
-        
-        container.autoregister(MarketplaceRepositoryProtocol.self, initializer: MarketplaceRepository.init)
-            .inObjectScope(.container)
-        
-        container.autoregister(NotificationRepositoryProtocol.self, initializer: NotificationRepository.init)
-            .inObjectScope(.container)
-        
-        // MARK: - Services (Using autoregistration)
-        container.autoregister(NotificationService.self, initializer: NotificationService.init)
-            .inObjectScope(.container)
-        
-        container.autoregister(ImageService.self, initializer: ImageService.init)
-            .inObjectScope(.container)
-        
-        container.autoregister(LocationService.self, initializer: LocationService.init)
-            .inObjectScope(.container)
-         */
-        
-        // MARK: - ViewModels (Using autoregistration - new instance each time)
+        // MARK: - ViewModels (FIXED: Using nonisolated factory closures)
         
         // Authentication ViewModels
-        container.autoregister(LoginViewModel.self, initializer: LoginViewModel.init)
-        container.autoregister(RegisterViewModel.self, initializer: RegisterViewModel.init)
+        container.register(LoginViewModel.self) { resolver in
+            // FIXED: Create factory closure that will be called on MainActor
+            let authManager = resolver.resolve(AuthManager.self)!
+            return LoginViewModel(authManager: authManager)
+        }
         
-        /*
+        container.register(RegisterViewModel.self) { resolver in
+            // FIXED: Create factory closure that will be called on MainActor
+            let authManager = resolver.resolve(AuthManager.self)!
+            return RegisterViewModel(authManager: authManager)
+        }
+        
         // Main Feature ViewModels
-        container.autoregister(FeedViewModel.self, initializer: FeedViewModel.init)
-        container.autoregister(MarketplaceViewModel.self, initializer: MarketplaceViewModel.init)
-        container.autoregister(ProfileViewModel.self, initializer: ProfileViewModel.init)
-        container.autoregister(ChatViewModel.self, initializer: ChatViewModel.init)
+        container.register(FeedViewModel.self) { resolver in
+            let apiService = resolver.resolve(APIServiceProtocol.self)!
+            return FeedViewModel(apiService: apiService)
+        }
         
-        // Detail ViewModels
-        container.autoregister(PostDetailViewModel.self, initializer: PostDetailViewModel.init)
-        container.autoregister(ItemDetailViewModel.self, initializer: ItemDetailViewModel.init)
-        container.autoregister(UserProfileViewModel.self, initializer: UserProfileViewModel.init)
+        container.register(MarketplaceViewModel.self) { resolver in
+            let apiService = resolver.resolve(APIServiceProtocol.self)!
+            return MarketplaceViewModel(apiService: apiService)
+        }
         
-        // Settings ViewModels
-        container.autoregister(SettingsViewModel.self, initializer: SettingsViewModel.init)
-        container.autoregister(NotificationSettingsViewModel.self, initializer: NotificationSettingsViewModel.init)
-         */
+        container.register(ProfileViewModel.self) { resolver in
+            let apiService = resolver.resolve(APIServiceProtocol.self)!
+            let authManager = resolver.resolve(AuthManager.self)!
+            return ProfileViewModel(
+                apiService: apiService,
+                authManager: authManager
+            )
+        }
+        
+        container.register(NotificationsViewModel.self) { resolver in
+            let apiService = resolver.resolve(APIServiceProtocol.self)!
+            return NotificationsViewModel(apiService: apiService)
+        }
+        
+        container.register(CreatePostViewModel.self) { resolver in
+            let apiService = resolver.resolve(APIServiceProtocol.self)!
+            return CreatePostViewModel(apiService: apiService)
+        }
+        
+        container.register(CommentsViewModel.self) { resolver in
+            let apiService = resolver.resolve(APIServiceProtocol.self)!
+            return CommentsViewModel(apiService: apiService)
+        }
         
         Logger.shared.info("Dependency container configured successfully", category: "di")
     }
@@ -121,8 +123,52 @@ final class DependencyContainer {
         return resolved
     }
     
+    // MARK: - Factory Methods (FIXED: MainActor-safe creation)
+    
+    /// Creates a new LoginViewModel instance on MainActor
+    @MainActor
+    func makeLoginViewModel() -> LoginViewModel {
+        return resolve(LoginViewModel.self)
+    }
+    
+    /// Creates a new FeedViewModel instance on MainActor
+    @MainActor
+    func makeFeedViewModel() -> FeedViewModel {
+        return resolve(FeedViewModel.self)
+    }
+    
+    /// Creates a new MarketplaceViewModel instance on MainActor
+    @MainActor
+    func makeMarketplaceViewModel() -> MarketplaceViewModel {
+        return resolve(MarketplaceViewModel.self)
+    }
+    
+    /// Creates a new ProfileViewModel instance on MainActor
+    @MainActor
+    func makeProfileViewModel() -> ProfileViewModel {
+        return resolve(ProfileViewModel.self)
+    }
+    
+    /// Creates a new NotificationsViewModel instance on MainActor
+    @MainActor
+    func makeNotificationsViewModel() -> NotificationsViewModel {
+        return resolve(NotificationsViewModel.self)
+    }
+    
+    /// Creates a new CreatePostViewModel instance on MainActor
+    @MainActor
+    func makeCreatePostViewModel() -> CreatePostViewModel {
+        return resolve(CreatePostViewModel.self)
+    }
+    
+    /// Creates a new CommentsViewModel instance on MainActor
+    @MainActor
+    func makeCommentsViewModel() -> CommentsViewModel {
+        return resolve(CommentsViewModel.self)
+    }
+    
     // MARK: - Debug Methods
-    #if DEBUG
+#if DEBUG
     func printRegisteredServices() {
         Logger.shared.debug("Registered services in DI container:", category: "di")
         // This would require reflection or manual tracking
@@ -144,7 +190,7 @@ final class DependencyContainer {
             return false
         }
     }
-    #endif
+#endif
 }
 
 // MARK: - Dependency Injection Property Wrapper (Updated)
@@ -162,86 +208,6 @@ struct Injected<T> {
     
     var wrappedValue: T {
         return dependency
-    }
-}
-
-// MARK: - ViewModels with Autoregistration Examples
-
-// Example of how ViewModels should be structured for autoregistration:
-
-/*
-// MARK: - Example Repository (for reference)
-protocol UserRepositoryProtocol {
-    func getUser(id: Int) async throws -> User
-    func updateUser(_ user: User) async throws -> User
-}
-
-final class UserRepository: UserRepositoryProtocol {
-    private let apiService: APIServiceProtocol
-    private let tokenManager: TokenManager
-    
-    // Constructor that autoregistration will use
-    init(apiService: APIServiceProtocol, tokenManager: TokenManager) {
-        self.apiService = apiService
-        self.tokenManager = tokenManager
-    }
-    
-    func getUser(id: Int) async throws -> User {
-        // Implementation
-    }
-    
-    func updateUser(_ user: User) async throws -> User {
-        // Implementation
-    }
-}
-
-// MARK: - Example ViewModel (for reference)
-final class ProfileViewModel: ObservableObject {
-    @Published var user: User?
-    @Published var isLoading = false
-    
-    private let userRepository: UserRepositoryProtocol
-    private let authManager: AuthManager
-    
-    // Constructor that autoregistration will use
-    init(userRepository: UserRepositoryProtocol, authManager: AuthManager) {
-        self.userRepository = userRepository
-        self.authManager = authManager
-    }
-    
-    func loadProfile() async {
-        // Implementation
-    }
-}
-*/
-
-// MARK: - Usage Examples
-extension DependencyContainer {
-    
-    // MARK: - Factory Methods (Optional convenience methods)
-    
-    /// Creates a new LoginViewModel instance
-    func makeLoginViewModel() -> LoginViewModel {
-        return resolve(LoginViewModel.self)
-    }
-    
-    /*
-    /// Creates a new FeedViewModel instance
-    func makeFeedViewModel() -> FeedViewModel {
-        return resolve(FeedViewModel.self)
-    }
-    
-    /// Creates a PostDetailViewModel with specific post
-    func makePostDetailViewModel(post: Post) -> PostDetailViewModel {
-        return resolve(PostDetailViewModel.self, argument: post)
-    }
-     */
-    
-    // MARK: - SwiftUI View Extensions (for easy DI in Views)
-    
-    static func configureForSwiftUI() {
-        // This can be called from App.swift to ensure container is ready
-        _ = shared
     }
 }
 

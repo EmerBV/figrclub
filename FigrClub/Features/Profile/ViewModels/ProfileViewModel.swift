@@ -26,7 +26,7 @@ final class ProfileViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
-    init(apiService: APIServiceProtocol = APIService.shared,
+    nonisolated init(apiService: APIServiceProtocol = APIService.shared,
          authManager: AuthManager = DependencyContainer.shared.resolve(AuthManager.self)) {
         self.apiService = apiService
         self.authManager = authManager

@@ -96,8 +96,20 @@ extension View {
             UINavigationBar.appearance().scrollEdgeAppearance = appearance
         }
     }
-    
-    
+}
+
+// MARK: - Post Model Equatable Extension
+extension Post: Equatable {
+    static func == (lhs: Post, rhs: Post) -> Bool {
+        return lhs.id == rhs.id
+    }
+}
+
+// MARK: - MarketplaceItem Model Equatable Extension
+extension MarketplaceItem: Equatable {
+    static func == (lhs: MarketplaceItem, rhs: MarketplaceItem) -> Bool {
+        return lhs.id == rhs.id
+    }
 }
 
 #if DEBUG
@@ -137,3 +149,4 @@ struct DebugInfoView: View {
     }
 }
 #endif
+

@@ -47,7 +47,7 @@ final class RegisterViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
-    init(authManager: AuthManager? = nil) {
+    nonisolated init(authManager: AuthManager? = nil) {
         // Use provided authManager or get from DI container
         if let authManager = authManager {
             self.authManager = authManager
@@ -55,8 +55,10 @@ final class RegisterViewModel: ObservableObject {
             self.authManager = DependencyContainer.shared.resolve(AuthManager.self)
         }
         
-        setupValidation()
-        setupAuthStateObserver()
+        Task { @MainActor in
+            setupValidation()
+            setupAuthStateObserver()
+        }
     }
     
     // MARK: - Public Methods
@@ -224,12 +226,12 @@ final class RegisterViewModel: ObservableObject {
                 let (password, confirmPassword) = passwordValidations
                 
                 return firstName.isValid &&
-                       lastName.isValid &&
-                       email.isValid &&
-                       username.isValid &&
-                       password.isValid &&
-                       confirmPassword.isValid &&
-                       legalValidation.isValid
+                lastName.isValid &&
+                email.isValid &&
+                username.isValid &&
+                password.isValid &&
+                confirmPassword.isValid &&
+                legalValidation.isValid
             }
             .assign(to: &$isFormValid)
     }
@@ -397,8 +399,8 @@ final class RegisterViewModel: ObservableObject {
         
         // Common patterns (reduce score)
         if password.lowercased().contains("password") ||
-           password.lowercased().contains("123456") ||
-           password.lowercased().contains("qwerty") {
+            password.lowercased().contains("123456") ||
+            password.lowercased().contains("qwerty") {
             score -= 2
         }
         

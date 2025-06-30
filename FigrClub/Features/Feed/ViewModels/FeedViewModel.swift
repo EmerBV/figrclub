@@ -26,7 +26,7 @@ final class FeedViewModel: ObservableObject {
     private let pageSize = AppConfig.Pagination.defaultPageSize
     
     // MARK: - Initialization
-    init(apiService: APIServiceProtocol = APIService.shared) {
+    nonisolated init(apiService: APIServiceProtocol = APIService.shared) {
         self.apiService = apiService
     }
     

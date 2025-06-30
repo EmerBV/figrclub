@@ -25,7 +25,7 @@ final class CreatePostViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
-    init(apiService: APIServiceProtocol = APIService.shared) {
+    nonisolated init(apiService: APIServiceProtocol = APIService.shared) {
         self.apiService = apiService
     }
     

@@ -15,7 +15,7 @@ final class CommentsViewModel: ObservableObject {
     
     private let apiService: APIServiceProtocol
     
-    init(apiService: APIServiceProtocol = APIService.shared) {
+    nonisolated init(apiService: APIServiceProtocol = APIService.shared) {
         self.apiService = apiService
     }
     
