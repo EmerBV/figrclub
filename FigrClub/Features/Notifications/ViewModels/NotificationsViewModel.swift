@@ -57,27 +57,28 @@ final class NotificationsViewModel: ObservableObject {
     func markAsRead(_ notification: AppNotification) {
         guard !notification.isRead else { return }
         
-        Task.detached(priority: .userInitiated) {
+        Task {
             do {
                 let _: AppNotification = try await apiService
                     .request(endpoint: .markNotificationAsRead(notification.id), body: nil)
                     .async()
                 
-                // Update local state
-                if let index = notifications.firstIndex(where: { $0.id == notification.id }) {
-                    notifications[index] = AppNotification(
-                        id: notification.id,
-                        title: notification.title,
-                        message: notification.message,
-                        type: notification.type,
-                        entityType: notification.entityType,
-                        entityId: notification.entityId,
-                        isRead: true,
-                        createdAt: notification.createdAt
-                    )
+                // Update local state on main actor
+                await MainActor.run {
+                    if let index = notifications.firstIndex(where: { $0.id == notification.id }) {
+                        notifications[index] = AppNotification(
+                            id: notification.id,
+                            title: notification.title,
+                            message: notification.message,
+                            type: notification.type,
+                            entityType: notification.entityType,
+                            entityId: notification.entityId,
+                            isRead: true,
+                            createdAt: notification.createdAt
+                        )
+                    }
+                    updateUnreadCount()
                 }
-                
-                updateUnreadCount()
                 
             } catch {
                 Logger.shared.error("Failed to mark notification as read", error: error, category: "notifications")
@@ -88,28 +89,31 @@ final class NotificationsViewModel: ObservableObject {
     func markAllAsRead() {
         Task {
             do {
-                try await apiService
+                let _: EmptyResponse = try await apiService
                     .request(endpoint: .markAllNotificationsAsRead, body: nil)
                     .async()
                 
-                // Update local state
-                notifications = notifications.map { notification in
-                    AppNotification(
-                        id: notification.id,
-                        title: notification.title,
-                        message: notification.message,
-                        type: notification.type,
-                        entityType: notification.entityType,
-                        entityId: notification.entityId,
-                        isRead: true,
-                        createdAt: notification.createdAt
-                    )
+                // Update local state on main actor
+                await MainActor.run {
+                    notifications = notifications.map { notification in
+                        AppNotification(
+                            id: notification.id,
+                            title: notification.title,
+                            message: notification.message,
+                            type: notification.type,
+                            entityType: notification.entityType,
+                            entityId: notification.entityId,
+                            isRead: true,
+                            createdAt: notification.createdAt
+                        )
+                    }
+                    updateUnreadCount()
                 }
                 
-                updateUnreadCount()
-                
             } catch {
-                showErrorMessage("Error al marcar como leídas: \(error.localizedDescription)")
+                await MainActor.run {
+                    showErrorMessage("Error al marcar como leídas: \(error.localizedDescription)")
+                }
             }
         }
     }
@@ -120,18 +124,22 @@ final class NotificationsViewModel: ObservableObject {
         Task {
             for notification in notificationsToDelete {
                 do {
-                    try await apiService
+                    let _: EmptyResponse = try await apiService
                         .request(endpoint: .deleteNotification(notification.id), body: nil)
                         .async()
                     
-                    notifications.removeAll { $0.id == notification.id }
+                    await MainActor.run {
+                        notifications.removeAll { $0.id == notification.id }
+                    }
                     
                 } catch {
                     Logger.shared.error("Failed to delete notification", error: error, category: "notifications")
                 }
             }
             
-            updateUnreadCount()
+            await MainActor.run {
+                updateUnreadCount()
+            }
         }
     }
     
@@ -143,8 +151,11 @@ final class NotificationsViewModel: ObservableObject {
         errorMessage = message
         showError = true
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
-            self?.hideError()
+        Task {
+            try? await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
+            await MainActor.run {
+                hideError()
+            }
         }
     }
     

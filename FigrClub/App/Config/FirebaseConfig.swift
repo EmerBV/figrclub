@@ -6,6 +6,8 @@
 //
 
 import Foundation
+import UIKit
+import Combine
 import FirebaseCore
 import FirebaseAnalytics
 import FirebaseCrashlytics
@@ -14,10 +16,12 @@ import FirebaseRemoteConfig
 import UserNotifications
 
 // MARK: - Firebase Configuration
-final class FirebaseConfig {
+final class FirebaseConfig: NSObject {
     static let shared = FirebaseConfig()
     
-    private init() {}
+    private override init() {
+        super.init()
+    }
     
     func configure() {
         // Configure Firebase
@@ -41,15 +45,15 @@ final class FirebaseConfig {
     // MARK: - Analytics Configuration
     private func configureAnalytics() {
         guard AppConfig.FeatureFlags.enableAnalytics else {
-            Analytics.setAnalyticsCollectionEnabled(false)
+            FirebaseAnalytics.Analytics.setAnalyticsCollectionEnabled(false)
             Logger.shared.info("Analytics disabled via feature flag", category: "firebase")
             return
         }
         
-        Analytics.setAnalyticsCollectionEnabled(true)
+        FirebaseAnalytics.Analytics.setAnalyticsCollectionEnabled(true)
         
         // Set default parameters
-        Analytics.setDefaultEventParameters([
+        FirebaseAnalytics.Analytics.setDefaultEventParameters([
             "app_version": AppConfig.AppInfo.version,
             "build_number": AppConfig.AppInfo.buildNumber,
             "environment": AppConfig.Environment.current.rawValue
@@ -176,15 +180,25 @@ extension FirebaseConfig: MessagingDelegate {
         
         // Send token to server
         if let token = fcmToken {
-            Task {
-                await NotificationService.shared.registerDeviceToken(token)
-            }
+            // Store token for later use by NotificationService
+            UserDefaults.standard.set(token, forKey: "fcm_token")
+            
+            // Notify that a new token is available
+            NotificationCenter.default.post(
+                name: .fcmTokenReceived,
+                object: nil,
+                userInfo: ["token": token]
+            )
         }
     }
     
-    func messaging(_ messaging: Messaging, didReceive remoteMessage: MessagingRemoteMessage) {
-        Logger.shared.info("Received remote message: \(remoteMessage.appData)", category: "firebase")
+    // Optional: Handle data messages received through FCM
+    // This method may not be required in all Firebase versions
+    /*
+    func messaging(_ messaging: Messaging, didReceive remoteMessage: [AnyHashable : Any]) {
+        Logger.shared.info("Received remote message: \(remoteMessage)", category: "firebase")
     }
+    */
 }
 
 // MARK: - Notification Center Delegate
@@ -198,7 +212,7 @@ extension FirebaseConfig: UNUserNotificationCenterDelegate {
         Logger.shared.info("Received foreground notification", category: "firebase")
         
         // Show notification in foreground
-        completionHandler([[.banner, .sound, .badge]])
+        completionHandler([.alert, .sound, .badge])
     }
     
     func userNotificationCenter(
@@ -206,14 +220,28 @@ extension FirebaseConfig: UNUserNotificationCenterDelegate {
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        // Handle notification taps
+        // Handle notification tap
         let userInfo = response.notification.request.content.userInfo
         Logger.shared.info("User tapped notification: \(userInfo)", category: "firebase")
         
-        // Process notification action
-        NotificationService.shared.handleNotificationTap(userInfo: userInfo)
+        // Handle the notification action via notification center to avoid circular dependency
+        NotificationCenter.default.post(
+            name: .handleNotificationTap,
+            object: nil,
+            userInfo: userInfo
+        )
         
         completionHandler()
+    }
+    
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        openSettingsFor notification: UNNotification?
+    ) {
+        Logger.shared.info("User opened notification settings", category: "firebase")
+        
+        // Handle settings action
+        NotificationCenter.default.post(name: .openNotificationSettings, object: nil)
     }
 }
 
@@ -224,7 +252,7 @@ final class RemoteFeatureFlags: ObservableObject {
     @Published var chatEnabled = true
     @Published var storiesEnabled = true
     @Published var liveStreamingEnabled = false
-    @Published var commissionRate: Double = 5.0
+    @Published var marketplaceCommissionRate: Double = 5.0
     @Published var maxImageUploadSizeMB: Double = 10.0
     @Published var apiTimeoutSeconds: Double = 30.0
     
@@ -235,16 +263,39 @@ final class RemoteFeatureFlags: ObservableObject {
         storiesEnabled: Bool,
         liveStreamingEnabled: Bool
     ) {
+        self.chatEnabled = chatEnabled
+        self.storiesEnabled = storiesEnabled
+        self.liveStreamingEnabled = liveStreamingEnabled
+        
+        // Notify observers
         DispatchQueue.main.async {
-            self.chatEnabled = chatEnabled
-            self.storiesEnabled = storiesEnabled
-            self.liveStreamingEnabled = liveStreamingEnabled
+            self.objectWillChange.send()
         }
     }
     
-    func updateCommissionRate(_ rate: Double) {
+    func updateConfiguration(
+        commissionRate: Double,
+        maxImageSize: Double,
+        apiTimeout: Double
+    ) {
+        self.marketplaceCommissionRate = commissionRate
+        self.maxImageUploadSizeMB = maxImageSize
+        self.apiTimeoutSeconds = apiTimeout
+        
+        // Notify observers
         DispatchQueue.main.async {
-            self.commissionRate = rate
+            self.objectWillChange.send()
         }
     }
+}
+
+// MARK: - NotificationCenter Names
+extension Notification.Name {
+    static let openNotificationSettings = Notification.Name("openNotificationSettings")
+    static let navigateToPost = Notification.Name("navigateToPost")
+    static let navigateToProfile = Notification.Name("navigateToProfile")
+    static let navigateToMarketplaceItem = Notification.Name("navigateToMarketplaceItem")
+    static let navigateToConversation = Notification.Name("navigateToConversation")
+    static let fcmTokenReceived = Notification.Name("fcmTokenReceived")
+    static let handleNotificationTap = Notification.Name("handleNotificationTap")
 }

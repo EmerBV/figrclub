@@ -171,6 +171,20 @@ final class NotificationService: NSObject, ObservableObject {
             name: UIApplication.didEnterBackgroundNotification,
             object: nil
         )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleFCMTokenReceived(_:)),
+            name: .fcmTokenReceived,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleNotificationTapFromFirebase(_:)),
+            name: .handleNotificationTap,
+            object: nil
+        )
     }
     
     // MARK: - App State Observers
@@ -184,6 +198,19 @@ final class NotificationService: NSObject, ObservableObject {
         // Save any pending notification state
     }
     
+    @objc private func handleFCMTokenReceived(_ notification: Notification) {
+        guard let token = notification.userInfo?["token"] as? String else { return }
+        
+        Task {
+            await registerDeviceToken(token)
+        }
+    }
+    
+    @objc private func handleNotificationTapFromFirebase(_ notification: Notification) {
+        guard let userInfo = notification.userInfo else { return }
+        handleNotificationTap(userInfo: userInfo)
+    }
+    
     // MARK: - Testing
     
     func sendTestNotification() async {
@@ -193,7 +220,7 @@ final class NotificationService: NSObject, ObservableObject {
         }
         
         do {
-            try await apiService
+            let _: EmptyResponse = try await apiService
                 .request(endpoint: .testNotification, body: nil)
                 .async()
             
@@ -219,8 +246,8 @@ extension NotificationService: UNUserNotificationCenterDelegate {
     ) {
         Logger.shared.info("Will present notification: \(notification.request.identifier)", category: "notifications")
         
-        // Show notification even when app is in foreground
-        completionHandler([.banner, .sound, .badge])
+        // Show notification in foreground
+        completionHandler([.alert, .sound, .badge])
         
         Analytics.shared.logEvent("notification_received_foreground", parameters: [
             "notification_id": notification.request.identifier
@@ -258,17 +285,18 @@ extension NotificationService: MessagingDelegate {
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         Logger.shared.info("FCM registration token received", category: "notifications")
         
-        guard let fcmToken = fcmToken else {
+        if let fcmToken = fcmToken {
+            Task {
+                await registerDeviceToken(fcmToken)
+            }
+        } else {
             Logger.shared.warning("FCM token is nil", category: "notifications")
-            return
-        }
-        
-        // Register token with backend
-        Task {
-            await registerDeviceToken(fcmToken)
         }
     }
     
+    // MessagingRemoteMessage was deprecated in Firebase 9.0+
+    // This method is optional and can be removed if not needed
+    /*
     func messaging(_ messaging: Messaging, didReceive remoteMessage: MessagingRemoteMessage) {
         Logger.shared.info("Received remote message: \(remoteMessage.appData)", category: "notifications")
         
@@ -276,16 +304,10 @@ extension NotificationService: MessagingDelegate {
             "message_id": remoteMessage.messageID ?? "unknown"
         ])
     }
+    */
 }
 
-// MARK: - Notification Names
-extension Notification.Name {
-    static let navigateToPost = Notification.Name("navigateToPost")
-    static let navigateToProfile = Notification.Name("navigateToProfile")
-    static let navigateToMarketplaceItem = Notification.Name("navigateToMarketplaceItem")
-    static let navigateToConversation = Notification.Name("navigateToConversation")
-    static let refreshNotifications = Notification.Name("refreshNotifications")
-}
+// Las definiciones de Notification.Name están en FirebaseConfig.swift
 
 // MARK: - Notification Preferences
 struct NotificationPreferences: Codable {
@@ -315,3 +337,4 @@ struct NotificationPreferences: Codable {
         }
     }
 }
+

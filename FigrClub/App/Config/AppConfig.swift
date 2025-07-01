@@ -110,7 +110,7 @@ struct AppConfig {
     
     // MARK: - External Services
     struct ExternalServices {
-        static let revenueCatAPIKey: String {
+        static var revenueCatAPIKey: String {
             switch Environment.current {
             case .development:
                 return "rc_dev_key"
@@ -121,7 +121,7 @@ struct AppConfig {
             }
         }
         
-        static let stripePublishableKey: String {
+        static var stripePublishableKey: String {
             switch Environment.current {
             case .development:
                 return "pk_test_dev"
@@ -198,10 +198,69 @@ extension AppConfig {
         print("   - Analytics: \(FeatureFlags.enableAnalytics)")
         print("   - Crash Reporting: \(FeatureFlags.enableCrashReporting)")
         print("   - Beta Features: \(FeatureFlags.enableBetaFeatures)")
-        print("📊 Cache Limits:")
-        print("   - Memory: \(Cache.imageCacheMemoryLimit / (1024 * 1024))MB")
-        print("   - Disk: \(Cache.imageCacheDiskLimit / (1024 * 1024))MB")
-        print("==========================================")
+        print("💾 Storage:")
+        print("   - Core Data Model: \(Storage.coreDataModelName)")
+        print("   - Keychain Service: \(Storage.keychainService)")
+        print("   - UserDefaults Suite: \(Storage.userDefaultsSuiteName)")
+        print("📊 Cache Configuration:")
+        print("   - Memory Limit: \(Cache.imageCacheMemoryLimit / (1024*1024))MB")
+        print("   - Disk Limit: \(Cache.imageCacheDiskLimit / (1024*1024))MB")
+        print("   - Expiration: \(Cache.imageCacheExpiration / (24*60*60)) days")
+        print("🔗 Deep Linking:")
+        print("   - Scheme: \(DeepLinking.scheme)")
+        print("   - Host: \(DeepLinking.host)")
+        print("   - Available Routes: \(DeepLinking.Routes.allCases.map { $0.rawValue }.joined(separator: ", "))")
+    }
+    
+    static var debugDescription: String {
+        var description = "FigrClub Configuration\n"
+        description += "Environment: \(Environment.current.displayName)\n"
+        description += "API Base URL: \(API.baseURL)\n"
+        description += "Version: \(AppInfo.version) (\(AppInfo.buildNumber))\n"
+        description += "Bundle ID: \(AppInfo.bundleId)\n"
+        description += "Minimum OS: \(AppInfo.minimumOSVersion)\n"
+        return description
     }
 }
 #endif
+
+// MARK: - Validation Helpers
+extension AppConfig.Validation {
+    static func isValidPassword(_ password: String) -> Bool {
+        return password.count >= minPasswordLength && password.count <= maxPasswordLength
+    }
+    
+    static func isValidUsername(_ username: String) -> Bool {
+        let trimmed = username.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.count >= minUsernameLength && trimmed.count <= maxUsernameLength
+    }
+    
+    static func isValidBio(_ bio: String) -> Bool {
+        return bio.count <= maxBioLength
+    }
+    
+    static func isValidPostContent(_ content: String) -> Bool {
+        let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !trimmed.isEmpty && trimmed.count <= maxPostContentLength
+    }
+}
+
+// MARK: - Configuration Validation
+extension AppConfig {
+    static func validateConfiguration() -> Bool {
+        // Validate required configurations
+        guard !API.baseURL.isEmpty else {
+            fatalError("API base URL is not configured")
+        }
+        
+        guard !Firebase.projectId.isEmpty else {
+            fatalError("Firebase project ID is not configured")
+        }
+        
+        guard !AppInfo.bundleId.isEmpty else {
+            fatalError("Bundle ID is not configured")
+        }
+        
+        return true
+    }
+}

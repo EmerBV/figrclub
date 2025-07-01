@@ -7,8 +7,13 @@
 
 import Foundation
 import OSLog
+import os
 import FirebaseAnalytics
 import FirebaseCrashlytics
+
+#if canImport(Darwin)
+import Darwin.Mach
+#endif
 
 // MARK: - Logger
 final class Logger {
@@ -16,6 +21,14 @@ final class Logger {
     
     private let osLogger: OSLog
     private let subsystem = "com.emerbv.FigrClub"
+    
+    // DateFormatter for logging timestamps
+    private static let logTimestampFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
+        formatter.timeZone = TimeZone.current
+        return formatter
+    }()
     
     private init() {
         self.osLogger = OSLog(subsystem: subsystem, category: "general")
@@ -187,7 +200,7 @@ final class Logger {
         function: String,
         line: Int
     ) -> String {
-        let timestamp = DateFormatter.logTimestamp.string(from: Date())
+        let timestamp = Self.logTimestampFormatter.string(from: Date())
         return "\(level.emoji) [\(timestamp)] [\(level.rawValue)] [\(category)] [\(fileName):\(line)] \(function) - \(message)"
     }
     
@@ -201,21 +214,15 @@ final class Logger {
         var message = "🌐 \(method) \(url)"
         
         if let statusCode = statusCode {
-            message += " - \(statusCode)"
+            message += " [\(statusCode)]"
         }
         
         if let duration = duration {
-            message += " (\(String(format: "%.3f", duration))s)"
+            message += " (\(String(format: "%.2f", duration))s)"
         }
         
-        if let statusCode = statusCode {
-            if statusCode >= 200 && statusCode < 300 {
-                info(message, category: "network")
-            } else if statusCode >= 400 {
-                error(message, category: "network")
-            } else {
-                warning(message, category: "network")
-            }
+        if let statusCode = statusCode, statusCode >= 400 {
+            error(message, category: "network")
         } else {
             info(message, category: "network")
         }
@@ -245,15 +252,73 @@ final class Logger {
             error(message, category: "data")
         }
     }
+    
+    // User actions logging
+    func logUserAction(
+        action: String,
+        category: String = "user_action",
+        metadata: [String: Any]? = nil
+    ) {
+        var message = "👤 User action: \(action)"
+        if let metadata = metadata {
+            message += " \(metadata)"
+        }
+        
+        info(message, category: category)
+    }
+    
+    // Memory usage logging
+    func logMemoryUsage(category: String = "memory") {
+        #if canImport(Darwin)
+        var memoryInfo = mach_task_basic_info()
+        var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size)/4
+        
+        let kerr: kern_return_t = withUnsafeMutablePointer(to: &memoryInfo) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: 1) {
+                task_info(mach_task_self_,
+                         task_flavor_t(MACH_TASK_BASIC_INFO),
+                         $0,
+                         &count)
+            }
+        }
+        
+        if kerr == KERN_SUCCESS {
+            let memoryUsage = memoryInfo.resident_size / (1024 * 1024) // MB
+            info("📊 Memory usage: \(memoryUsage) MB", category: category)
+        } else {
+            info("📊 Memory usage: Unable to retrieve", category: category)
+        }
+        #else
+        info("📊 Memory usage: Not available on this platform", category: category)
+        #endif
+    }
 }
 
-
-// MARK: - Logging Macros (iOS 14+)
+// MARK: - Apple Logger Extensions (iOS 14+)
 @available(iOS 14.0, *)
+extension os.Logger {
+    static let network = os.Logger(subsystem: "com.emerbv.FigrClub", category: "network")
+    static let auth = os.Logger(subsystem: "com.emerbv.FigrClub", category: "auth")
+    static let ui = os.Logger(subsystem: "com.emerbv.FigrClub", category: "ui")
+    static let data = os.Logger(subsystem: "com.emerbv.FigrClub", category: "data")
+    static let performance = os.Logger(subsystem: "com.emerbv.FigrClub", category: "performance")
+}
+
+// MARK: - Logger Categories
 extension Logger {
-    static let network = Logger(subsystem: "com.emerbv.FigrClub", category: "network")
-    static let auth = Logger(subsystem: "com.emerbv.FigrClub", category: "auth")
-    static let ui = Logger(subsystem: "com.emerbv.FigrClub", category: "ui")
-    static let data = Logger(subsystem: "com.emerbv.FigrClub", category: "data")
-    static let performance = Logger(subsystem: "com.emerbv.FigrClub", category: "performance")
+    struct Category {
+        static let general = "general"
+        static let network = "network"
+        static let authentication = "authentication"
+        static let coredata = "coredata"
+        static let ui = "ui"
+        static let notifications = "notifications"
+        static let firebase = "firebase"
+        static let kingfisher = "kingfisher"
+        static let analytics = "analytics"
+        static let performance = "performance"
+        static let memory = "memory"
+        static let userAction = "user_action"
+        static let lifecycle = "lifecycle"
+    }
 }

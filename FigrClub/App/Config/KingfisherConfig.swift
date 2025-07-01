@@ -30,11 +30,11 @@ final class KingfisherConfig {
         let cache = ImageCache.default
         
         // Memory cache settings
-        cache.memoryStorage.config.totalCostLimit = AppConfig.Cache.imageCacheMemoryLimit
+        cache.memoryStorage.config.totalCostLimit = UInt(AppConfig.Cache.imageCacheMemoryLimit)
         cache.memoryStorage.config.countLimit = 100
         
         // Disk cache settings
-        cache.diskStorage.config.sizeLimit = AppConfig.Cache.imageCacheDiskLimit
+        cache.diskStorage.config.sizeLimit = Int(AppConfig.Cache.imageCacheDiskLimit)
         cache.diskStorage.config.expiration = .seconds(AppConfig.Cache.imageCacheExpiration)
         
         Logger.shared.info("Image cache configured - Memory: \(AppConfig.Cache.imageCacheMemoryLimit / (1024*1024))MB, Disk: \(AppConfig.Cache.imageCacheDiskLimit / (1024*1024))MB", category: "kingfisher")
@@ -57,7 +57,6 @@ final class KingfisherConfig {
         
         // Request modifier for auth headers
         downloader.requestsUsePipelining = true
-        downloader.processingQueue = .global(qos: .userInitiated)
         
         Logger.shared.info("Image downloader configured", category: "kingfisher")
     }
@@ -121,8 +120,8 @@ final class KingfisherConfig {
         Logger.shared.info("Image cache cleared", category: "kingfisher")
     }
     
-    func getCacheSize() -> UInt {
-        return ImageCache.default.diskStorageSize
+    func getCacheSize() async throws -> UInt {
+        return try await ImageCache.default.diskStorageSize
     }
     
     func cleanExpiredCache() {
@@ -168,7 +167,7 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
                 Logger.shared.debug("Image loaded successfully: \(url?.absoluteString ?? "unknown")", category: "kingfisher")
                 Analytics.shared.logEvent("image_loaded", parameters: [
                     "image_type": "\(imageType)",
-                    "cache_type": result.cacheType.rawValue
+                    "cache_type": String(describing: result.cacheType)
                 ])
             }
             .onFailure { error in
@@ -183,48 +182,42 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
         switch type {
         case .avatar:
             return ResizingImageProcessor(referenceSize: CGSize(width: 200, height: 200))
-            |> RoundCornerImageProcessor(cornerRadius: 100)
+                |> RoundCornerImageProcessor(cornerRadius: 100)
         case .thumbnail:
             return ResizingImageProcessor(referenceSize: CGSize(width: 300, height: 300))
         case .fullSize:
             return DefaultImageProcessor.default
         case .marketplace:
             return ResizingImageProcessor(referenceSize: CGSize(width: 400, height: 400))
-            |> RoundCornerImageProcessor(cornerRadius: 12)
+                |> RoundCornerImageProcessor(cornerRadius: 12)
         }
     }
 }
 
 // MARK: - Convenience Extensions
 extension KFImage {
-    func figrStyle(for type: ImageType) -> Self {
-        return self.setProcessor(KingfisherConfig.processorForType(type))
-            .fade(duration: 0.25)
-            .onSuccess { result in
-                Analytics.shared.logEvent("image_loaded", parameters: [
-                    "image_type": "\(type)",
-                    "cache_type": result.cacheType.rawValue
-                ])
-            }
-            .onFailure { error in
-                Logger.shared.error("Image loading failed", error: error, category: "kingfisher")
-            }
+    func figrStyle(for type: ImageType) -> some View {
+        let options = KingfisherConfig.imageOptions(for: type)
+        return self.options(options)
     }
 }
 
-private extension KingfisherConfig {
-    static func processorForType(_ type: ImageType) -> ImageProcessor {
-        switch type {
-        case .avatar:
-            return ResizingImageProcessor(referenceSize: CGSize(width: 200, height: 200))
-            |> RoundCornerImageProcessor(cornerRadius: 100)
-        case .thumbnail:
-            return ResizingImageProcessor(referenceSize: CGSize(width: 300, height: 300))
-        case .fullSize:
-            return DefaultImageProcessor.default
-        case .marketplace:
-            return ResizingImageProcessor(referenceSize: CGSize(width: 400, height: 400))
-            |> RoundCornerImageProcessor(cornerRadius: 12)
-        }
+// MARK: - SwiftUI View Extensions for cached images
+extension View {
+    func cachedAsyncImage<Placeholder: View>(
+        url: URL?,
+        imageType: ImageType = .thumbnail,
+        @ViewBuilder placeholder: @escaping () -> Placeholder
+    ) -> some View {
+        CachedAsyncImage(
+            url: url,
+            imageType: imageType,
+            content: { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            },
+            placeholder: placeholder
+        )
     }
 }

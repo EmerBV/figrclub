@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import UIKit
 
 @MainActor
 final class ProfileViewModel: ObservableObject {
@@ -26,8 +27,10 @@ final class ProfileViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
-    nonisolated init(apiService: APIServiceProtocol = APIService.shared,
-         authManager: AuthManager = DependencyContainer.shared.resolve(AuthManager.self)) {
+    nonisolated init(
+        apiService: APIServiceProtocol = APIService.shared,
+        authManager: AuthManager = DependencyContainer.shared.resolve(AuthManager.self)
+    ) {
         self.apiService = apiService
         self.authManager = authManager
     }
@@ -79,8 +82,17 @@ final class ProfileViewModel: ObservableObject {
             applicationActivities: nil
         )
         
-        if let topVC = UIApplication.shared.topViewController {
-            topVC.present(activityVC, animated: true)
+        // Configure for iPad
+        if let popover = activityVC.popoverPresentationController {
+            popover.sourceView = UIApplication.shared.topViewController?.view
+            popover.sourceRect = CGRect(x: UIScreen.main.bounds.width / 2, y: UIScreen.main.bounds.height / 2, width: 0, height: 0)
+            popover.permittedArrowDirections = []
+        }
+        
+        Task { @MainActor in
+            if let topVC = UIApplication.shared.topViewController {
+                topVC.present(activityVC, animated: true)
+            }
         }
         
         Analytics.shared.logEvent("profile_shared", parameters: [
@@ -92,8 +104,11 @@ final class ProfileViewModel: ObservableObject {
         errorMessage = message
         showError = true
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
-            self?.hideError()
+        Task {
+            try? await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
+            await MainActor.run {
+                hideError()
+            }
         }
     }
     

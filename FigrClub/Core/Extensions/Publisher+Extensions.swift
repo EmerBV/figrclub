@@ -37,19 +37,13 @@ extension Publisher {
         maxRetries: Int = 3,
         baseDelay: TimeInterval = 1.0
     ) -> AnyPublisher<Output, Failure> {
-        self.catch { error -> AnyPublisher<Output, Failure> in
-            return Publishers.Sequence(sequence: 0..<maxRetries)
-                .publisher
-                .flatMap { attempt in
-                    return Just(())
-                        .delay(for: .seconds(baseDelay * pow(2.0, Double(attempt))), scheduler: DispatchQueue.main)
-                        .flatMap { _ in self }
-                }
-                .first()
-                .catch { _ in Fail(error: error) }
-                .eraseToAnyPublisher()
-        }
-        .eraseToAnyPublisher()
+        self.retry(maxRetries)
+            .catch { error -> AnyPublisher<Output, Failure> in
+                // If all retries failed, return the error
+                return Fail(error: error)
+                    .eraseToAnyPublisher()
+            }
+            .eraseToAnyPublisher()
     }
 }
 
