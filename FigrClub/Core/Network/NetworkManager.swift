@@ -39,10 +39,35 @@ final class NetworkManager {
         do {
             let request = try buildURLRequest(for: endpoint, body: body)
             
+            // Log the request
+            logRequest(request, endpoint: endpoint)
+            
             return session.dataTaskPublisher(for: request)
-                .map(\.data)
-                .tryMap { [weak self] data in
-                    try self?.handleResponse(data: data, responseType: T.self) ?? {
+                .tryMap { [weak self] data, response in
+                    // Log the response
+                    self?.logResponse(data: data, response: response, endpoint: endpoint)
+                    
+                    // Check HTTP status
+                    if let httpResponse = response as? HTTPURLResponse {
+                        if httpResponse.statusCode >= 400 {
+                            // Try to decode error response
+                            if let errorResponse = try? self?.decoder.decode(APIErrorResponse.self, from: data) {
+                                throw APIError(
+                                    message: errorResponse.message,
+                                    code: errorResponse.code ?? "HTTP_\(httpResponse.statusCode)",
+                                    timestamp: errorResponse.timestamp
+                                )
+                            } else {
+                                throw APIError(
+                                    message: "HTTP Error \(httpResponse.statusCode)",
+                                    code: "HTTP_\(httpResponse.statusCode)",
+                                    timestamp: ISO8601DateFormatter().string(from: Date())
+                                )
+                            }
+                        }
+                    }
+                    
+                    return try self?.handleResponse(data: data, responseType: T.self) ?? {
                         throw APIError(
                             message: "Network manager not available",
                             code: "MANAGER_ERROR",
@@ -85,7 +110,7 @@ final class NetworkManager {
     // MARK: - Private Methods
     
     private func buildURLRequest(for endpoint: APIEndpoint, body: Codable?) throws -> URLRequest {
-        let baseURL = "http://localhost:9092/figrclub/api/v1" // Cambiar por tu URL base
+        let baseURL = AppConfig.API.baseURL
         
         guard var urlComponents = URLComponents(string: baseURL + endpoint.path) else {
             throw APIError(
@@ -117,8 +142,8 @@ final class NetworkManager {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         
-        // Add auth token if available
-        if let token = TokenManager.shared.getAccessToken() {
+        // Add auth token if required and available
+        if endpoint.requiresAuthentication, let token = TokenManager.shared.getAccessToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         
@@ -139,38 +164,98 @@ final class NetworkManager {
     }
     
     private func handleResponse<T: Codable>(data: Data, responseType: T.Type) throws -> T {
-        // Log response for debugging
-        #if DEBUG
+        // Log raw response for debugging
+#if DEBUG
         if let jsonString = String(data: data, encoding: .utf8) {
-            print("📥 API Response: \(jsonString)")
+            print("📥 Raw API Response for \(T.self): \(jsonString)")
+            
+            // Usar el DebugHelper para inspeccionar la estructura
+            DebugHelper.inspectJSONStructure(jsonString)
+            
+            // Intentar validar contra diferentes modelos
+            print("🧪 Testing decode strategies:")
+            DebugHelper.validateJSON(jsonString, as: APIResponse<T>.self)
+            DebugHelper.validateJSON(jsonString, as: T.self)
         }
-        #endif
+#endif
         
-        // Try to decode as APIResponse<T> first
-        if let apiResponse = try? decoder.decode(APIResponse<T>.self, from: data) {
+        // Strategy 1: Try to decode as wrapped APIResponse<T>
+        do {
+            let apiResponse = try decoder.decode(APIResponse<T>.self, from: data)
             guard let responseData = apiResponse.data else {
                 throw APIError(
                     message: apiResponse.message,
                     code: "EMPTY_DATA",
-                    timestamp: apiResponse.timestamp
+                    timestamp: String(apiResponse.timestamp)
                 )
             }
+            Logger.shared.debug("✅ Successfully decoded as wrapped APIResponse", category: "network")
             return responseData
+        } catch {
+            Logger.shared.debug("❌ Failed to decode as APIResponse<T>: \(error)", category: "network")
         }
         
-        // Try to decode as APIError
+        // Strategy 2: Try to decode directly as T
+        do {
+            let directResponse = try decoder.decode(T.self, from: data)
+            Logger.shared.debug("✅ Successfully decoded directly as \(T.self)", category: "network")
+            return directResponse
+        } catch {
+            Logger.shared.debug("❌ Failed to decode directly as \(T.self): \(error)", category: "network")
+        }
+        
+        // Strategy 3: Try to decode as error response
         if let apiError = try? decoder.decode(APIError.self, from: data) {
             throw apiError
         }
         
-        // Fallback to direct decoding
-        do {
-            return try decoder.decode(T.self, from: data)
-        } catch {
+        // Strategy 4: Try to decode as APIErrorResponse
+        if let errorResponse = try? decoder.decode(APIErrorResponse.self, from: data) {
             throw APIError(
-                message: "Failed to decode response: \(error.localizedDescription)",
-                code: "DECODING_ERROR",
-                timestamp: ISO8601DateFormatter().string(from: Date())
+                message: errorResponse.message,
+                code: errorResponse.code ?? "API_ERROR",
+                timestamp: errorResponse.timestamp
+            )
+        }
+        
+        // If all strategies fail, throw a detailed error
+        throw APIError(
+            message: "Failed to decode response as \(T.self). Raw data length: \(data.count) bytes",
+            code: "DECODING_ERROR",
+            timestamp: ISO8601DateFormatter().string(from: Date())
+        )
+    }
+    
+    private func logRequest(_ request: URLRequest, endpoint: APIEndpoint) {
+#if DEBUG
+        print("🚀 API Request: \(endpoint.method.rawValue) \(request.url?.absoluteString ?? "unknown")")
+        if let headers = request.allHTTPHeaderFields {
+            print("📋 Headers: \(headers)")
+        }
+        if let body = request.httpBody, let bodyString = String(data: body, encoding: .utf8) {
+            print("📤 Request Body: \(bodyString)")
+        }
+#endif
+        
+        Logger.shared.logNetworkRequest(
+            method: endpoint.method.rawValue,
+            url: request.url?.absoluteString ?? "unknown"
+        )
+    }
+    
+    private func logResponse(data: Data, response: URLResponse, endpoint: APIEndpoint) {
+#if DEBUG
+        if let httpResponse = response as? HTTPURLResponse {
+            print("📥 Response Status: \(httpResponse.statusCode)")
+            print("📋 Response Headers: \(httpResponse.allHeaderFields)")
+        }
+#endif
+        
+        if let httpResponse = response as? HTTPURLResponse {
+            Logger.shared.logNetworkRequest(
+                method: endpoint.method.rawValue,
+                url: httpResponse.url?.absoluteString ?? "unknown",
+                statusCode: httpResponse.statusCode
             )
         }
     }

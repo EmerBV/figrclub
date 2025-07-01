@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import UserNotifications
 
 // MARK: - Authentication State
 enum AuthState {
@@ -79,26 +80,64 @@ final class AuthManager: AuthManagerProtocol {
         
         do {
             let loginRequest = LoginRequest(email: email, password: password)
+            
+            // Primero hacemos login
             let authResponse: AuthResponse = try await apiService
                 .request(endpoint: .login, body: loginRequest)
                 .async()
             
-            // Save tokens
+            Logger.shared.info("Login successful for user: \(authResponse.userId)", category: "auth")
+            
+            // Guardamos los tokens
             tokenManager.saveTokens(
                 accessToken: authResponse.authToken.token,
                 userId: authResponse.userId
             )
             
-            // Get user details
-            return await getCurrentUser()
+            // Luego obtenemos los datos del usuario
+            let userResult = await getCurrentUser()
+            
+            switch userResult {
+            case .success(let user):
+                await setAuthenticatedState(user)
+                Analytics.shared.logLogin(method: "email")
+                return .success(user)
+            case .failure(let error):
+                // Si falla obtener el usuario, creamos uno temporal con los datos que tenemos
+                Logger.shared.warning("Failed to get user details after login, creating temporary user", category: "auth")
+                
+                let temporaryUser = User(
+                    id: authResponse.userId,
+                    firstName: "Usuario", // Placeholder
+                    lastName: "", // Placeholder
+                    email: authResponse.email,
+                    username: authResponse.email.components(separatedBy: "@").first ?? "user",
+                    userType: .regular,
+                    subscriptionType: .free,
+                    isVerified: false,
+                    profileImageUrl: nil,
+                    bio: nil,
+                    createdAt: ISO8601DateFormatter().string(from: Date())
+                )
+                
+                await setAuthenticatedState(temporaryUser)
+                
+                // Intentamos obtener los datos reales del usuario en background
+                Task {
+                    _ = await getCurrentUser()
+                }
+                
+                return .success(temporaryUser)
+            }
             
         } catch {
             let apiError = error as? APIError ?? APIError(
-                message: "Login failed",
+                message: "Login failed: \(error.localizedDescription)",
                 code: "LOGIN_FAILED",
                 timestamp: ISO8601DateFormatter().string(from: Date())
             )
             
+            Logger.shared.error("Login failed", error: apiError, category: "auth")
             await setErrorState(apiError)
             return .failure(apiError)
         }
@@ -112,11 +151,10 @@ final class AuthManager: AuthManagerProtocol {
                 .request(endpoint: .register, body: request)
                 .async()
             
-            // For registration, user might need email verification
-            // So we don't automatically log them in
+            // Para el registro, el usuario podría necesitar verificación de email
             await setUnauthenticatedState()
             
-            // Return user data even if not authenticated yet
+            // Retornamos datos del usuario aunque no esté autenticado aún
             let user = User(
                 id: response.userId,
                 firstName: request.firstName,
@@ -131,15 +169,17 @@ final class AuthManager: AuthManagerProtocol {
                 createdAt: ISO8601DateFormatter().string(from: Date())
             )
             
+            Analytics.shared.logSignup(method: "email")
             return .success(user)
             
         } catch {
             let apiError = error as? APIError ?? APIError(
-                message: "Registration failed",
+                message: "Registration failed: \(error.localizedDescription)",
                 code: "REGISTRATION_FAILED",
                 timestamp: ISO8601DateFormatter().string(from: Date())
             )
             
+            Logger.shared.error("Registration failed", error: apiError, category: "auth")
             await setErrorState(apiError)
             return .failure(apiError)
         }
@@ -150,17 +190,16 @@ final class AuthManager: AuthManagerProtocol {
         currentUser = nil
         authState = .unauthenticated
         
-        // Clear any cached data
+        // Limpiar datos en caché
         clearUserData()
         
-        #if DEBUG
-        print("✅ User logged out successfully")
-        #endif
+        Analytics.shared.logLogout()
+        Logger.shared.info("User logged out successfully", category: "auth")
     }
     
     func refreshTokenIfNeeded() async -> Bool {
         guard tokenManager.shouldRefreshToken() else {
-            return true // Token is still valid
+            return true // Token sigue siendo válido
         }
         
         let result = await tokenManager.refreshAccessToken()
@@ -168,8 +207,8 @@ final class AuthManager: AuthManagerProtocol {
         switch result {
         case .success:
             return true
-        case .failure:
-            // If refresh fails, logout user
+        case .failure(let error):
+            Logger.shared.error("Failed to refresh token", error: error, category: "auth")
             logout()
             return false
         }
@@ -187,21 +226,32 @@ final class AuthManager: AuthManagerProtocol {
         }
         
         do {
+            Logger.shared.info("Fetching user data for userId: \(userId)", category: "auth")
+            
             let user: User = try await apiService
                 .request(endpoint: .getUserById(userId), body: nil)
                 .async()
             
+            Logger.shared.info("Successfully fetched user data: \(user.email)", category: "auth")
             await setAuthenticatedState(user)
             return .success(user)
             
         } catch {
             let apiError = error as? APIError ?? APIError(
-                message: "Failed to get user data",
+                message: "Failed to get user data: \(error.localizedDescription)",
                 code: "GET_USER_FAILED",
                 timestamp: ISO8601DateFormatter().string(from: Date())
             )
             
-            await setErrorState(apiError)
+            Logger.shared.error("Failed to get user data", error: apiError, category: "auth")
+            
+            // No establecemos error state aquí si ya estamos autenticados
+            if case .authenticated = authState {
+                Logger.shared.info("Keeping current auth state despite user fetch failure", category: "auth")
+            } else {
+                await setErrorState(apiError)
+            }
+            
             return .failure(apiError)
         }
     }
@@ -209,21 +259,19 @@ final class AuthManager: AuthManagerProtocol {
     func updateCurrentUser(_ updatedUser: User) {
         currentUser = updatedUser
         authState = .authenticated(updatedUser)
+        Logger.shared.info("User data updated", category: "auth")
     }
     
     // MARK: - Private Methods
     
     private func setupObservers() {
-        // Observe token manager authentication changes
+        // Observar cambios en la autenticación del token manager
         tokenManager.$isAuthenticated
             .removeDuplicates()
             .sink { [weak self] isAuthenticated in
                 Task { @MainActor in
-                    if isAuthenticated && self?.currentUser == nil {
-                        // Token exists but no user data, fetch user
-                        _ = await self?.getCurrentUser()
-                    } else if !isAuthenticated {
-                        // Token removed, logout
+                    if !isAuthenticated {
+                        // Token fue removido, hacer logout
                         self?.logout()
                     }
                 }
@@ -234,44 +282,64 @@ final class AuthManager: AuthManagerProtocol {
     private func checkInitialAuthState() {
         Task {
             if tokenManager.isAuthenticated {
-                // Check if token is still valid by getting user data
-                _ = await getCurrentUser()
+                Logger.shared.info("Found existing token, attempting to get user data", category: "auth")
+                let result = await getCurrentUser()
+                
+                switch result {
+                case .success:
+                    Logger.shared.info("Successfully restored user session", category: "auth")
+                case .failure:
+                    Logger.shared.warning("Failed to restore user session, clearing tokens", category: "auth")
+                    logout()
+                }
             } else {
+                Logger.shared.info("No existing token found", category: "auth")
                 await setUnauthenticatedState()
             }
         }
     }
     
     private func clearUserData() {
-        // Clear any cached user data, CoreData, UserDefaults, etc.
-        // This can be expanded based on your app's needs
-        
-        // Example: Clear CoreData
-        // CoreDataManager.shared.clearAllData()
-        
-        // Example: Clear UserDefaults
+        // Limpiar datos en caché, CoreData, UserDefaults, etc.
         UserDefaults.standard.removeObject(forKey: "user_preferences")
         UserDefaults.standard.removeObject(forKey: "cached_user_data")
+        
+        // Limpiar notificaciones locales
+        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+        UNUserNotificationCenter.current().removeAllDeliveredNotifications()
     }
     
     // MARK: - State Management
     
     private func setLoadingState() async {
         authState = .loading
+        Logger.shared.debug("Auth state: loading", category: "auth")
     }
     
     private func setAuthenticatedState(_ user: User) async {
         currentUser = user
         authState = .authenticated(user)
+        Logger.shared.info("Auth state: authenticated (\(user.email))", category: "auth")
+        
+        // Configurar analytics y crash reporting
+        Analytics.shared.setUserId(String(user.id))
+        Analytics.shared.setUserType(user.userType.rawValue)
+        CrashReporter.shared.setUserId(String(user.id))
+        CrashReporter.shared.setUserEmail(user.email)
     }
     
     private func setUnauthenticatedState() async {
         currentUser = nil
         authState = .unauthenticated
+        Logger.shared.debug("Auth state: unauthenticated", category: "auth")
+        
+        // Limpiar analytics
+        Analytics.shared.setUserId(nil)
     }
     
     private func setErrorState(_ error: APIError) async {
         authState = .error(error)
+        Logger.shared.debug("Auth state: error (\(error.message))", category: "auth")
     }
 }
 
@@ -367,49 +435,40 @@ extension AuthManager {
         
         return nil
     }
-}
-
-// MARK: - Supporting Models
-struct RegisterResponse: Codable {
-    let userId: Int
-    let email: String
-    let fullName: String
-    let emailVerified: Bool
-    let emailSent: Bool
-}
-
-// MARK: - Validation Errors
-enum AuthValidationError: LocalizedError {
-    case emptyEmail
-    case invalidEmail
-    case emptyPassword
-    case weakPassword
-    case emptyFirstName
-    case emptyLastName
-    case emptyUsername
-    case shortUsername
-    case serverError(String)
     
-    var errorDescription: String? {
-        switch self {
-        case .emptyEmail:
-            return "El email es requerido"
-        case .invalidEmail:
-            return "El formato del email no es válido"
-        case .emptyPassword:
-            return "La contraseña es requerida"
-        case .weakPassword:
-            return "La contraseña debe tener al menos 8 caracteres"
-        case .emptyFirstName:
-            return "El nombre es requerido"
-        case .emptyLastName:
-            return "El apellido es requerido"
-        case .emptyUsername:
-            return "El nombre de usuario es requerido"
-        case .shortUsername:
-            return "El nombre de usuario debe tener al menos 3 caracteres"
-        case .serverError(let message):
-            return message
+    // MARK: - Validation Errors
+    enum AuthValidationError: LocalizedError {
+        case emptyEmail
+        case invalidEmail
+        case emptyPassword
+        case weakPassword
+        case emptyFirstName
+        case emptyLastName
+        case emptyUsername
+        case shortUsername
+        case serverError(String)
+        
+        var errorDescription: String? {
+            switch self {
+            case .emptyEmail:
+                return "El email es requerido"
+            case .invalidEmail:
+                return "El formato del email no es válido"
+            case .emptyPassword:
+                return "La contraseña es requerida"
+            case .weakPassword:
+                return "La contraseña debe tener al menos 8 caracteres"
+            case .emptyFirstName:
+                return "El nombre es requerido"
+            case .emptyLastName:
+                return "El apellido es requerido"
+            case .emptyUsername:
+                return "El nombre de usuario es requerido"
+            case .shortUsername:
+                return "El nombre de usuario debe tener al menos 3 caracteres"
+            case .serverError(let message):
+                return message
+            }
         }
     }
 }

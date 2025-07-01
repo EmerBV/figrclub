@@ -24,6 +24,92 @@ struct User: Codable, Identifiable {
     var fullName: String {
         return "\(firstName) \(lastName)"
     }
+    
+    // Custom init para debugging
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+#if DEBUG
+        print("🔍 Decoding User model...")
+        print("Available keys: \(container.allKeys)")
+#endif
+        
+        do {
+            id = try container.decode(Int.self, forKey: .id)
+            firstName = try container.decode(String.self, forKey: .firstName)
+            lastName = try container.decode(String.self, forKey: .lastName)
+            email = try container.decode(String.self, forKey: .email)
+            username = try container.decode(String.self, forKey: .username)
+            userType = try container.decode(UserType.self, forKey: .userType)
+            subscriptionType = try container.decode(SubscriptionType.self, forKey: .subscriptionType)
+            isVerified = try container.decode(Bool.self, forKey: .isVerified)
+            profileImageUrl = try container.decodeIfPresent(String.self, forKey: .profileImageUrl)
+            bio = try container.decodeIfPresent(String.self, forKey: .bio)
+            createdAt = try container.decode(String.self, forKey: .createdAt)
+            
+#if DEBUG
+            print("✅ User decoded successfully: \(email)")
+#endif
+        } catch {
+#if DEBUG
+            print("❌ Failed to decode User: \(error)")
+            if let decodingError = error as? DecodingError {
+                DebugHelper.printDecodingError(decodingError)
+            }
+#endif
+            throw error
+        }
+    }
+    
+    // Encoding normal
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(firstName, forKey: .firstName)
+        try container.encode(lastName, forKey: .lastName)
+        try container.encode(email, forKey: .email)
+        try container.encode(username, forKey: .username)
+        try container.encode(userType, forKey: .userType)
+        try container.encode(subscriptionType, forKey: .subscriptionType)
+        try container.encode(isVerified, forKey: .isVerified)
+        try container.encodeIfPresent(profileImageUrl, forKey: .profileImageUrl)
+        try container.encodeIfPresent(bio, forKey: .bio)
+        try container.encode(createdAt, forKey: .createdAt)
+    }
+    
+    // CodingKeys
+    enum CodingKeys: String, CodingKey {
+        case id, firstName, lastName, email, username, userType, subscriptionType, isVerified, profileImageUrl, bio, createdAt
+    }
+}
+
+// Extensión para crear usuario con inicializador normal también
+extension User {
+    init(
+        id: Int,
+        firstName: String,
+        lastName: String,
+        email: String,
+        username: String,
+        userType: UserType,
+        subscriptionType: SubscriptionType,
+        isVerified: Bool,
+        profileImageUrl: String?,
+        bio: String?,
+        createdAt: String
+    ) {
+        self.id = id
+        self.firstName = firstName
+        self.lastName = lastName
+        self.email = email
+        self.username = username
+        self.userType = userType
+        self.subscriptionType = subscriptionType
+        self.isVerified = isVerified
+        self.profileImageUrl = profileImageUrl
+        self.bio = bio
+        self.createdAt = createdAt
+    }
 }
 
 enum UserType: String, Codable, CaseIterable {
@@ -70,6 +156,15 @@ enum SubscriptionType: String, Codable, CaseIterable {
 struct LoginRequest: Codable {
     let email: String
     let password: String
+}
+
+// MARK: - Register Response Model
+struct RegisterResponse: Codable {
+    let userId: Int
+    let email: String
+    let fullName: String
+    let emailVerified: Bool
+    let emailSent: Bool
 }
 
 struct RegisterRequest: Codable {
