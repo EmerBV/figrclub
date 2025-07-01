@@ -85,7 +85,7 @@ final class NetworkManager {
     // MARK: - Private Methods
     
     private func buildURLRequest(for endpoint: APIEndpoint, body: Codable?) throws -> URLRequest {
-        let baseURL = "https://api.figrclub.com" // Cambiar por tu URL base
+        let baseURL = "http://localhost:9092/figrclub/api/v1" // Cambiar por tu URL base
         
         guard var urlComponents = URLComponents(string: baseURL + endpoint.path) else {
             throw APIError(

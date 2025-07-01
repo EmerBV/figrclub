@@ -33,11 +33,11 @@ struct AppConfig {
         static var baseURL: String {
             switch Environment.current {
             case .development:
-                return "https://dev-api.figrclub.com"
+                return "http://localhost:9092/figrclub/api/v1"
             case .staging:
-                return "https://staging-api.figrclub.com"
+                return "http://localhost:9092/figrclub/api/v1"
             case .production:
-                return "https://api.figrclub.com"
+                return "http://localhost:9092/figrclub/api/v1"
             }
         }
         

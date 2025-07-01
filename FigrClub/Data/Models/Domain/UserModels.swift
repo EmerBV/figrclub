@@ -33,11 +33,24 @@ enum UserType: String, Codable, CaseIterable {
     case admin = "ADMIN"
 }
 
-struct UserStats {
+struct UserStats: Codable {
     let postsCount: Int
     let followersCount: Int
     let followingCount: Int
     let likesReceived: Int
+    
+    // Inicializador por defecto
+    init(
+        postsCount: Int = 0,
+        followersCount: Int = 0,
+        followingCount: Int = 0,
+        likesReceived: Int = 0
+    ) {
+        self.postsCount = postsCount
+        self.followersCount = followersCount
+        self.followingCount = followingCount
+        self.likesReceived = likesReceived
+    }
 }
 
 struct UpdateUserRequest: Codable {

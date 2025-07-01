@@ -29,13 +29,13 @@ final class KingfisherConfig {
     private func configureCacheSettings() {
         let cache = ImageCache.default
         
-        // Memory cache settings
-        cache.memoryStorage.config.totalCostLimit = UInt(AppConfig.Cache.imageCacheMemoryLimit)
+        // Memory cache settings - Fix: Use correct types
+        cache.memoryStorage.config.totalCostLimit = AppConfig.Cache.imageCacheMemoryLimit
         cache.memoryStorage.config.countLimit = 100
         
-        // Disk cache settings
-        cache.diskStorage.config.sizeLimit = Int(AppConfig.Cache.imageCacheDiskLimit)
-        cache.diskStorage.config.expiration = .seconds(AppConfig.Cache.imageCacheExpiration)
+        // Disk cache settings - Fix: Use correct types
+        cache.diskStorage.config.sizeLimit = UInt(AppConfig.Cache.imageCacheDiskLimit)
+        cache.diskStorage.config.expiration = .seconds(TimeInterval(AppConfig.Cache.imageCacheExpiration))
         
         Logger.shared.info("Image cache configured - Memory: \(AppConfig.Cache.imageCacheMemoryLimit / (1024*1024))MB, Disk: \(AppConfig.Cache.imageCacheDiskLimit / (1024*1024))MB", category: "kingfisher")
     }
@@ -75,6 +75,7 @@ final class KingfisherConfig {
         }
     }
     
+    // Fix: Correct KingfisherOptionsInfo usage
     static func imageOptions(for imageType: ImageType) -> KingfisherOptionsInfo {
         switch imageType {
         case .avatar:
@@ -181,24 +182,45 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
     private func processorForType(_ type: ImageType) -> ImageProcessor {
         switch type {
         case .avatar:
+            // Fix: Use concatenation operator properly
             return ResizingImageProcessor(referenceSize: CGSize(width: 200, height: 200))
-                |> RoundCornerImageProcessor(cornerRadius: 100)
+            |> RoundCornerImageProcessor(cornerRadius: 100)
         case .thumbnail:
             return ResizingImageProcessor(referenceSize: CGSize(width: 300, height: 300))
         case .fullSize:
             return DefaultImageProcessor.default
         case .marketplace:
+            // Fix: Use concatenation operator properly
             return ResizingImageProcessor(referenceSize: CGSize(width: 400, height: 400))
-                |> RoundCornerImageProcessor(cornerRadius: 12)
+            |> RoundCornerImageProcessor(cornerRadius: 12)
         }
     }
 }
 
 // MARK: - Convenience Extensions
 extension KFImage {
-    func figrStyle(for type: ImageType) -> some View {
+    // Fix: Use correct method name and return type
+    func figrStyle(for type: ImageType) -> KFImage {
         let options = KingfisherConfig.imageOptions(for: type)
-        return self.options(options)
+        
+        var image = self
+        for option in options {
+            switch option {
+            case .processor(let processor):
+                image = image.setProcessor(processor)
+            case .scaleFactor(let factor):
+                image = image.scaleFactor(factor)
+            case .cacheOriginalImage:
+                image = image.cacheOriginalImage()
+            case .backgroundDecode:
+                image = image.backgroundDecode()
+            case .requestModifier(let modifier):
+                image = image.requestModifier(modifier)
+            default:
+                break
+            }
+        }
+        return image
     }
 }
 
@@ -219,5 +241,146 @@ extension View {
             },
             placeholder: placeholder
         )
+    }
+}
+
+// MARK: - Modern Kingfisher Image View
+struct FigrAsyncImage: View {
+    let url: URL?
+    let imageType: ImageType
+    let size: CGSize?
+    
+    init(url: URL?, imageType: ImageType = .thumbnail, size: CGSize? = nil) {
+        self.url = url
+        self.imageType = imageType
+        self.size = size
+    }
+    
+    var body: some View {
+        KFImage(url)
+            .figrStyle(for: imageType)
+            .placeholder {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color(.systemGray4)) // Fix: Use UIColor initializer
+                    .overlay(
+                        Image(systemName: "photo")
+                            .foregroundColor(Color(.systemGray2))
+                    )
+            }
+            .fade(duration: 0.25)
+            .resizable()
+            .aspectRatio(contentMode: .fill)
+            .if(size != nil) { view in
+                view.frame(width: size!.width, height: size!.height)
+            }
+            .clipped()
+    }
+}
+
+// MARK: - Kingfisher Image Processor Helpers
+struct KFImageProcessors {
+    static func roundedProcessor(cornerRadius: CGFloat) -> ImageProcessor {
+        return RoundCornerImageProcessor(cornerRadius: cornerRadius)
+    }
+    
+    static func resizeProcessor(to size: CGSize) -> ImageProcessor {
+        return ResizingImageProcessor(referenceSize: size)
+    }
+    
+    static func avatarProcessor(size: CGFloat) -> ImageProcessor {
+        return ResizingImageProcessor(referenceSize: CGSize(width: size, height: size))
+        |> RoundCornerImageProcessor(cornerRadius: size / 2)
+    }
+}
+
+// MARK: - Additional Cache Management
+extension KingfisherConfig {
+    
+    /// Get cache statistics
+    func getCacheStatistics() async -> (memoryCount: Int, diskSize: UInt) {
+        // Fix: Access public properties only
+        let diskSize = (try? await ImageCache.default.diskStorageSize) ?? 0
+        // Note: Memory count is not accessible through public API
+        return (0, diskSize)
+    }
+    
+    /// Clean cache if needed based on size limit
+    func cleanCacheIfNeeded() {
+        Task {
+            let (_, diskSize) = await getCacheStatistics()
+            let limitSize = UInt(AppConfig.Cache.imageCacheDiskLimit)
+            
+            if diskSize > limitSize {
+                await ImageCache.default.cleanExpiredDiskCache()
+                Logger.shared.info("Cache cleaned due to size limit exceeded", category: "kingfisher")
+            }
+        }
+    }
+    
+    /// Configure cache with custom settings
+    func configureCache(memoryLimit: Int, diskLimit: UInt, expiration: TimeInterval) {
+        let cache = ImageCache.default
+        
+        cache.memoryStorage.config.totalCostLimit = memoryLimit
+        cache.diskStorage.config.sizeLimit = diskLimit
+        cache.diskStorage.config.expiration = .seconds(expiration)
+        
+        Logger.shared.info("Custom cache configuration applied", category: "kingfisher")
+    }
+    
+    /// Get memory cache info (public API only)
+    func getMemoryCacheInfo() -> (totalCostLimit: Int, countLimit: Int) {
+        let cache = ImageCache.default
+        return (
+            totalCostLimit: cache.memoryStorage.config.totalCostLimit,
+            countLimit: cache.memoryStorage.config.countLimit
+        )
+    }
+}
+
+// MARK: - Helper for conditional view modifier (removed - already exists in View+Extensions)
+
+// MARK: - Improved FigrAvatar using Kingfisher
+struct FigrKFAvatar: View {
+    let imageURL: String?
+    let size: CGFloat
+    let fallbackText: String
+    
+    init(imageURL: String?, size: CGFloat = 40, fallbackText: String = "?") {
+        self.imageURL = imageURL
+        self.size = size
+        self.fallbackText = fallbackText
+    }
+    
+    var body: some View {
+        Group {
+            if let urlString = imageURL, let url = URL(string: urlString) {
+                KFImage(url)
+                    .setProcessor(KFImageProcessors.avatarProcessor(size: size))
+                    .placeholder {
+                        avatarPlaceholder
+                    }
+                    .onFailure { _ in
+                        // Fallback handled by placeholder
+                    }
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } else {
+                avatarPlaceholder
+            }
+        }
+        .frame(width: size, height: size)
+        .clipShape(Circle())
+    }
+    
+    private var avatarPlaceholder: some View {
+        ZStack {
+            Circle()
+                .fill(Color(.systemBlue).opacity(0.1))
+            
+            Text(fallbackText)
+                .font(.system(size: size * 0.4, weight: .medium))
+                .foregroundColor(Color(.systemBlue))
+        }
     }
 }
