@@ -17,6 +17,51 @@ enum AuthState {
     case error(APIError)
 }
 
+// MARK: - Auth Validation Error
+enum AuthValidationError: LocalizedError {
+    case emptyEmail
+    case invalidEmailFormat
+    case emptyPassword
+    case passwordTooShort
+    case emptyFirstName
+    case emptyLastName
+    case emptyUsername
+    case usernameInvalid
+    case passwordMismatch
+    case termsNotAccepted
+    case privacyNotAccepted
+    case serverError(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .emptyEmail:
+            return "El email es requerido"
+        case .invalidEmailFormat:
+            return "Formato de email inválido"
+        case .emptyPassword:
+            return "La contraseña es requerida"
+        case .passwordTooShort:
+            return "La contraseña debe tener al menos 6 caracteres"
+        case .emptyFirstName:
+            return "El nombre es requerido"
+        case .emptyLastName:
+            return "El apellido es requerido"
+        case .emptyUsername:
+            return "El nombre de usuario es requerido"
+        case .usernameInvalid:
+            return "El nombre de usuario debe tener al menos 3 caracteres y solo contener letras, números y guiones bajos"
+        case .passwordMismatch:
+            return "Las contraseñas no coinciden"
+        case .termsNotAccepted:
+            return "Debes aceptar los términos y condiciones"
+        case .privacyNotAccepted:
+            return "Debes aceptar la política de privacidad"
+        case .serverError(let message):
+            return message
+        }
+    }
+}
+
 // MARK: - Auth Manager Protocol
 protocol AuthManagerProtocol: ObservableObject {
     var authState: AuthState { get }
@@ -62,6 +107,8 @@ final class AuthManager: AuthManagerProtocol {
     private let apiService: APIServiceProtocol
     private let tokenManager: TokenManager
     private var cancellables = Set<AnyCancellable>()
+    private var retryCount = 0
+    private let maxRetries = 3
     
     // MARK: - Initialization
     init(apiService: APIServiceProtocol = APIService.shared,
@@ -94,40 +141,25 @@ final class AuthManager: AuthManagerProtocol {
                 userId: authResponse.userId
             )
             
-            // Luego obtenemos los datos del usuario
+            // Crear usuario temporal con datos del login
+            let fallbackUser = createFallbackUser(from: authResponse)
+            
+            // Intentamos obtener los datos reales del usuario
             let userResult = await getCurrentUser()
             
             switch userResult {
             case .success(let user):
+                // Si obtenemos los datos reales, los usamos
                 await setAuthenticatedState(user)
                 Analytics.shared.logLogin(method: "email")
+                resetRetryCount()
                 return .success(user)
+                
             case .failure(let error):
-                // Si falla obtener el usuario, creamos uno temporal con los datos que tenemos
-                Logger.shared.warning("Failed to get user details after login, creating temporary user", category: "auth")
+                Logger.shared.warning("Failed to get user details after login: \(error.message)", category: "auth")
                 
-                let temporaryUser = User(
-                    id: authResponse.userId,
-                    firstName: "Usuario", // Placeholder
-                    lastName: "", // Placeholder
-                    email: authResponse.email,
-                    username: authResponse.email.components(separatedBy: "@").first ?? "user",
-                    userType: .regular,
-                    subscriptionType: .free,
-                    isVerified: false,
-                    profileImageUrl: nil,
-                    bio: nil,
-                    createdAt: ISO8601DateFormatter().string(from: Date())
-                )
-                
-                await setAuthenticatedState(temporaryUser)
-                
-                // Intentamos obtener los datos reales del usuario en background
-                Task {
-                    _ = await getCurrentUser()
-                }
-                
-                return .success(temporaryUser)
+                // Manejar diferentes tipos de errores
+                return await handleUserDataError(error: error, fallbackUser: fallbackUser)
             }
             
         } catch {
@@ -189,6 +221,7 @@ final class AuthManager: AuthManagerProtocol {
         tokenManager.clearTokens()
         currentUser = nil
         authState = .unauthenticated
+        resetRetryCount()
         
         // Limpiar datos en caché
         clearUserData()
@@ -234,6 +267,7 @@ final class AuthManager: AuthManagerProtocol {
             
             Logger.shared.info("Successfully fetched user data: \(user.email)", category: "auth")
             await setAuthenticatedState(user)
+            resetRetryCount()
             return .success(user)
             
         } catch {
@@ -245,11 +279,25 @@ final class AuthManager: AuthManagerProtocol {
             
             Logger.shared.error("Failed to get user data", error: apiError, category: "auth")
             
-            // No establecemos error state aquí si ya estamos autenticados
-            if case .authenticated = authState {
-                Logger.shared.info("Keeping current auth state despite user fetch failure", category: "auth")
-            } else {
-                await setErrorState(apiError)
+            // Manejar diferentes tipos de errores
+            switch apiError.code {
+            case "EMPTY_USER_DATA", "MALFORMED_SUCCESS_RESPONSE":
+                Logger.shared.warning("Backend returned empty user data", category: "auth")
+                
+                // No cambiar el estado si ya estamos autenticados
+                if case .authenticated = authState {
+                    Logger.shared.info("Keeping current auth state despite empty data error", category: "auth")
+                } else {
+                    await setErrorState(apiError)
+                }
+                
+            default:
+                // Para otros errores, mantener estado si ya estamos autenticados
+                if case .authenticated = authState {
+                    Logger.shared.info("Keeping current auth state despite user fetch failure", category: "auth")
+                } else {
+                    await setErrorState(apiError)
+                }
             }
             
             return .failure(apiError)
@@ -260,6 +308,42 @@ final class AuthManager: AuthManagerProtocol {
         currentUser = updatedUser
         authState = .authenticated(updatedUser)
         Logger.shared.info("User data updated", category: "auth")
+    }
+    
+    // MARK: - Validation Methods
+    
+    func loginWithValidation(email: String, password: String) async -> Result<User, AuthValidationError> {
+        // Validate input
+        if let validationError = validateLoginInput(email: email, password: password) {
+            return .failure(validationError)
+        }
+        
+        let result = await login(email: email, password: password)
+        
+        switch result {
+        case .success(let user):
+            return .success(user)
+        case .failure(let apiError):
+            let validationError = AuthValidationError.serverError(apiError.message)
+            return .failure(validationError)
+        }
+    }
+    
+    func registerWithValidation(_ request: RegisterRequest) async -> Result<User, AuthValidationError> {
+        // Validate input
+        if let validationError = validateRegistrationInput(request) {
+            return .failure(validationError)
+        }
+        
+        let result = await register(request)
+        
+        switch result {
+        case .success(let user):
+            return .success(user)
+        case .failure(let apiError):
+            let validationError = AuthValidationError.serverError(apiError.message)
+            return .failure(validationError)
+        }
     }
     
     // MARK: - Private Methods
@@ -299,6 +383,136 @@ final class AuthManager: AuthManagerProtocol {
         }
     }
     
+    private func createFallbackUser(from authResponse: AuthResponse) -> User {
+        return User(
+            id: authResponse.userId,
+            firstName: extractFirstName(from: authResponse.email),
+            lastName: "",
+            email: authResponse.email,
+            username: extractUsername(from: authResponse.email),
+            userType: .regular,
+            subscriptionType: .free,
+            isVerified: false,
+            profileImageUrl: nil,
+            bio: nil,
+            createdAt: ISO8601DateFormatter().string(from: Date())
+        )
+    }
+    
+    private func handleUserDataError(error: APIError, fallbackUser: User) async -> Result<User, APIError> {
+        switch error.code {
+        case "EMPTY_USER_DATA", "MALFORMED_SUCCESS_RESPONSE":
+            // Error del backend - datos vacíos
+            await setAuthenticatedState(fallbackUser)
+            Analytics.shared.logLogin(method: "email")
+            
+            // Mostrar alerta al usuario
+            postUserAlert(
+                title: "Aviso",
+                message: "Login exitoso, pero algunos datos de perfil no están disponibles temporalmente. Puedes completarlos en tu perfil.",
+                type: .warning
+            )
+            
+            // Reintentar en background
+            scheduleUserDataRetry()
+            
+            return .success(fallbackUser)
+            
+        case "DECODING_ERROR":
+            // Error de decodificación - problema de formato
+            await setAuthenticatedState(fallbackUser)
+            Analytics.shared.logLogin(method: "email")
+            
+            Logger.shared.error("User data format error - using fallback", error: error, category: "auth")
+            
+            // Reintentar en background
+            scheduleUserDataRetry()
+            
+            return .success(fallbackUser)
+            
+        default:
+            // Otros errores (network, etc)
+            await setAuthenticatedState(fallbackUser)
+            Analytics.shared.logLogin(method: "email")
+            
+            // Reintentar en background para cualquier otro error
+            scheduleUserDataRetry()
+            
+            return .success(fallbackUser)
+        }
+    }
+    
+    private func scheduleUserDataRetry() {
+        guard retryCount < maxRetries else {
+            Logger.shared.warning("Max retries reached for getUserData", category: "auth")
+            return
+        }
+        
+        Task {
+            await retryGetUserDataWithBackoff()
+        }
+    }
+    
+    private func retryGetUserDataWithBackoff() async {
+        guard retryCount < maxRetries else {
+            Logger.shared.warning("Max retries reached for getUserData", category: "auth")
+            return
+        }
+        
+        retryCount += 1
+        
+        // Esperar con backoff exponencial: 5s, 15s, 45s
+        let delay = pow(3.0, Double(retryCount)) * 5.0
+        try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+        
+        Logger.shared.info("Retrying getUserData attempt \(retryCount)/\(maxRetries)", category: "auth")
+        
+        let result = await getCurrentUser()
+        
+        switch result {
+        case .success(let user):
+            Logger.shared.info("Successfully retrieved user data on retry \(retryCount)", category: "auth")
+            await setAuthenticatedState(user)
+            resetRetryCount()
+            
+            // Notificar que los datos fueron actualizados
+            postUserAlert(
+                title: "Datos actualizados",
+                message: "Tus datos de perfil han sido sincronizados correctamente.",
+                type: .success
+            )
+            
+            NotificationCenter.default.post(
+                name: .userDataUpdated,
+                object: user
+            )
+            
+        case .failure(let error):
+            if error.code == "EMPTY_USER_DATA" || error.code == "MALFORMED_SUCCESS_RESPONSE" {
+                // Continuar reintentando para errores de backend
+                await retryGetUserDataWithBackoff()
+            } else {
+                Logger.shared.warning("Stopping retries due to non-backend error: \(error.code)", category: "auth")
+                resetRetryCount()
+            }
+        }
+    }
+    
+    private func resetRetryCount() {
+        retryCount = 0
+    }
+    
+    private func postUserAlert(title: String, message: String, type: UserAlert.AlertType) {
+        NotificationCenter.default.post(
+            name: .showUserAlert,
+            object: UserAlert(
+                title: title,
+                message: message,
+                type: type
+            )
+        )
+    }
+    
     private func clearUserData() {
         // Limpiar datos en caché, CoreData, UserDefaults, etc.
         UserDefaults.standard.removeObject(forKey: "user_preferences")
@@ -307,6 +521,94 @@ final class AuthManager: AuthManagerProtocol {
         // Limpiar notificaciones locales
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()
+    }
+    
+    private func extractFirstName(from email: String) -> String {
+        let username = email.components(separatedBy: "@").first ?? "Usuario"
+        return username.components(separatedBy: ".").first?.capitalized ?? username.capitalized
+    }
+    
+    private func extractUsername(from email: String) -> String {
+        return email.components(separatedBy: "@").first ?? "user"
+    }
+    
+    // MARK: - Validation Helpers
+    
+    private func validateLoginInput(email: String, password: String) -> AuthValidationError? {
+        if email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return .emptyEmail
+        }
+        
+        if !isValidEmail(email) {
+            return .invalidEmailFormat
+        }
+        
+        if password.isEmpty {
+            return .emptyPassword
+        }
+        
+        if password.count < 6 {
+            return .passwordTooShort
+        }
+        
+        return nil
+    }
+    
+    private func validateRegistrationInput(_ request: RegisterRequest) -> AuthValidationError? {
+        if request.firstName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return .emptyFirstName
+        }
+        
+        if request.lastName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return .emptyLastName
+        }
+        
+        if request.email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return .emptyEmail
+        }
+        
+        if !isValidEmail(request.email) {
+            return .invalidEmailFormat
+        }
+        
+        if request.username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return .emptyUsername
+        }
+        
+        if !isValidUsername(request.username) {
+            return .usernameInvalid
+        }
+        
+        if request.password.isEmpty {
+            return .emptyPassword
+        }
+        
+        if request.password.count < 6 {
+            return .passwordTooShort
+        }
+        
+        // Verificar aceptación de términos legales
+        let hasTermsAcceptance = request.legalAcceptances.contains { acceptance in
+            acceptance.documentType == "TERMS_OF_SERVICE"
+        }
+        
+        if !hasTermsAcceptance {
+            return .termsNotAccepted
+        }
+        
+        return nil
+    }
+    
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegex = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        return emailPredicate.evaluate(with: email)
+    }
+    
+    private func isValidUsername(_ username: String) -> Bool {
+        let usernameRegex = "^[a-zA-Z0-9_]{3,20}$"
+        let usernamePredicate = NSPredicate(format: "SELF MATCHES %@", usernameRegex)
+        return usernamePredicate.evaluate(with: username)
     }
     
     // MARK: - State Management
@@ -340,135 +642,5 @@ final class AuthManager: AuthManagerProtocol {
     private func setErrorState(_ error: APIError) async {
         authState = .error(error)
         Logger.shared.debug("Auth state: error (\(error.message))", category: "auth")
-    }
-}
-
-// MARK: - Convenience Methods
-extension AuthManager {
-    
-    func loginWithValidation(email: String, password: String) async -> Result<User, AuthValidationError> {
-        // Validate input
-        if let validationError = validateLoginInput(email: email, password: password) {
-            return .failure(validationError)
-        }
-        
-        let result = await login(email: email, password: password)
-        
-        switch result {
-        case .success(let user):
-            return .success(user)
-        case .failure(let apiError):
-            let validationError = AuthValidationError.serverError(apiError.message)
-            return .failure(validationError)
-        }
-    }
-    
-    func registerWithValidation(_ request: RegisterRequest) async -> Result<User, AuthValidationError> {
-        // Validate input
-        if let validationError = validateRegistrationInput(request) {
-            return .failure(validationError)
-        }
-        
-        let result = await register(request)
-        
-        switch result {
-        case .success(let user):
-            return .success(user)
-        case .failure(let apiError):
-            let validationError = AuthValidationError.serverError(apiError.message)
-            return .failure(validationError)
-        }
-    }
-    
-    private func validateLoginInput(email: String, password: String) -> AuthValidationError? {
-        if email.isEmpty {
-            return .emptyEmail
-        }
-        
-        if !email.isValidEmail {
-            return .invalidEmail
-        }
-        
-        if password.isEmpty {
-            return .emptyPassword
-        }
-        
-        if password.count < 6 {
-            return .weakPassword
-        }
-        
-        return nil
-    }
-    
-    private func validateRegistrationInput(_ request: RegisterRequest) -> AuthValidationError? {
-        if request.firstName.isEmpty {
-            return .emptyFirstName
-        }
-        
-        if request.lastName.isEmpty {
-            return .emptyLastName
-        }
-        
-        if request.email.isEmpty {
-            return .emptyEmail
-        }
-        
-        if !request.email.isValidEmail {
-            return .invalidEmail
-        }
-        
-        if request.password.isEmpty {
-            return .emptyPassword
-        }
-        
-        if request.password.count < 8 {
-            return .weakPassword
-        }
-        
-        if request.username.isEmpty {
-            return .emptyUsername
-        }
-        
-        if request.username.count < 3 {
-            return .shortUsername
-        }
-        
-        return nil
-    }
-    
-    // MARK: - Validation Errors
-    enum AuthValidationError: LocalizedError {
-        case emptyEmail
-        case invalidEmail
-        case emptyPassword
-        case weakPassword
-        case emptyFirstName
-        case emptyLastName
-        case emptyUsername
-        case shortUsername
-        case serverError(String)
-        
-        var errorDescription: String? {
-            switch self {
-            case .emptyEmail:
-                return "El email es requerido"
-            case .invalidEmail:
-                return "El formato del email no es válido"
-            case .emptyPassword:
-                return "La contraseña es requerida"
-            case .weakPassword:
-                return "La contraseña debe tener al menos 8 caracteres"
-            case .emptyFirstName:
-                return "El nombre es requerido"
-            case .emptyLastName:
-                return "El apellido es requerido"
-            case .emptyUsername:
-                return "El nombre de usuario es requerido"
-            case .shortUsername:
-                return "El nombre de usuario debe tener al menos 3 caracteres"
-            case .serverError(let message):
-                return message
-            }
-        }
     }
 }

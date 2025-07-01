@@ -92,35 +92,4 @@ struct DebugHelper {
         }
     }
 }
-
-// Extension para el NetworkManager para debugging
-extension NetworkManager {
-    func debugRequest<T: Codable>(
-        endpoint: APIEndpoint,
-        expectedType: T.Type,
-        body: Codable? = nil
-    ) {
-#if DEBUG
-        print("🐛 DEBUG REQUEST")
-        print("📍 Endpoint: \(endpoint.path)")
-        print("🔧 Method: \(endpoint.method.rawValue)")
-        print("🎯 Expected Type: \(expectedType)")
-        
-        if let queryParams = endpoint.queryParameters {
-            print("📋 Query Parameters: \(queryParams)")
-        }
-        
-        if let body = body {
-            do {
-                let bodyData = try JSONEncoder().encode(body)
-                if let bodyString = String(data: bodyData, encoding: .utf8) {
-                    print("📤 Request Body: \(bodyString)")
-                }
-            } catch {
-                print("❌ Failed to encode body for debugging: \(error)")
-            }
-        }
-#endif
-    }
-}
 #endif

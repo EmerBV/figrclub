@@ -171,26 +171,86 @@ final class NetworkManager {
             
             // Usar el DebugHelper para inspeccionar la estructura
             DebugHelper.inspectJSONStructure(jsonString)
-            
-            // Intentar validar contra diferentes modelos
-            print("🧪 Testing decode strategies:")
-            DebugHelper.validateJSON(jsonString, as: APIResponse<T>.self)
-            DebugHelper.validateJSON(jsonString, as: T.self)
         }
 #endif
+        
+        // Primero, vamos a parsear como Dictionary para revisar el contenido
+        guard let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
+            throw APIError(
+                message: "Invalid JSON response",
+                code: "INVALID_JSON",
+                timestamp: ISO8601DateFormatter().string(from: Date())
+            )
+        }
+        
+#if DEBUG
+        print("🔍 JSON Object keys: \(jsonObject.keys)")
+        if let dataField = jsonObject["data"] {
+            print("🔍 Data field type: \(type(of: dataField))")
+            if let dataDict = dataField as? [String: Any] {
+                print("🔍 Data field keys: \(dataDict.keys)")
+                print("🔍 Data field content: \(dataDict)")
+            }
+        }
+#endif
+        
+        // CASO ESPECIAL: Si data está vacío pero tenemos status 200, es un problema del backend
+        if let dataField = jsonObject["data"] as? [String: Any],
+           dataField.isEmpty,
+           let status = jsonObject["status"] as? Int,
+           status == 200 {
+            
+            let message = jsonObject["message"] as? String ?? "No data returned"
+            
+#if DEBUG
+            print("⚠️ Detected empty data field with status 200 - Backend issue")
+            print("⚠️ Message: \(message)")
+#endif
+            
+            throw APIError(
+                message: "El servidor no devolvió datos del usuario. Error del backend.",
+                code: "EMPTY_USER_DATA",
+                timestamp: ISO8601DateFormatter().string(from: Date())
+            )
+        }
+        
+        // CASO ESPECIAL: Si data es null pero tenemos status 200
+        if jsonObject["data"] is NSNull,
+           let status = jsonObject["status"] as? Int,
+           status == 200 {
+            
+            let message = jsonObject["message"] as? String ?? "No data returned"
+            
+#if DEBUG
+            print("⚠️ Detected null data field with status 200 - Backend issue")
+            print("⚠️ Message: \(message)")
+#endif
+            
+            throw APIError(
+                message: "El servidor respondió exitosamente pero no devolvió datos.",
+                code: "NULL_USER_DATA",
+                timestamp: ISO8601DateFormatter().string(from: Date())
+            )
+        }
         
         // Strategy 1: Try to decode as wrapped APIResponse<T>
         do {
             let apiResponse = try decoder.decode(APIResponse<T>.self, from: data)
             guard let responseData = apiResponse.data else {
                 throw APIError(
-                    message: apiResponse.message,
+                    message: apiResponse.message.isEmpty ? "No data returned from server" : apiResponse.message,
                     code: "EMPTY_DATA",
                     timestamp: String(apiResponse.timestamp)
                 )
             }
             Logger.shared.debug("✅ Successfully decoded as wrapped APIResponse", category: "network")
             return responseData
+        } catch let decodingError as DecodingError {
+            Logger.shared.debug("❌ Failed to decode as APIResponse<T>: \(decodingError)", category: "network")
+            
+#if DEBUG
+            DebugHelper.printDecodingError(decodingError)
+#endif
         } catch {
             Logger.shared.debug("❌ Failed to decode as APIResponse<T>: \(error)", category: "network")
         }
@@ -200,6 +260,12 @@ final class NetworkManager {
             let directResponse = try decoder.decode(T.self, from: data)
             Logger.shared.debug("✅ Successfully decoded directly as \(T.self)", category: "network")
             return directResponse
+        } catch let decodingError as DecodingError {
+            Logger.shared.debug("❌ Failed to decode directly as \(T.self): \(decodingError)", category: "network")
+            
+#if DEBUG
+            DebugHelper.printDecodingError(decodingError)
+#endif
         } catch {
             Logger.shared.debug("❌ Failed to decode directly as \(T.self): \(error)", category: "network")
         }
@@ -218,9 +284,38 @@ final class NetworkManager {
             )
         }
         
-        // If all strategies fail, throw a detailed error
+        // Strategy 5: Check if it's a successful response but with malformed data
+        if let status = jsonObject["status"] as? Int, status >= 200, status < 300 {
+            let message = jsonObject["message"] as? String ?? "Unknown server response"
+            throw APIError(
+                message: "El servidor respondió exitosamente pero los datos no tienen el formato esperado. Mensaje: \(message)",
+                code: "MALFORMED_SUCCESS_RESPONSE",
+                timestamp: ISO8601DateFormatter().string(from: Date())
+            )
+        }
+        
+        // Strategy 6: Check if response indicates success but structure is unexpected
+        let successIndicators = ["exitoso", "success", "successful", "ok"]
+        if let message = jsonObject["message"] as? String,
+           successIndicators.contains(where: { message.lowercased().contains($0) }) {
+            
+            throw APIError(
+                message: "Respuesta exitosa del servidor pero con estructura de datos incorrecta: \(message)",
+                code: "STRUCTURE_MISMATCH",
+                timestamp: ISO8601DateFormatter().string(from: Date())
+            )
+        }
+        
+        // If all strategies fail, throw a detailed error with helpful information
+        var errorDetails = "Failed to decode response as \(T.self)."
+        errorDetails += " Raw data length: \(data.count) bytes."
+        
+        if let topLevelKeys = jsonObject.keys.isEmpty ? nil : Array(jsonObject.keys) {
+            errorDetails += " Available keys: \(topLevelKeys.joined(separator: ", "))."
+        }
+        
         throw APIError(
-            message: "Failed to decode response as \(T.self). Raw data length: \(data.count) bytes",
+            message: errorDetails,
             code: "DECODING_ERROR",
             timestamp: ISO8601DateFormatter().string(from: Date())
         )
@@ -279,3 +374,48 @@ final class NetworkManager {
         }
     }
 }
+
+// MARK: - Debug Extension
+#if DEBUG
+extension NetworkManager {
+    func debugRequest<T: Codable>(
+        endpoint: APIEndpoint,
+        expectedType: T.Type,
+        body: Codable? = nil
+    ) {
+        print("🐛 DEBUG REQUEST")
+        print("📍 Endpoint: \(endpoint.path)")
+        print("🔧 Method: \(endpoint.method.rawValue)")
+        print("🎯 Expected Type: \(expectedType)")
+        
+        if let queryParams = endpoint.queryParameters {
+            print("📋 Query Parameters: \(queryParams)")
+        }
+        
+        if let body = body {
+            do {
+                let bodyData = try JSONEncoder().encode(body)
+                if let bodyString = String(data: bodyData, encoding: .utf8) {
+                    print("📤 Request Body: \(bodyString)")
+                }
+            } catch {
+                print("❌ Failed to encode body for debugging: \(error)")
+            }
+        }
+    }
+    
+    func testResponseParsing<T: Codable>(jsonString: String, as type: T.Type) {
+        guard let data = jsonString.data(using: .utf8) else {
+            print("❌ Invalid JSON string")
+            return
+        }
+        
+        do {
+            let result = try handleResponse(data: data, responseType: type)
+            print("✅ Successfully parsed as \(type): \(result)")
+        } catch {
+            print("❌ Failed to parse as \(type): \(error)")
+        }
+    }
+}
+#endif
