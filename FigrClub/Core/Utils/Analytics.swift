@@ -43,20 +43,46 @@ final class Analytics {
     // MARK: - Social Events
     func logPostCreated(postType: String) {
         logEvent("post_created", parameters: [
-            "post_type": postType
+            "post_type": postType,
+            "action": "create"
         ])
     }
     
     func logPostLike(postId: String) {
-        logEvent("post_like", parameters: [
-            "post_id": postId
-        ])
+        func logPostLike(postId: String) {
+            logEvent("post_liked", parameters: [
+                "post_id": postId,
+                "action": "like"
+            ])
+        }
     }
     
     func logPostShare(postId: String, method: String) {
         logEvent("post_share", parameters: [
             "post_id": postId,
             "method": method
+        ])
+    }
+    
+    func logPostShare(postId: String) {
+        logEvent("post_shared", parameters: [
+            "post_id": postId,
+            "action": "share"
+        ])
+    }
+    
+    func logPostComment(postId: String) {
+        logEvent("post_commented", parameters: [
+            "post_id": postId,
+            "action": "comment"
+        ])
+    }
+    
+    func logImageViewed(imageId: String, postId: String) {
+        logEvent("image_viewed", parameters: [
+            "image_id": imageId,
+            "post_id": postId,
+            "action": "view"
         ])
     }
     

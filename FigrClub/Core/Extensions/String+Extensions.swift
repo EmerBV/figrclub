@@ -76,4 +76,28 @@ extension String {
         default: return .veryStrong
         }
     }
+    
+    func formatPostDate() -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        
+        if let date = formatter.date(from: self) {
+            let relativeFormatter = RelativeDateTimeFormatter()
+            relativeFormatter.unitsStyle = .short
+            return relativeFormatter.localizedString(for: date, relativeTo: Date())
+        }
+        
+        // Fallback: intentar formato simple
+        let fallbackFormatter = DateFormatter()
+        fallbackFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        
+        if let date = fallbackFormatter.date(from: self) {
+            let relativeFormatter = RelativeDateTimeFormatter()
+            relativeFormatter.unitsStyle = .short
+            return relativeFormatter.localizedString(for: date, relativeTo: Date())
+        }
+        
+        // Si no se puede parsear, devolver como está
+        return self
+    }
 }

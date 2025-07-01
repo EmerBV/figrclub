@@ -470,22 +470,65 @@ struct FigrAvatar: View {
     }
     
     var body: some View {
-        AsyncImage(url: URL(string: imageURL ?? "")) { image in
-            image
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-        } placeholder: {
-            ZStack {
-                Circle()
-                    .fill(.figrPrimary.opacity(0.1))
-                
-                Text(fallbackText)
-                    .font(.system(size: size * 0.4, weight: .medium))
-                    .foregroundColor(.figrPrimary)
+        Group {
+            if let urlString = imageURL,
+               !urlString.isEmpty,
+               let url = URL(string: urlString) {
+                // Usar Kingfisher para cargar la imagen
+                KFImage(url)
+                    .setProcessor(avatarProcessor)
+                    .placeholder {
+                        avatarPlaceholder
+                    }
+                    .onFailure { error in
+#if DEBUG
+                        print("🔴 Avatar loading failed: \(error.localizedDescription)")
+#endif
+                        Logger.shared.error("Avatar loading failed", error: error, category: "ui")
+                    }
+                    .onSuccess { result in
+#if DEBUG
+                        print("✅ Avatar loaded from: \(result.cacheType)")
+#endif
+                    }
+                    .fade(duration: 0.25)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } else {
+                // Mostrar placeholder si no hay URL
+                avatarPlaceholder
             }
         }
         .frame(width: size, height: size)
         .clipShape(Circle())
+        .overlay(
+            Circle()
+                .stroke(Color(.systemGray5), lineWidth: 0.5)
+        )
+    }
+    
+    // MARK: - Processor para avatar
+    private var avatarProcessor: ImageProcessor {
+        return ResizingImageProcessor(referenceSize: CGSize(width: size * UIScreen.main.scale, height: size * UIScreen.main.scale))
+        |> RoundCornerImageProcessor(cornerRadius: size * UIScreen.main.scale)
+    }
+    
+    // MARK: - Placeholder del avatar
+    private var avatarPlaceholder: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [Color.blue.opacity(0.1), Color.blue.opacity(0.05)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+            
+            Text(fallbackText)
+                .font(.system(size: size * 0.4, weight: .semibold, design: .rounded))
+                .foregroundColor(.blue)
+        }
     }
 }
 

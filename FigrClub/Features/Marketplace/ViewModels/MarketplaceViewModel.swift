@@ -52,6 +52,7 @@ final class MarketplaceViewModel: ObservableObject {
                 .async()
             
             items = response.content
+            /*
             currentPage = response.currentPage
             hasMorePages = response.currentPage < response.totalPages - 1
             
@@ -59,6 +60,7 @@ final class MarketplaceViewModel: ObservableObject {
                 "items_count": response.content.count,
                 "page": currentPage
             ])
+             */
             
         } catch {
             showErrorMessage("Error al cargar productos: \(error.localizedDescription)")
@@ -80,8 +82,10 @@ final class MarketplaceViewModel: ObservableObject {
                 .async()
             
             items.append(contentsOf: response.content)
+            /*
             currentPage = response.currentPage
             hasMorePages = response.currentPage < response.totalPages - 1
+             */
             
         } catch {
             showErrorMessage("Error al cargar más productos: \(error.localizedDescription)")

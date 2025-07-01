@@ -23,7 +23,7 @@ final class FeedViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var currentPage = 0
     private var hasMorePages = true
-    private let pageSize = AppConfig.Pagination.defaultPageSize
+    private let pageSize = 20 // AppConfig.Pagination.defaultPageSize
     
     // MARK: - Initialization
     nonisolated init(apiService: APIServiceProtocol = APIService.shared) {
@@ -45,8 +45,8 @@ final class FeedViewModel: ObservableObject {
                 .async()
             
             posts = response.content
-            currentPage = response.currentPage
-            hasMorePages = response.currentPage < response.totalPages - 1
+            currentPage = response.page
+            hasMorePages = !response.last
             
             Logger.shared.info("Loaded \(response.content.count) posts", category: "feed")
             
@@ -76,8 +76,8 @@ final class FeedViewModel: ObservableObject {
                 .async()
             
             posts.append(contentsOf: response.content)
-            currentPage = response.currentPage
-            hasMorePages = response.currentPage < response.totalPages - 1
+            currentPage = response.page
+            hasMorePages = !response.last
             
             Logger.shared.info("Loaded \(response.content.count) more posts", category: "feed")
             
