@@ -12,10 +12,10 @@ import SwiftUI
 struct AppConfig {
     
     // MARK: - Environment
-    enum Environment: String, CaseIterable {
-        case development = "dev"
-        case staging = "staging"
-        case production = "prod"
+    enum Environment {
+        case development
+        case staging
+        case production
         
         static var current: Environment {
 #if DEBUG
@@ -42,7 +42,78 @@ struct AppConfig {
         }
         
         static let timeout: TimeInterval = 30.0
-        static let retryLimit = 3
+        static let maxRetries = 3
+        static let retryDelay: TimeInterval = 1.0
+    }
+    
+    // MARK: - Pagination
+    struct Pagination {
+        static let defaultPageSize = 20
+        static let maxPageSize = 100
+        static let preloadThreshold = 5 // Load more when 5 items from bottom
+    }
+    
+    // MARK: - Cache Configuration
+    struct Cache {
+        static let maxMemoryUsage = 50 * 1024 * 1024 // 50MB
+        static let maxImageCacheCount = 100
+        static let cacheExpirationTime: TimeInterval = 24 * 60 * 60 // 24 hours
+    }
+    
+    // MARK: - Image Configuration
+    struct Images {
+        static let maxUploadSize = 10 * 1024 * 1024 // 10MB
+        static let allowedFormats = ["jpg", "jpeg", "png", "heic"]
+        static let compressionQuality: CGFloat = 0.8
+        static let maxDimension: CGFloat = 2048
+    }
+    
+    // MARK: - UI Configuration
+    struct UI {
+        static let animationDuration: Double = 0.3
+        static let hapticFeedbackEnabled = true
+        static let cornerRadius: CGFloat = 12
+        static let borderWidth: CGFloat = 1
+    }
+    
+    // MARK: - Security
+    struct Security {
+        static let keychainService = "com.figrclub.keychain"
+        static let biometricEnabled = true
+        static let sessionTimeout: TimeInterval = 30 * 60 // 30 minutes
+    }
+    
+    // MARK: - Features
+    struct Features {
+        static let darkModeEnabled = true
+        static let pushNotificationsEnabled = true
+        static let analyticsEnabled = true
+        static let crashReportingEnabled = true
+        static let debugLoggingEnabled = Environment.current != .production
+    }
+    
+    // MARK: - Limits
+    struct Limits {
+        static let maxPostContentLength = 2000
+        static let maxBioLength = 500
+        static let maxUsernameLength = 30
+        static let minPasswordLength = 8
+        static let maxImagesPerPost = 10
+    }
+    
+    // MARK: - URLs
+    struct URLs {
+        static let privacyPolicy = "https://figrclub.com/privacy"
+        static let termsOfService = "https://figrclub.com/terms"
+        static let support = "https://figrclub.com/support"
+        static let appStore = "https://apps.apple.com/app/figrclub/id123456789"
+    }
+    
+    // MARK: - Social
+    struct Social {
+        static let twitterURL = "https://twitter.com/figrclub"
+        static let instagramURL = "https://instagram.com/figrclub"
+        static let discordURL = "https://discord.gg/figrclub"
     }
     
     // MARK: - Firebase Configuration
@@ -83,19 +154,6 @@ struct AppConfig {
         static let coreDataModelName = "FigrClub"
         static let keychainService = "com.emerbv.FigrClub.keychain"
         static let userDefaultsSuiteName = "group.com.emerbv.FigrClub"
-    }
-    
-    // MARK: - Cache Configuration
-    struct Cache {
-        static let imageCacheMemoryLimit = 100 * 1024 * 1024 // 100MB
-        static let imageCacheDiskLimit = 200 * 1024 * 1024 // 200MB
-        static let imageCacheExpiration: TimeInterval = 7 * 24 * 60 * 60 // 7 days
-    }
-    
-    // MARK: - Pagination
-    struct Pagination {
-        static let defaultPageSize = 20
-        static let maxPageSize = 100
     }
     
     // MARK: - Validation Rules
@@ -183,47 +241,6 @@ extension AppConfig.Environment {
     }
 }
 
-// MARK: - Debug Information
-#if DEBUG
-extension AppConfig {
-    static func printDebugInfo() {
-        print("🏗️ FigrClub Debug Information")
-        print("📱 App: \(AppInfo.name) v\(AppInfo.version) (\(AppInfo.buildNumber))")
-        print("🌍 Environment: \(Environment.current.displayName)")
-        print("🌐 API Base URL: \(API.baseURL)")
-        print("🔥 Firebase Project: \(Firebase.projectId)")
-        print("🚩 Feature Flags:")
-        print("   - Biometric Auth: \(FeatureFlags.enableBiometricAuth)")
-        print("   - Push Notifications: \(FeatureFlags.enablePushNotifications)")
-        print("   - Analytics: \(FeatureFlags.enableAnalytics)")
-        print("   - Crash Reporting: \(FeatureFlags.enableCrashReporting)")
-        print("   - Beta Features: \(FeatureFlags.enableBetaFeatures)")
-        print("💾 Storage:")
-        print("   - Core Data Model: \(Storage.coreDataModelName)")
-        print("   - Keychain Service: \(Storage.keychainService)")
-        print("   - UserDefaults Suite: \(Storage.userDefaultsSuiteName)")
-        print("📊 Cache Configuration:")
-        print("   - Memory Limit: \(Cache.imageCacheMemoryLimit / (1024*1024))MB")
-        print("   - Disk Limit: \(Cache.imageCacheDiskLimit / (1024*1024))MB")
-        print("   - Expiration: \(Cache.imageCacheExpiration / (24*60*60)) days")
-        print("🔗 Deep Linking:")
-        print("   - Scheme: \(DeepLinking.scheme)")
-        print("   - Host: \(DeepLinking.host)")
-        print("   - Available Routes: \(DeepLinking.Routes.allCases.map { $0.rawValue }.joined(separator: ", "))")
-    }
-    
-    static var debugDescription: String {
-        var description = "FigrClub Configuration\n"
-        description += "Environment: \(Environment.current.displayName)\n"
-        description += "API Base URL: \(API.baseURL)\n"
-        description += "Version: \(AppInfo.version) (\(AppInfo.buildNumber))\n"
-        description += "Bundle ID: \(AppInfo.bundleId)\n"
-        description += "Minimum OS: \(AppInfo.minimumOSVersion)\n"
-        return description
-    }
-}
-#endif
-
 // MARK: - Validation Helpers
 extension AppConfig.Validation {
     static func isValidPassword(_ password: String) -> Bool {
@@ -262,5 +279,96 @@ extension AppConfig {
         }
         
         return true
+    }
+}
+
+// MARK: - Remote Configuration
+@MainActor
+final class RemoteConfigManager: ObservableObject {
+    static let shared = RemoteConfigManager()
+    
+    @Published var isMaintenanceMode = false
+    @Published var minimumAppVersion = "1.0.0"
+    @Published var featuresEnabled: [String: Bool] = [:]
+    @Published var remoteSettings: [String: Any] = [:]
+    
+    private init() {
+        loadRemoteConfig()
+    }
+    
+    func loadRemoteConfig() {
+        // In production, this would load from Firebase Remote Config
+        // For now, we'll use default values
+        featuresEnabled = [
+            "marketplace": true,
+            "notifications": true,
+            "stories": false,
+            "live_streams": false
+        ]
+        
+        remoteSettings = [
+            "max_posts_per_hour": 10,
+            "maintenance_message": "Estamos realizando mantenimiento programado.",
+            "force_update_message": "Por favor, actualiza la aplicación para continuar."
+        ]
+    }
+    
+    func isFeatureEnabled(_ feature: String) -> Bool {
+        return featuresEnabled[feature] ?? false
+    }
+    
+    func getSetting<T>(_ key: String, defaultValue: T) -> T {
+        return remoteSettings[key] as? T ?? defaultValue
+    }
+    
+    func isAppVersionSupported(_ currentVersion: String) -> Bool {
+        return currentVersion.compare(minimumAppVersion, options: .numeric) != .orderedAscending
+    }
+}
+
+// MARK: - Debug Configuration
+#if DEBUG
+struct DebugConfig {
+    static let showPerformanceOverlay = true
+    static let showMemoryUsage = true
+    static let enableNetworkLogging = true
+    static let simulateSlowNetwork = false
+    static let networkDelay: TimeInterval = 2.0
+    
+    // Mock data settings
+    static let useMockData = false
+    static let mockDataDelay: TimeInterval = 1.0
+    
+    // UI Testing
+    static let disableAnimations = false
+    static let showAccessibilityOutlines = false
+}
+#endif
+
+// MARK: - Build Configuration
+struct BuildConfig {
+    static let appName = Bundle.main.infoDictionary?["CFBundleDisplayName"] as? String ?? "FigrClub"
+    static let bundleId = Bundle.main.bundleIdentifier ?? "com.figrclub.app"
+    static let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+    static let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+    
+    static var fullVersion: String {
+        return "\(version) (\(buildNumber))"
+    }
+    
+    static var isDebugBuild: Bool {
+#if DEBUG
+        return true
+#else
+        return false
+#endif
+    }
+    
+    static var isTestFlightBuild: Bool {
+        return Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
+    }
+    
+    static var isAppStoreBuild: Bool {
+        return !isDebugBuild && !isTestFlightBuild
     }
 }

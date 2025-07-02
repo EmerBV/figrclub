@@ -8,23 +8,23 @@
 import Foundation
 import SwiftUI
 
-enum ValidationState: Equatable {
+enum ValidationState {
     case idle
     case valid
     case invalid(String)
     
     var isValid: Bool {
-        if case .valid = self {
-            return true
+        switch self {
+        case .valid: return true
+        default: return false
         }
-        return false
     }
     
     var errorMessage: String? {
-        if case .invalid(let message) = self {
-            return message
+        switch self {
+        case .invalid(let message): return message
+        default: return nil
         }
-        return nil
     }
 }
 

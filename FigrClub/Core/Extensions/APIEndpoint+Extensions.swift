@@ -64,9 +64,11 @@ extension APIEndpoint {
 // MARK: - Additional Response Models for Missing Endpoints
 
 // Simple response for actions that don't return data
+/*
 struct EmptyResponse: Codable {
     static let success = EmptyResponse()
 }
+ */
 
 // Response for like/unlike actions
 struct LikeResponse: Codable {

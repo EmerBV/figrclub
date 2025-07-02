@@ -122,7 +122,12 @@ struct PaginatedResponse<T: Codable>: Codable {
     }
 }
 
+// MARK: - Support Models
+struct EmptyResponse: Codable {}
 
+struct UnreadCountResponse: Codable {
+    let count: Int
+}
 
 // MARK: - Convenience Extensions
 extension PaginatedResponse {

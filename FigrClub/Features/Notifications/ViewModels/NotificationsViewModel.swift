@@ -9,158 +9,76 @@ import Foundation
 import Combine
 
 @MainActor
-final class NotificationsViewModel: ObservableObject {
+final class NotificationsViewModel: PaginatedViewModel<AppNotification> {
     
     // MARK: - Published Properties
-    @Published var notifications: [AppNotification] = []
-    @Published var isLoading = false
-    @Published var errorMessage: String?
-    @Published var showError = false
     @Published var unreadCount = 0
     
-    // MARK: - Private Properties
-    private let apiService: APIServiceProtocol
-    private var cancellables = Set<AnyCancellable>()
+    // MARK: - Use Cases
+    private let loadNotificationsUseCase: LoadNotificationsUseCase
+    private let markNotificationAsReadUseCase: MarkNotificationAsReadUseCase
     
     // MARK: - Initialization
-    nonisolated init(apiService: APIServiceProtocol = APIService.shared) {
-        self.apiService = apiService
+    nonisolated init(
+        loadNotificationsUseCase: LoadNotificationsUseCase,
+        markNotificationAsReadUseCase: MarkNotificationAsReadUseCase
+    ) {
+        self.loadNotificationsUseCase = loadNotificationsUseCase
+        self.markNotificationAsReadUseCase = markNotificationAsReadUseCase
+        super.init()
+    }
+    
+    // MARK: - Override Abstract Methods
+    override func loadFirstPage() async {
+        await executeWithLoading {
+            try await self.loadNotificationsUseCase.execute(LoadNotificationsInput(page: 0, size: self.pageSize))
+        } onSuccess: { response in
+            self.replaceItems(response.content, from: response)
+            self.updateUnreadCount()
+            Logger.shared.info("Notifications loaded: \(response.content.count) notifications", category: "notifications")
+        }
+    }
+    
+    override func loadNextPage() async {
+        await executeWithLoadingMore {
+            try await self.loadNotificationsUseCase.execute(LoadNotificationsInput(page: self.currentPage + 1, size: self.pageSize))
+        } onSuccess: { response in
+            self.appendItems(response.content, from: response)
+            Logger.shared.info("More notifications loaded: \(response.content.count) notifications", category: "notifications")
+        }
     }
     
     // MARK: - Public Methods
-    
-    func loadNotifications() async {
-        guard !isLoading else { return }
-        
-        isLoading = true
-        
-        do {
-            let response: PaginatedResponse<AppNotification> = try await apiService
-                .request(endpoint: .getNotifications(page: 0, size: 50), body: nil)
-                .async()
-            
-            notifications = response.content
-            updateUnreadCount()
-            
-        } catch {
-            showErrorMessage("Error al cargar notificaciones: \(error.localizedDescription)")
-            Logger.shared.error("Failed to load notifications", error: error, category: "notifications")
-        }
-        
-        isLoading = false
-    }
-    
-    func refreshNotifications() async {
-        await loadNotifications()
-    }
-    
     func markAsRead(_ notification: AppNotification) {
         guard !notification.isRead else { return }
         
         Task {
             do {
-                let _: AppNotification = try await apiService
-                    .request(endpoint: .markNotificationAsRead(notification.id), body: nil)
-                    .async()
-                
-                // Update local state on main actor
-                await MainActor.run {
-                    if let index = notifications.firstIndex(where: { $0.id == notification.id }) {
-                        notifications[index] = AppNotification(
-                            id: notification.id,
-                            title: notification.title,
-                            message: notification.message,
-                            type: notification.type,
-                            entityType: notification.entityType,
-                            entityId: notification.entityId,
-                            isRead: true,
-                            createdAt: notification.createdAt
-                        )
-                    }
-                    updateUnreadCount()
-                }
-                
+                let updatedNotification = try await markNotificationAsReadUseCase.execute(notification.id)
+                updateNotification(updatedNotification)
+                updateUnreadCount()
             } catch {
-                Logger.shared.error("Failed to mark notification as read", error: error, category: "notifications")
+                showErrorMessage("Error al marcar como leída: \(error.localizedDescription)")
             }
         }
     }
     
     func markAllAsRead() {
-        Task {
-            do {
-                let _: EmptyResponse = try await apiService
-                    .request(endpoint: .markAllNotificationsAsRead, body: nil)
-                    .async()
-                
-                // Update local state on main actor
-                await MainActor.run {
-                    notifications = notifications.map { notification in
-                        AppNotification(
-                            id: notification.id,
-                            title: notification.title,
-                            message: notification.message,
-                            type: notification.type,
-                            entityType: notification.entityType,
-                            entityId: notification.entityId,
-                            isRead: true,
-                            createdAt: notification.createdAt
-                        )
-                    }
-                    updateUnreadCount()
-                }
-                
-            } catch {
-                await MainActor.run {
-                    showErrorMessage("Error al marcar como leídas: \(error.localizedDescription)")
-                }
-            }
+        // TODO: Implement mark all as read use case
+        let unreadNotifications = items.filter { !$0.isRead }
+        
+        for notification in unreadNotifications {
+            markAsRead(notification)
         }
     }
     
-    func deleteNotifications(at indexSet: IndexSet) {
-        let notificationsToDelete = indexSet.map { notifications[$0] }
-        
-        Task {
-            for notification in notificationsToDelete {
-                do {
-                    let _: EmptyResponse = try await apiService
-                        .request(endpoint: .deleteNotification(notification.id), body: nil)
-                        .async()
-                    
-                    await MainActor.run {
-                        notifications.removeAll { $0.id == notification.id }
-                    }
-                    
-                } catch {
-                    Logger.shared.error("Failed to delete notification", error: error, category: "notifications")
-                }
-            }
-            
-            await MainActor.run {
-                updateUnreadCount()
-            }
-        }
+    // MARK: - Private Methods
+    private func updateNotification(_ updatedNotification: AppNotification) {
+        guard let index = items.firstIndex(where: { $0.id == updatedNotification.id }) else { return }
+        items[index] = updatedNotification
     }
     
     private func updateUnreadCount() {
-        unreadCount = notifications.filter { !$0.isRead }.count
-    }
-    
-    private func showErrorMessage(_ message: String) {
-        errorMessage = message
-        showError = true
-        
-        Task {
-            try? await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
-            await MainActor.run {
-                hideError()
-            }
-        }
-    }
-    
-    private func hideError() {
-        errorMessage = nil
-        showError = false
+        unreadCount = items.filter { !$0.isRead }.count
     }
 }

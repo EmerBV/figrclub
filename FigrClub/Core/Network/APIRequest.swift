@@ -25,10 +25,11 @@ struct RegisterRequest: Codable {
 }
 
 struct UpdateUserRequest: Codable {
-    let firstName: String
-    let lastName: String
-    let username: String
+    let firstName: String?
+    let lastName: String?
+    let username: String?
     let bio: String?
+    let profileImageUrl: String?
 }
 
 // MARK: - Page Request Model
@@ -86,4 +87,21 @@ struct UpdateNotificationPreferencesRequest: Codable {
     let marketingEnabled: Bool
     let salesEnabled: Bool
     let purchaseEnabled: Bool
+}
+
+struct ForgotPasswordRequest: Codable {
+    let email: String
+}
+
+struct ResetPasswordRequest: Codable {
+    let token: String
+    let newPassword: String
+}
+
+struct UpdateMarketplaceItemRequest: Codable {
+    let title: String?
+    let description: String?
+    let price: Double?
+    let condition: ItemCondition?
+    let categoryId: Int?
 }

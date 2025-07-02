@@ -9,89 +9,46 @@ import Foundation
 import Combine
 
 @MainActor
-final class LoginViewModel: ObservableObject {
+final class LoginViewModel: BaseViewModel {
     
     // MARK: - Published Properties
     @Published var email = ""
     @Published var password = ""
-    @Published var isLoading = false
-    @Published var errorMessage: String?
-    @Published var showError = false
+    @Published var loginSuccess = false
+    @Published var rememberMe = false
     
-    // MARK: - Validation States
+    // MARK: - Validation
     @Published var emailValidationState: ValidationState = .idle
     @Published var passwordValidationState: ValidationState = .idle
     @Published var isFormValid = false
     
-    // MARK: - Private Properties
+    // MARK: - Use Cases
+    private let loginUseCase: LoginUseCase
     private let authManager: AuthManager
-    private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
-    nonisolated init(authManager: AuthManager? = nil) {
-        // Use provided authManager or get from DI container
-        if let authManager = authManager {
-            self.authManager = authManager
-        } else {
-            self.authManager = DependencyContainer.shared.resolve(AuthManager.self)
-        }
+    nonisolated init(
+        loginUseCase: LoginUseCase,
+        authManager: AuthManager
+    ) {
+        self.loginUseCase = loginUseCase
+        self.authManager = authManager
+        super.init()
         
-        // Setup must be called on MainActor
         Task { @MainActor in
             setupValidation()
-            setupAuthStateObserver()
+            setupAuthObserver()
         }
     }
     
-    // MARK: - Public Methods
-    
-    func login() async {
-        guard isFormValid else {
-            showErrorMessage("Por favor, corrige los errores en el formulario")
-            return
-        }
-        
-        isLoading = true
-        hideError()
-        
-        let result = await authManager.loginWithValidation(email: email, password: password)
-        
-        isLoading = false
-        
-        switch result {
-        case .success:
-            // Success is handled by AuthManager state changes
-            clearForm()
-        case .failure(let error):
-            showErrorMessage(error.localizedDescription)
-        }
-    }
-    
-    func forgotPassword() {
-        // TODO: Implement forgot password flow
-        print("Forgot password tapped for email: \(email)")
-    }
-    
-    func clearForm() {
-        email = ""
-        password = ""
-        hideError()
-    }
-    
-    func hideError() {
-        errorMessage = nil
-        showError = false
-    }
-    
-    // MARK: - Private Methods
-    
+    // MARK: - Setup
     private func setupValidation() {
         // Email validation
         $email
             .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
             .removeDuplicates()
-            .map { email in
-                self.validateEmail(email)
+            .map { [weak self] email in
+                self?.validateEmail(email) ?? .idle
             }
             .assign(to: &$emailValidationState)
         
@@ -99,21 +56,20 @@ final class LoginViewModel: ObservableObject {
         $password
             .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
             .removeDuplicates()
-            .map { password in
-                self.validatePassword(password)
+            .map { [weak self] password in
+                self?.validatePassword(password) ?? .idle
             }
             .assign(to: &$passwordValidationState)
         
         // Form validation
         Publishers.CombineLatest($emailValidationState, $passwordValidationState)
             .map { emailState, passwordState in
-                emailState == .valid && passwordState == .valid
+                emailState.isValid && passwordState.isValid
             }
             .assign(to: &$isFormValid)
     }
     
-    private func setupAuthStateObserver() {
-        // Observe auth manager loading state
+    private func setupAuthObserver() {
         authManager.authStatePublisher
             .map { state in
                 if case .loading = state {
@@ -123,14 +79,47 @@ final class LoginViewModel: ObservableObject {
             }
             .receive(on: DispatchQueue.main)
             .assign(to: &$isLoading)
+        
+        authManager.authStatePublisher
+            .map { state in
+                if case .authenticated = state {
+                    return true
+                }
+                return false
+            }
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$loginSuccess)
     }
     
+    // MARK: - Public Methods
+    func login() async {
+        guard isFormValid else {
+            showErrorMessage("Por favor, completa todos los campos correctamente")
+            return
+        }
+        
+        await executeWithLoading {
+            try await self.loginUseCase.execute(LoginInput(email: self.email, password: self.password))
+        } onSuccess: { (authResponse, user) in
+            Logger.shared.info("Login successful for user: \(user.id)", category: "auth")
+            // AuthManager will handle the state update
+        }
+    }
+    
+    func resetForm() {
+        email = ""
+        password = ""
+        rememberMe = false
+        hideError()
+    }
+    
+    // MARK: - Validation Methods
     private func validateEmail(_ email: String) -> ValidationState {
         if email.isEmpty {
             return .idle
         }
         
-        if !email.isValidEmail {
+        if !email.contains("@") || !email.contains(".") {
             return .invalid("Formato de email inválido")
         }
         
@@ -147,16 +136,6 @@ final class LoginViewModel: ObservableObject {
         }
         
         return .valid
-    }
-    
-    private func showErrorMessage(_ message: String) {
-        errorMessage = message
-        showError = true
-        
-        // Auto-hide error after 5 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
-            self?.hideError()
-        }
     }
 }
 

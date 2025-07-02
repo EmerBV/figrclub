@@ -10,76 +10,83 @@ import Combine
 import UIKit
 
 @MainActor
-final class ProfileViewModel: ObservableObject {
+final class ProfileViewModel: BaseViewModel {
     
     // MARK: - Published Properties
     @Published var userPosts: [Post] = []
     @Published var userStats: UserStats?
-    @Published var isLoading = false
+    @Published var currentUser: User?
     @Published var showEditProfile = false
     @Published var showSettings = false
-    @Published var errorMessage: String?
-    @Published var showError = false
     
-    // MARK: - Private Properties
-    private let apiService: APIServiceProtocol
+    // MARK: - Use Cases
+    private let loadUserProfileUseCase: LoadUserProfileUseCase
+    private let loadUserPostsUseCase: LoadUserPostsUseCase
+    private let toggleFollowUserUseCase: ToggleFollowUserUseCase
     private let authManager: AuthManager
-    private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
     nonisolated init(
-        apiService: APIServiceProtocol = APIService.shared,
-        authManager: AuthManager = DependencyContainer.shared.resolve(AuthManager.self)
+        loadUserProfileUseCase: LoadUserProfileUseCase,
+        loadUserPostsUseCase: LoadUserPostsUseCase,
+        toggleFollowUserUseCase: ToggleFollowUserUseCase,
+        authManager: AuthManager
     ) {
-        self.apiService = apiService
+        self.loadUserProfileUseCase = loadUserProfileUseCase
+        self.loadUserPostsUseCase = loadUserPostsUseCase
+        self.toggleFollowUserUseCase = toggleFollowUserUseCase
         self.authManager = authManager
+        super.init()
+        
+        Task { @MainActor in
+            setupAuthObserver()
+        }
+    }
+    
+    // MARK: - Setup
+    private func setupAuthObserver() {
+        authManager.$currentUser
+            .compactMap { $0 }
+            .sink { [weak self] user in
+                Task { @MainActor in
+                    self?.currentUser = user
+                    await self?.loadUserData()
+                }
+            }
+            .store(in: &cancellables)
     }
     
     // MARK: - Public Methods
-    
     func loadUserData() async {
-        guard let userId = authManager.currentUser?.id else {
+        guard let userId = currentUser?.id else {
             Logger.shared.warning("No current user found", category: "profile")
             return
         }
         
-        isLoading = true
-        
-        do {
-            let stats: UserStats = try await apiService
-                .request(endpoint: .getUserStats(userId), body: nil)
-                .async()
-            
-            userStats = stats
-            
-            Logger.shared.info("User stats loaded successfully", category: "profile")
-            
-        } catch {
-            showErrorMessage("Error al cargar datos del perfil: \(error.localizedDescription)")
-            Logger.shared.error("Failed to load user data", error: error, category: "profile")
+        await executeWithLoading {
+            try await self.loadUserProfileUseCase.execute(userId)
+        } onSuccess: { (user, stats) in
+            self.currentUser = user
+            self.userStats = stats
         }
-        
-        isLoading = false
     }
     
     func loadUserPosts() async {
-        guard let userId = authManager.currentUser?.id else {
+        guard let userId = currentUser?.id else {
             Logger.shared.warning("No current user found for posts", category: "profile")
             return
         }
         
         do {
-            let response: PaginatedResponse<Post> = try await apiService
-                .request(endpoint: .getUserPosts(userId, page: 0, size: 20), body: nil)
-                .async()
-            
+            let response = try await loadUserPostsUseCase.execute(
+                LoadUserPostsInput(userId: userId, page: 0, size: 20)
+            )
             userPosts = response.content
             
             Logger.shared.info("User posts loaded: \(response.content.count) posts", category: "profile")
             
         } catch {
             showErrorMessage("Error al cargar posts: \(error.localizedDescription)")
-            Logger.shared.error("Failed to load user posts", error: error, category: "profile")
         }
     }
     
@@ -89,62 +96,37 @@ final class ProfileViewModel: ObservableObject {
     }
     
     func shareProfile() {
-        guard let user = authManager.currentUser else {
+        guard let user = currentUser else {
             Logger.shared.warning("No current user to share", category: "profile")
             return
         }
         
         let shareText = "¡Echa un vistazo al perfil de \(user.fullName) en FigrClub!"
-        let shareURL = URL(string: "https://figrclub.com/profile/\(user.username)")!
+        let shareURL = URL(string: "https://figrclub.com/profile/\(user.username)")
         
-        let activityVC = UIActivityViewController(
-            activityItems: [shareText, shareURL],
-            applicationActivities: nil
-        )
-        
-        // Configure for iPad
-        if let popover = activityVC.popoverPresentationController {
-            popover.sourceView = UIApplication.shared.topViewController?.view
-            popover.sourceRect = CGRect(
-                x: UIScreen.main.bounds.width / 2,
-                y: UIScreen.main.bounds.height / 2,
-                width: 0,
-                height: 0
-            )
-            popover.permittedArrowDirections = []
+        var items: [Any] = [shareText]
+        if let url = shareURL {
+            items.append(url)
         }
         
-        // Present activity controller
-        if let topVC = UIApplication.shared.topViewController {
-            topVC.present(activityVC, animated: true)
-            
-            Analytics.shared.logEvent("profile_shared", parameters: [
-                "user_id": user.id,
-                "username": user.username
-            ])
-        } else {
-            Logger.shared.warning("No top view controller found for sharing", category: "profile")
+        let activityVC = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            window.rootViewController?.present(activityVC, animated: true)
         }
+        
+        Analytics.shared.logEvent("profile_shared", parameters: [
+            "user_id": user.id
+        ])
     }
     
-    // MARK: - Private Methods
-    
-    private func showErrorMessage(_ message: String) {
-        errorMessage = message
-        showError = true
-        
-        // Auto-hide error after 3 seconds
-        Task {
-            try? await Task.sleep(nanoseconds: 3_000_000_000)
-            await MainActor.run {
-                hideError()
-            }
+    func logout() async {
+        await executeWithLoading {
+            await self.authManager.logout()
+        } onSuccess: { _ in
+            Logger.shared.info("User logged out successfully", category: "profile")
         }
-    }
-    
-    private func hideError() {
-        errorMessage = nil
-        showError = false
     }
 }
 

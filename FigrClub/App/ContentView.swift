@@ -10,45 +10,24 @@ import CoreData
 
 struct ContentView: View {
     @EnvironmentObject private var authManager: AuthManager
-    @State private var isInitializing = true
+    @EnvironmentObject private var remoteConfigManager: RemoteConfigManager
     
     var body: some View {
         Group {
-            if isInitializing {
-                LoadingView(message: "Iniciando FigrClub...")
-            } else {
-                switch authManager.authState {
-                case .authenticated:
-                    MainTabView()
-                        .transition(.opacity)
-                    
-                case .unauthenticated:
-                    LoginView()
-                        .transition(.opacity)
-                    
-                case .loading:
-                    LoadingView(message: "Autenticando...")
-                    
-                case .error(let error):
-                    ErrorView(
-                        message: error.localizedDescription,
-                        buttonTitle: "Reintentar"
-                    ) {
-                        Task {
-                            _ = await authManager.getCurrentUser()
-                        }
-                    }
-                }
+            switch authManager.authState {
+            case .loading:
+                SplashView()
+                
+            case .authenticated:
+                MainTabView()
+                
+            case .unauthenticated:
+                AuthenticationFlowView()
             }
         }
-        .animation(.easeInOut(duration: 0.3), value: authManager.authState)
+        .animation(.easeInOut(duration: AppConfig.UI.animationDuration), value: authManager.authState)
         .task {
-            // Simulate initialization time
-            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
-            
-            withAnimation {
-                isInitializing = false
-            }
+            await authManager.checkAuthenticationStatus()
         }
     }
 }
