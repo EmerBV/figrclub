@@ -46,14 +46,14 @@ final class TokenManager: ObservableObject {
                 self.isAuthenticated = true
             }
             
-            #if DEBUG
+#if DEBUG
             print("✅ Tokens saved successfully for user: \(userId)")
-            #endif
+#endif
             
         } catch {
-            #if DEBUG
+#if DEBUG
             print("❌ Failed to save tokens: \(error)")
-            #endif
+#endif
         }
     }
     
@@ -61,9 +61,9 @@ final class TokenManager: ObservableObject {
         do {
             return try keychain.get(accessTokenKey)
         } catch {
-            #if DEBUG
+#if DEBUG
             print("❌ Failed to get access token: \(error)")
-            #endif
+#endif
             return nil
         }
     }
@@ -72,9 +72,9 @@ final class TokenManager: ObservableObject {
         do {
             return try keychain.get(refreshTokenKey)
         } catch {
-            #if DEBUG
+#if DEBUG
             print("❌ Failed to get refresh token: \(error)")
-            #endif
+#endif
             return nil
         }
     }
@@ -87,9 +87,9 @@ final class TokenManager: ObservableObject {
             }
             return userId
         } catch {
-            #if DEBUG
+#if DEBUG
             print("❌ Failed to get user ID: \(error)")
-            #endif
+#endif
             return nil
         }
     }
@@ -104,14 +104,14 @@ final class TokenManager: ObservableObject {
                 self.isAuthenticated = false
             }
             
-            #if DEBUG
+#if DEBUG
             print("✅ Tokens cleared successfully")
-            #endif
+#endif
             
         } catch {
-            #if DEBUG
+#if DEBUG
             print("❌ Failed to clear tokens: \(error)")
-            #endif
+#endif
         }
     }
     
@@ -201,14 +201,14 @@ final class TokenManager: ObservableObject {
                 self.isAuthenticated = true
             }
             
-            #if DEBUG
+#if DEBUG
             print("✅ Tokens saved with biometric protection for user: \(userId)")
-            #endif
+#endif
             
         } catch {
-            #if DEBUG
+#if DEBUG
             print("❌ Failed to save tokens with biometrics: \(error)")
-            #endif
+#endif
             // Fallback to regular save
             saveTokens(accessToken: accessToken, refreshToken: refreshToken, userId: userId)
         }
@@ -216,7 +216,7 @@ final class TokenManager: ObservableObject {
     
     // MARK: - Debug Methods
     
-    #if DEBUG
+#if DEBUG
     func debugPrintKeychain() {
         print("🔑 Keychain Debug Info:")
         print("- Has Access Token: \(getAccessToken() != nil)")
@@ -236,7 +236,7 @@ final class TokenManager: ObservableObject {
             print("❌ Failed to clear keychain: \(error)")
         }
     }
-    #endif
+#endif
 }
 
 // MARK: - Supporting Models

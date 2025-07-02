@@ -16,3 +16,11 @@ struct APIError: Error, Codable {
         return message
     }
 }
+
+// MARK: - Error Response
+struct APIErrorResponse: Codable {
+    let message: String
+    let code: String?
+    let timestamp: String
+    let status: Int?
+}

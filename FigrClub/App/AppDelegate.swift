@@ -8,6 +8,7 @@
 import Foundation
 import UIKit
 import Firebase
+import FirebaseMessaging
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     

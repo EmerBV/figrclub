@@ -195,10 +195,10 @@ extension FirebaseConfig: MessagingDelegate {
     // Optional: Handle data messages received through FCM
     // This method may not be required in all Firebase versions
     /*
-    func messaging(_ messaging: Messaging, didReceive remoteMessage: [AnyHashable : Any]) {
-        Logger.shared.info("Received remote message: \(remoteMessage)", category: "firebase")
-    }
-    */
+     func messaging(_ messaging: Messaging, didReceive remoteMessage: [AnyHashable : Any]) {
+     Logger.shared.info("Received remote message: \(remoteMessage)", category: "firebase")
+     }
+     */
 }
 
 // MARK: - Notification Center Delegate

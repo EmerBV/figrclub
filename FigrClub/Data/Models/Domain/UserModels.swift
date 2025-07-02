@@ -139,49 +139,10 @@ struct UserStats: Codable {
     }
 }
 
-struct UpdateUserRequest: Codable {
-    let firstName: String
-    let lastName: String
-    let username: String
-    let bio: String?
-}
-
 enum SubscriptionType: String, Codable, CaseIterable {
     case free = "FREE"
     case premium = "PREMIUM"
     case pro = "PRO"
-}
-
-// MARK: - Authentication Models
-struct LoginRequest: Codable {
-    let email: String
-    let password: String
-}
-
-// MARK: - Register Response Model
-struct RegisterResponse: Codable {
-    let userId: Int
-    let email: String
-    let fullName: String
-    let emailVerified: Bool
-    let emailSent: Bool
-}
-
-struct RegisterRequest: Codable {
-    let firstName: String
-    let lastName: String
-    let email: String
-    let password: String
-    let username: String
-    let userType: UserType
-    let legalAcceptances: [LegalAcceptance]
-    let consents: [Consent]
-}
-
-struct AuthResponse: Codable {
-    let authToken: AuthToken
-    let userId: Int
-    let email: String
 }
 
 struct AuthToken: Codable {
@@ -197,82 +158,6 @@ struct LegalAcceptance: Codable {
 struct Consent: Codable {
     let consentType: String
     let isGranted: Bool
-}
-
-// MARK: - Marketplace Models
-struct MarketplaceItem: Codable, Identifiable {
-    let id: Int
-    let title: String
-    let description: String
-    let price: Double
-    let currency: String
-    let condition: ItemCondition
-    let category: Category
-    let images: [String]
-    let seller: User
-    let status: ItemStatus
-    let createdAt: String
-    let updatedAt: String?
-    let stockQuantity: Int
-    let viewsCount: Int
-    let favoritesCount: Int
-    let location: ItemLocation?
-    
-    // User interaction flags
-    let isFavoritedByCurrentUser: Bool?
-    let canEdit: Bool?
-    let canDelete: Bool?
-    let canMakeOffer: Bool?
-    let canAskQuestion: Bool?
-}
-
-enum ItemCondition: String, Codable, CaseIterable {
-    case new = "NEW"
-    case likeNew = "LIKE_NEW"
-    case good = "GOOD"
-    case fair = "FAIR"
-    case poor = "POOR"
-}
-
-enum ItemStatus: String, Codable, CaseIterable {
-    case available = "AVAILABLE"
-    case sold = "SOLD"
-    case reserved = "RESERVED"
-    case inactive = "INACTIVE"
-}
-
-struct ItemLocation: Codable {
-    let country: String
-    let city: String
-    let region: String?
-}
-
-struct CreateMarketplaceItemRequest: Codable {
-    let title: String
-    let description: String
-    let category: String
-    let basePrice: Double
-    let currency: String
-    let condition: ItemCondition
-    let baseStockQuantity: Int
-    let negotiable: Bool
-    let acceptsOffers: Bool
-    let allowsQuestions: Bool
-    let freeShipping: Bool
-    let pickupAvailable: Bool
-    let country: String
-    let city: String
-    let region: String?
-}
-
-// MARK: - Category Models
-struct Category: Codable, Identifiable {
-    let id: Int
-    let name: String
-    let description: String?
-    let parentId: Int?
-    let imageUrl: String?
-    let isActive: Bool
 }
 
 // MARK: - Device Token Models
@@ -293,43 +178,6 @@ enum DeviceType: String, Codable, CaseIterable {
     case ios = "IOS"
     case android = "ANDROID"
     case web = "WEB"
-}
-
-struct RegisterDeviceTokenRequest: Codable {
-    let token: String
-    let deviceType: DeviceType
-    let deviceName: String?
-    let appVersion: String
-    let osVersion: String
-}
-
-struct UpdateNotificationPreferencesRequest: Codable {
-    let notificationsEnabled: Bool
-    let marketingEnabled: Bool
-    let salesEnabled: Bool
-    let purchaseEnabled: Bool
-}
-
-// MARK: - Notification Models
-struct AppNotification: Codable, Identifiable {
-    let id: Int
-    let title: String
-    let message: String
-    let type: NotificationType
-    let entityType: String?
-    let entityId: Int?
-    let isRead: Bool
-    let createdAt: String
-}
-
-enum NotificationType: String, Codable, CaseIterable {
-    case like = "LIKE"
-    case comment = "COMMENT"
-    case follow = "FOLLOW"
-    case newPost = "NEW_POST"
-    case marketplaceSale = "MARKETPLACE_SALE"
-    case marketplaceQuestion = "MARKETPLACE_QUESTION"
-    case system = "SYSTEM"
 }
 
 // MARK: - UserType Extensions

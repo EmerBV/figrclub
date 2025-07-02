@@ -29,12 +29,12 @@ final class APIService: APIServiceProtocol {
         body: Codable? = nil
     ) -> AnyPublisher<T, APIError> {
         
-        #if DEBUG
+#if DEBUG
         print("🚀 API Request: \(endpoint.method.rawValue) \(endpoint.path)")
         if let body = body {
             print("📤 Request Body: \(body)")
         }
-        #endif
+#endif
         
         return networkManager.request(endpoint: endpoint, body: body)
     }
