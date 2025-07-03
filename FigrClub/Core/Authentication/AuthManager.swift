@@ -190,16 +190,16 @@ final class AuthManager: AuthManagerProtocol {
                 id: response.userId,
                 firstName: request.firstName,
                 lastName: request.lastName,
-                email: response.email,
                 username: request.username,
+                email: response.email,
                 userType: request.userType,
-                subscriptionType: .free,
-                isVerified: response.emailVerified,
-                isPrivate: false,
                 profileImageUrl: nil,
                 bio: nil,
-                createdAt: ISO8601DateFormatter().string(from: Date()),
-                updatedAt: ISO8601DateFormatter().string(from: Date())
+                createdAt: Date(),
+                updatedAt: Date(),
+                isActive: true,
+                isVerified: response.emailVerified,
+                isPrivate: false
             )
             
             Analytics.shared.logSignup(method: "email")
@@ -385,16 +385,18 @@ final class AuthManager: AuthManagerProtocol {
     private func createFallbackUser(from authResponse: AuthResponse) -> User {
         return User(
             id: authResponse.userId,
-            firstName: extractFirstName(from: authResponse.email),
+            firstName: extractFirstName(from: authResponse.email ?? ""),
             lastName: "",
-            email: authResponse.email,
-            username: extractUsername(from: authResponse.email),
+            username: extractUsername(from: authResponse.email ?? ""),
+            email: authResponse.email ?? "",
             userType: .regular,
-            subscriptionType: .free,
-            isVerified: false,
             profileImageUrl: nil,
             bio: nil,
-            createdAt: ISO8601DateFormatter().string(from: Date())
+            createdAt: Date(),
+            updatedAt: Date(),
+            isActive: true,
+            isVerified: false,
+            isPrivate: false
         )
     }
     
@@ -588,7 +590,7 @@ final class AuthManager: AuthManagerProtocol {
         
         // Verificar aceptación de términos legales
         let hasTermsAcceptance = request.legalAcceptances.contains { acceptance in
-            acceptance.documentType == "TERMS_OF_SERVICE"
+            acceptance.type == .termsOfService
         }
         
         if !hasTermsAcceptance {

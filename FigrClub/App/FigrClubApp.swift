@@ -109,10 +109,6 @@ struct FigrClubApp: App {
     }
     
     private func configureAccessibility() {
-        // Enable accessibility features
-        UIAccessibility.buttonShapesEnabled = true
-        UIAccessibility.isGuidedAccessEnabled = false
-        
         // Setup VoiceOver settings
         if UIAccessibility.isVoiceOverRunning {
             Logger.shared.info("VoiceOver is running", category: "accessibility")

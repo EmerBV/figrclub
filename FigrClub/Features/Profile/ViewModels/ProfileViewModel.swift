@@ -26,7 +26,7 @@ final class ProfileViewModel: BaseViewModel {
     private let authManager: AuthManager
     
     // MARK: - Initialization
-    nonisolated init(
+    init(
         loadUserProfileUseCase: LoadUserProfileUseCase,
         loadUserPostsUseCase: LoadUserPostsUseCase,
         toggleFollowUserUseCase: ToggleFollowUserUseCase,
@@ -137,7 +137,7 @@ extension UserStats {
             ("Posts", formatCount(postsCount)),
             ("Seguidores", formatCount(followersCount)),
             ("Siguiendo", formatCount(followingCount)),
-            ("Likes", formatCount(likesReceivedCount))
+            ("Likes", formatCount(likesCount))
         ]
     }
     

@@ -20,7 +20,7 @@ final class MarketplaceViewModel: SearchableViewModel<MarketplaceItem> {
     private let loadCategoriesUseCase: LoadCategoriesUseCase
     
     // MARK: - Initialization
-    nonisolated init(
+    init(
         loadMarketplaceItemsUseCase: LoadMarketplaceItemsUseCase,
         loadCategoriesUseCase: LoadCategoriesUseCase
     ) {
@@ -76,10 +76,6 @@ final class MarketplaceViewModel: SearchableViewModel<MarketplaceItem> {
             self.appendItems(response.content, from: response)
             Logger.shared.info("More marketplace items loaded: \(response.content.count) items", category: "marketplace")
         }
-    }
-    
-    override func performSearch(_ query: String) async {
-        await refresh()
     }
     
     // MARK: - Public Methods

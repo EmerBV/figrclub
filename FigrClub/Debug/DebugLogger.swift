@@ -72,11 +72,16 @@ final class DebugLogger {
     }
     
     func exportLogs() -> String {
-        return logs.map { entry in
+        var result: [String] = []
+        
+        for entry in logs {
             let timestamp = DateFormatter.logTimestamp.string(from: entry.timestamp)
             let fileName = URL(fileURLWithPath: entry.file).lastPathComponent
-            return "\(entry.level.emoji) [\(timestamp)] [\(entry.level.rawValue)] [\(entry.category)] [\(fileName):\(entry.line)] \(entry.function) - \(entry.message)"
-        }.joined(separator: "\n")
+            let logLine = "\(entry.level.emoji) [\(timestamp)] [\(entry.level.rawValue)] [\(entry.category)] [\(fileName):\(entry.line)] \(entry.function) - \(entry.message)"
+            result.append(logLine)
+        }
+        
+        return result.joined(separator: "\n")
     }
 }
 
@@ -177,6 +182,15 @@ struct DebugLogsView: View {
     private func refreshLogs() {
         logs = DebugLogger.shared.getLogs(level: selectedLevel, category: selectedCategory)
     }
+}
+
+// MARK: - DateFormatter Extension
+extension DateFormatter {
+    static let logTimestamp: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss.SSS"
+        return formatter
+    }()
 }
 #endif
 

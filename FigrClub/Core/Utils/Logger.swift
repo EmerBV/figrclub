@@ -21,7 +21,7 @@ final class Logger {
     }
     
     // MARK: - Log Levels
-    enum LogLevel: String {
+    enum LogLevel: String, CaseIterable {
         case debug = "DEBUG"
         case info = "INFO"
         case warning = "WARNING"
@@ -35,6 +35,16 @@ final class Logger {
             case .warning: return .default
             case .error: return .error
             case .fatal: return .fault
+            }
+        }
+        
+        var emoji: String {
+            switch self {
+            case .debug: return "🔍"
+            case .info: return "ℹ️"
+            case .warning: return "⚠️"
+            case .error: return "❌"
+            case .fatal: return "💥"
             }
         }
     }

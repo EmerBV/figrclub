@@ -15,7 +15,6 @@ final class NetworkManager {
     private let session: URLSession
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
-    private let errorHandler: ErrorHandler
     
     private init() {
         let config = URLSessionConfiguration.default
@@ -24,7 +23,6 @@ final class NetworkManager {
         config.waitsForConnectivity = true
         
         self.session = URLSession(configuration: config)
-        self.errorHandler = DefaultErrorHandler()
         
         setupDecoder()
     }
@@ -38,37 +36,30 @@ final class NetworkManager {
     func request<T: Codable>(
         endpoint: APIEndpoint,
         body: Codable? = nil
-    ) -> AsyncThrowingStream<T, Error> {
-        return AsyncThrowingStream { continuation in
+    ) -> AnyPublisher<T, APIError> {
+        
+        return Future<T, APIError> { promise in
             Task {
                 do {
-                    let result: T = try await performRequest(endpoint: endpoint, body: body)
-                    continuation.yield(result)
-                    continuation.finish()
+                    let result: T = try await self.performRequest(endpoint: endpoint, body: body)
+                    promise(.success(result))
                 } catch {
-                    let strategy = errorHandler.handle(error)
-                    
-                    switch strategy {
-                    case .retry(let maxAttempts, let delay):
-                        await handleRetry(
-                            endpoint: endpoint,
-                            body: body,
-                            maxAttempts: maxAttempts,
-                            delay: delay,
-                            continuation: continuation
+                    if let apiError = error as? APIError {
+                        promise(.failure(apiError))
+                    } else {
+                        let apiError = APIError(
+                            message: "Request failed: \(error.localizedDescription)",
+                            code: "REQUEST_FAILED",
+                            timestamp: ISO8601DateFormatter().string(from: Date()),
+                            statusCode: nil,
+                            details: nil
                         )
-                    case .refreshTokenAndRetry:
-                        await handleTokenRefreshAndRetry(
-                            endpoint: endpoint,
-                            body: body,
-                            continuation: continuation
-                        )
-                    case .showError, .silent, .logout:
-                        continuation.finish(throwing: error)
+                        promise(.failure(apiError))
                     }
                 }
             }
         }
+        .eraseToAnyPublisher()
     }
     
     // MARK: - Core Request Logic
@@ -222,59 +213,6 @@ final class NetworkManager {
                     details: ["decoding_error": error.localizedDescription]
                 )
             }
-        }
-    }
-    
-    // MARK: - Retry Logic
-    private func handleRetry<T: Codable>(
-        endpoint: APIEndpoint,
-        body: Codable?,
-        maxAttempts: Int,
-        delay: TimeInterval,
-        continuation: AsyncThrowingStream<T, Error>.Continuation
-    ) async {
-        var attempts = 0
-        
-        while attempts < maxAttempts {
-            attempts += 1
-            
-            do {
-                try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-                let result: T = try await performRequest(endpoint: endpoint, body: body)
-                continuation.yield(result)
-                continuation.finish()
-                return
-            } catch {
-                if attempts == maxAttempts {
-                    continuation.finish(throwing: error)
-                    return
-                }
-                Logger.shared.warning("Retry attempt \(attempts)/\(maxAttempts) failed", category: "network")
-            }
-        }
-    }
-    
-    // MARK: - Token Refresh and Retry
-    private func handleTokenRefreshAndRetry<T: Codable>(
-        endpoint: APIEndpoint,
-        body: Codable?,
-        continuation: AsyncThrowingStream<T, Error>.Continuation
-    ) async {
-        do {
-            // Attempt token refresh
-            let refreshResult = await TokenManager.shared.refreshTokenIfNeeded()
-            
-            switch refreshResult {
-            case .success:
-                // Retry the original request
-                let result: T = try await performRequest(endpoint: endpoint, body: body)
-                continuation.yield(result)
-                continuation.finish()
-            case .failure(let error):
-                continuation.finish(throwing: error)
-            }
-        } catch {
-            continuation.finish(throwing: error)
         }
     }
 }

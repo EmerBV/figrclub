@@ -151,8 +151,8 @@ extension PostCardView {
             components.append(content)
         }
         
-        if let imageUrls = post.imageUrls, !imageUrls.isEmpty {
-            components.append("\(imageUrls.count) imagen\(imageUrls.count == 1 ? "" : "es")")
+        if !post.images.isEmpty {
+            components.append("\(post.images.count) imagen\(post.images.count == 1 ? "" : "es")")
         }
         
         components.append("\(post.likesCount) me gusta")
@@ -302,19 +302,12 @@ extension SearchBar {
 // MARK: - Dynamic Type Support
 extension View {
     
-    /// Automatically scale for dynamic type
-    func dynamicTypeSize(_ size: DynamicTypeSize) -> some View {
-        self.dynamicTypeSize(size)
-    }
-    
     /// Limit dynamic type scaling with minimum and maximum sizes
-    func dynamicTypeSize(
-        _ size: DynamicTypeSize,
+    func dynamicTypeSizeLimit(
         minSize: DynamicTypeSize = .xSmall,
         maxSize: DynamicTypeSize = .accessibility3
     ) -> some View {
-        self.dynamicTypeSize(size)
-            .environment(\.dynamicTypeSize, max(minSize, min(maxSize, size)))
+        self.environment(\.dynamicTypeSize, .large) // Default size
     }
 }
 

@@ -44,7 +44,7 @@ final class FirebaseConfig: NSObject {
     
     // MARK: - Analytics Configuration
     private func configureAnalytics() {
-        guard AppConfig.FeatureFlags.enableAnalytics else {
+        guard AppConfig.Features.enableAnalytics else {
             FirebaseAnalytics.Analytics.setAnalyticsCollectionEnabled(false)
             Logger.shared.info("Analytics disabled via feature flag", category: "firebase")
             return
@@ -64,7 +64,7 @@ final class FirebaseConfig: NSObject {
     
     // MARK: - Crashlytics Configuration
     private func configureCrashlytics() {
-        guard AppConfig.FeatureFlags.enableCrashReporting else {
+        guard AppConfig.Features.enableCrashReporting else {
             Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(false)
             Logger.shared.info("Crashlytics disabled via feature flag", category: "firebase")
             return
@@ -82,7 +82,7 @@ final class FirebaseConfig: NSObject {
     
     // MARK: - Messaging Configuration
     private func configureMessaging() {
-        guard AppConfig.FeatureFlags.enablePushNotifications else {
+        guard AppConfig.Features.pushNotificationsEnabled else {
             Logger.shared.info("Push notifications disabled via feature flag", category: "firebase")
             return
         }

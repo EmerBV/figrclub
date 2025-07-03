@@ -121,7 +121,7 @@ final class NotificationService: NSObject {
                 deviceId: UIDevice.current.identifierForVendor?.uuidString ?? ""
             )
             
-            let _: Void = try await APIService.shared
+            let _: EmptyResponse = try await APIService.shared
                 .request(endpoint: .registerDeviceToken, body: request)
                 .async()
             

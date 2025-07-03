@@ -16,7 +16,7 @@ final class FeedViewModel: PaginatedViewModel<Post> {
     private let togglePostLikeUseCase: TogglePostLikeUseCase
     
     // MARK: - Initialization
-    nonisolated init(
+    init(
         loadPostsUseCase: LoadPostsUseCase,
         togglePostLikeUseCase: TogglePostLikeUseCase
     ) {

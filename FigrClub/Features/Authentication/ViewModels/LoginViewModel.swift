@@ -27,7 +27,7 @@ final class LoginViewModel: BaseViewModel {
     private let authManager: AuthManager
     
     // MARK: - Initialization
-    nonisolated init(
+    init(
         loginUseCase: LoginUseCase,
         authManager: AuthManager
     ) {
@@ -35,10 +35,8 @@ final class LoginViewModel: BaseViewModel {
         self.authManager = authManager
         super.init()
         
-        Task { @MainActor in
-            setupValidation()
-            setupAuthObserver()
-        }
+        setupValidation()
+        setupAuthObserver()
     }
     
     // MARK: - Setup

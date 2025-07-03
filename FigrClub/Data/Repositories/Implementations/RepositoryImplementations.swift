@@ -34,11 +34,14 @@ final class RemotePostRepository: PostRepository {
             .async()
     }
     
+    // TODO: Define UpdatePostRequest model
+    /*
     func updatePost(id: Int, request: UpdatePostRequest) async throws -> Post {
         return try await apiService
             .request(endpoint: .updatePost(id), body: request)
             .async()
     }
+    */
     
     func deletePost(id: Int) async throws -> Void {
         let _: EmptyResponse = try await apiService
@@ -281,24 +284,4 @@ final class RemoteAuthRepository: AuthRepository {
             .async()
     }
 }
-
-// MARK: - Supporting Types
-struct UnreadCountResponse: Codable {
-    let count: Int
-}
-
-struct EmptyResponse: Codable {}
-
-// MARK: - Request Types
-struct ForgotPasswordRequest: Codable {
-    let email: String
-}
-
-struct ResetPasswordRequest: Codable {
-    let token: String
-    let newPassword: String
-}
-
-
-
 

@@ -103,20 +103,6 @@ open class BaseViewModel: ObservableObject {
     }
 }
 
-extension BaseViewModel {
-    func handlePaginationCorrectly(currentPage: Int?, totalPages: Int?) {
-        // Manejar opcionales correctamente
-        guard let currentPage = currentPage,
-              let totalPages = totalPages else {
-            return
-        }
-        
-        hasMorePages = currentPage < totalPages - 1
-        self.currentPage = currentPage
-        self.totalPages = totalPages
-    }
-}
-
 // MARK: - Paginated ViewModel
 @MainActor
 open class PaginatedViewModel<T: Identifiable>: BaseViewModel {
@@ -320,7 +306,7 @@ final class DefaultErrorHandler: ErrorHandler {
     }
     
     private func handleAPIError(_ error: APIError) -> ErrorRecoveryStrategy {
-        switch error.statusCode {
+        switch error.statusCode ?? 0 {
         case 401:
             return .refreshTokenAndRetry
         case 500...599:
@@ -344,7 +330,7 @@ final class DefaultErrorHandler: ErrorHandler {
     }
     
     private func getUserFriendlyAPIErrorMessage(_ error: APIError) -> String {
-        switch error.statusCode {
+        switch error.statusCode ?? 0 {
         case 400:
             return "Los datos enviados no son válidos. Por favor, revisa la información."
         case 401:

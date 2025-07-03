@@ -21,12 +21,12 @@ final class CreatePostViewModel: ObservableObject {
     @Published var showError = false
     
     // MARK: - Private Properties
-    private let apiService: APIServiceProtocol
+    private let createPostUseCase: CreatePostUseCase
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
-    nonisolated init(apiService: APIServiceProtocol = APIService.shared) {
-        self.apiService = apiService
+    init(createPostUseCase: CreatePostUseCase) {
+        self.createPostUseCase = createPostUseCase
     }
     
     // MARK: - Public Methods
@@ -46,16 +46,14 @@ final class CreatePostViewModel: ObservableObject {
             visibility: visibility,
             publishNow: true,
             location: nil,
-            hashtags: extractHashtags(from: content)
+            hashtags: extractHashtags(from: content),
+            imageUrls: [] // TODO: Implement image handling
         )
         
         do {
-            let _: Post = try await apiService
-                .request(endpoint: .createPost, body: createRequest)
-                .async()
-            
+            let _: Post = try await createPostUseCase.execute(createRequest)
             postCreated = true
-            Analytics.shared.logPostCreated(postType: "text")
+            Logger.shared.info("Post created successfully", category: "create_post")
             
         } catch {
             showErrorMessage("Error al crear post: \(error.localizedDescription)")

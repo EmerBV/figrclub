@@ -9,7 +9,6 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var authManager: AuthManager
-    @EnvironmentObject private var remoteConfigManager: RemoteConfigManager
     
     var body: some View {
         Group {
@@ -26,7 +25,7 @@ struct ContentView: View {
                     .environmentObject(authManager)
                 
             case .error(let error):
-                ErrorView(error: error) {
+                ErrorView(message: error.localizedDescription) {
                     Task {
                         await authManager.checkAuthenticationStatus()
                     }
@@ -166,7 +165,6 @@ struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
             .environmentObject(DependencyContainer.shared.resolve(AuthManager.self))
-            .environmentObject(RemoteConfigManager.shared)
     }
 }
 #endif

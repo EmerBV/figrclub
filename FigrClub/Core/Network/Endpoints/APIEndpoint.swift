@@ -486,11 +486,19 @@ extension APIEndpoint {
             }
             
         case .getFollowers(let userId, _, _), .getFollowing(let userId, _, _),
-                .userPosts(let userId, _, _), .getComments(let postId, _, _):
-            guard userId > 0 || postId > 0 else {
+                .userPosts(let userId, _, _):
+            guard userId > 0 else {
                 throw APIError(
-                    message: "Invalid ID parameter",
-                    code: "INVALID_ID"
+                    message: "Invalid user ID parameter",
+                    code: "INVALID_USER_ID"
+                )
+            }
+            
+        case .getComments(let postId, _, _):
+            guard postId > 0 else {
+                throw APIError(
+                    message: "Invalid post ID parameter",
+                    code: "INVALID_POST_ID"
                 )
             }
             

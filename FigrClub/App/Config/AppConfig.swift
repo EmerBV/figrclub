@@ -21,21 +21,29 @@ enum AppConfig {
     }
     
     // MARK: - Environment
-    enum Environment {
-        static let current: String = {
+    enum Environment: String, CaseIterable {
+        case development = "development"
+        case staging = "staging"
+        case production = "production"
+        
+        static let current: Environment = {
 #if DEBUG
-            return "development"
+            return .development
 #else
-            return "production"
+            return .production
 #endif
         }()
         
-        static var isDevelopment: Bool {
-            current == "development"
+        var isDevelopment: Bool {
+            self == .development
         }
         
-        static var isProduction: Bool {
-            current == "production"
+        var isProduction: Bool {
+            self == .production
+        }
+        
+        var isStaging: Bool {
+            self == .staging
         }
     }
     
@@ -43,13 +51,11 @@ enum AppConfig {
     enum API {
         static let baseURL: String = {
             switch Environment.current {
-            case "development":
+            case .development:
                 return "http://localhost:9092/figrclub/api/v1"
-            case "staging":
+            case .staging:
                 return "http://localhost:9092/figrclub/api/v1"
-            case "production":
-                return "http://localhost:9092/figrclub/api/v1"
-            default:
+            case .production:
                 return "http://localhost:9092/figrclub/api/v1"
             }
         }()
@@ -66,9 +72,9 @@ enum AppConfig {
     // MARK: - Feature Flags
     enum Features {
         static let enableAnalytics = true
-        static let enableCrashReporting = !Environment.isDevelopment
+        static let enableCrashReporting = !Environment.current.isDevelopment
         static let pushNotificationsEnabled = true
-        static let enableDebugMenu = Environment.isDevelopment
+        static let enableDebugMenu = Environment.current.isDevelopment
         static let enablePerformanceMonitoring = true
         static let enableOfflineMode = true
         static let enableBiometricAuth = true

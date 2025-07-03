@@ -53,14 +53,14 @@ private extension DependencyContainer {
 }
 
 // MARK: - Managers Registration
+@MainActor
 private extension DependencyContainer {
     
     func registerManagers() {
         container.register(AuthManagerProtocol.self) { resolver in
-            AuthManager(
-                apiService: resolver.resolve(APIServiceProtocol.self)!,
-                tokenManager: resolver.resolve(TokenManager.self)!
-            )
+            let apiService = resolver.resolve(APIServiceProtocol.self)!
+            let tokenManager = resolver.resolve(TokenManager.self)!
+            return AuthManager(apiService: apiService, tokenManager: tokenManager)
         }.inObjectScope(.container)
         
         container.register(AuthManager.self) { resolver in
@@ -118,54 +118,70 @@ private extension DependencyContainer {
 }
 
 // MARK: - ViewModels Registration
+@MainActor
 extension DependencyContainer {
     func registerViewModels() {
         // Login ViewModel
         container.register(LoginViewModel.self) { resolver in
-            let viewModel = LoginViewModel()
-            return viewModel
+            let loginUseCase = resolver.resolve(LoginUseCase.self)!
+            let authManager = resolver.resolve(AuthManager.self)!
+            return LoginViewModel(loginUseCase: loginUseCase, authManager: authManager)
         }
         
         // Register ViewModel
         container.register(RegisterViewModel.self) { resolver in
-            let authManager = resolver.resolve(AuthManager.self)
-            let viewModel = RegisterViewModel(authManager: authManager)
-            return viewModel
+            let authManager = resolver.resolve(AuthManager.self)!
+            return RegisterViewModel(authManager: authManager)
         }
         
         // Feed ViewModel
         container.register(FeedViewModel.self) { resolver in
-            let viewModel = FeedViewModel()
-            return viewModel
+            let loadPostsUseCase = resolver.resolve(LoadPostsUseCase.self)!
+            let togglePostLikeUseCase = resolver.resolve(TogglePostLikeUseCase.self)!
+            return FeedViewModel(
+                loadPostsUseCase: loadPostsUseCase,
+                togglePostLikeUseCase: togglePostLikeUseCase
+            )
         }
         
         // Marketplace ViewModel
         container.register(MarketplaceViewModel.self) { resolver in
-            let viewModel = MarketplaceViewModel()
-            return viewModel
+            let loadMarketplaceItemsUseCase = resolver.resolve(LoadMarketplaceItemsUseCase.self)!
+            let loadCategoriesUseCase = resolver.resolve(LoadCategoriesUseCase.self)!
+            return MarketplaceViewModel(
+                loadMarketplaceItemsUseCase: loadMarketplaceItemsUseCase,
+                loadCategoriesUseCase: loadCategoriesUseCase
+            )
         }
         
         // Notifications ViewModel
         container.register(NotificationsViewModel.self) { resolver in
-            let viewModel = NotificationsViewModel()
-            return viewModel
+            let loadNotificationsUseCase = resolver.resolve(LoadNotificationsUseCase.self)!
+            let markNotificationAsReadUseCase = resolver.resolve(MarkNotificationAsReadUseCase.self)!
+            return NotificationsViewModel(
+                loadNotificationsUseCase: loadNotificationsUseCase,
+                markNotificationAsReadUseCase: markNotificationAsReadUseCase
+            )
         }
         
         // Profile ViewModel
         container.register(ProfileViewModel.self) { resolver in
-            let viewModel = ProfileViewModel()
-            return viewModel
+            let loadUserProfileUseCase = resolver.resolve(LoadUserProfileUseCase.self)!
+            let loadUserPostsUseCase = resolver.resolve(LoadUserPostsUseCase.self)!
+            let toggleFollowUserUseCase = resolver.resolve(ToggleFollowUserUseCase.self)!
+            let authManager = resolver.resolve(AuthManager.self)!
+            return ProfileViewModel(
+                loadUserProfileUseCase: loadUserProfileUseCase,
+                loadUserPostsUseCase: loadUserPostsUseCase,
+                toggleFollowUserUseCase: toggleFollowUserUseCase,
+                authManager: authManager
+            )
         }
         
         // Create Post ViewModel
         container.register(CreatePostViewModel.self) { resolver in
             let createPostUseCase = resolver.resolve(CreatePostUseCase.self)!
-            let uploadImageUseCase = resolver.resolve(UploadImageUseCase.self)!
-            let viewModel = CreatePostViewModel(
-                createPostUseCase: createPostUseCase,
-                uploadImageUseCase: uploadImageUseCase
-            )
-            return viewModel
+            return CreatePostViewModel(createPostUseCase: createPostUseCase)
         }
     }
 }
@@ -276,8 +292,8 @@ extension DependencyContainer {
         return resolved
     }
     
-    func resolve<T, Arg1, Arg2>(_ type: T.Type, arguments arg1: Arg1, _ arg2: Arg2) -> T {
-        guard let resolved = container.resolve(type, arguments: arg1, arg2) else {
+    func resolve<T, Arg1, Arg2>(_ type: T.Type, argument1: Arg1, argument2: Arg2) -> T {
+        guard let resolved = container.resolve(type, argument: argument1, argument2) else {
             Logger.shared.fatal("Could not resolve \(type) with arguments", category: "di")
             fatalError("Could not resolve \(type) with arguments")
         }

@@ -227,7 +227,7 @@ enum UseCaseError: Error {
             return .networkError
         }
         
-        if apiError.statusCode == 400 || apiError.statusCode == 422 {
+        if let statusCode = apiError.statusCode, (statusCode == 400 || statusCode == 422) {
             return .invalidInput(apiError.message)
         }
         

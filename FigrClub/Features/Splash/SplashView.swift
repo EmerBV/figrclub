@@ -25,7 +25,7 @@ struct SplashView: View {
                     .opacity(isAnimating ? 1.0 : 0.8)
                 
                 Text("FigrClub")
-                    .font(.figrTitle1.weight(.bold))
+                    .font(.figrTitle.weight(.bold))
                     .foregroundColor(.figrPrimary)
                     .opacity(isAnimating ? 1.0 : 0.0)
                 
@@ -63,7 +63,7 @@ struct MaintenanceView: View {
                 
                 // Título
                 Text("Mantenimiento en curso")
-                    .font(.figrTitle1)
+                    .font(.figrTitle)
                     .foregroundColor(.figrTextPrimary)
                     .multilineTextAlignment(.center)
                 

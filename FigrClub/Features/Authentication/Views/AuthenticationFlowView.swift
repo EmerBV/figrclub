@@ -487,7 +487,7 @@ struct PasswordStrengthIndicator: View {
             ForEach(0..<4, id: \.self) { index in
                 Rectangle()
                     .frame(height: 4)
-                    .foregroundColor(index < strength.level ? strength.color : .figrBorder)
+                    .foregroundColor(index < strength.rawValue + 1 ? strengthColor : .figrBorder)
                     .cornerRadius(2)
             }
             
@@ -495,7 +495,20 @@ struct PasswordStrengthIndicator: View {
             
             Text(strength.description)
                 .font(.figrCaption)
-                .foregroundColor(strength.color)
+                .foregroundColor(strengthColor)
+        }
+    }
+    
+    private var strengthColor: Color {
+        switch strength {
+        case .weak:
+            return .figrError
+        case .fair:
+            return .figrWarning
+        case .good:
+            return .figrInfo
+        case .strong:
+            return .figrSuccess
         }
     }
 }
