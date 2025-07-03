@@ -23,7 +23,7 @@ final class RemotePostRepository: PostRepository {
     
     func getUserPosts(userId: Int, page: Int, size: Int) async throws -> PaginatedResponse<Post> {
         return try await apiService
-            .request(endpoint: .getUserPosts(userId, page: page, size: size), body: nil)
+            .request(endpoint: .userPosts(userId: userId, page: page, size: size), body: nil)
             .async()
     }
     
@@ -98,13 +98,13 @@ final class RemoteUserRepository: UserRepository {
     
     func getFollowers(userId: Int, page: Int, size: Int) async throws -> PaginatedResponse<User> {
         return try await apiService
-            .request(endpoint: .getFollowers(userId, page: page, size: size), body: nil)
+            .request(endpoint: .getFollowers(userId: userId, page: page, size: size), body: nil)
             .async()
     }
     
     func getFollowing(userId: Int, page: Int, size: Int) async throws -> PaginatedResponse<User> {
         return try await apiService
-            .request(endpoint: .getFollowing(userId, page: page, size: size), body: nil)
+            .request(endpoint: .getFollowing(userId: userId, page: page, size: size), body: nil)
             .async()
     }
 }
@@ -155,7 +155,7 @@ final class RemoteMarketplaceRepository: MarketplaceRepository {
     
     func getItemsByCategory(categoryId: Int, page: Int, size: Int) async throws -> PaginatedResponse<MarketplaceItem> {
         return try await apiService
-            .request(endpoint: .getMarketplaceItemsByCategory(categoryId, page: page, size: size), body: nil)
+            .request(endpoint: .getMarketplaceItemsByCategory(categoryId: categoryId, page: page, size: size), body: nil)
             .async()
     }
 }

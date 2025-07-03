@@ -276,9 +276,3 @@ extension Post {
         return truncated + "..."
     }
 }
-
-// MARK: - Sort Direction
-enum SortDirection: String, Codable, CaseIterable {
-    case asc = "ASC"
-    case desc = "DESC"
-}

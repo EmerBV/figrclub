@@ -282,69 +282,6 @@ extension AppConfig {
     }
 }
 
-// MARK: - Remote Configuration
-@MainActor
-final class RemoteConfigManager: ObservableObject {
-    static let shared = RemoteConfigManager()
-    
-    @Published var isMaintenanceMode = false
-    @Published var minimumAppVersion = "1.0.0"
-    @Published var featuresEnabled: [String: Bool] = [:]
-    @Published var remoteSettings: [String: Any] = [:]
-    
-    private init() {
-        loadRemoteConfig()
-    }
-    
-    func loadRemoteConfig() {
-        // In production, this would load from Firebase Remote Config
-        // For now, we'll use default values
-        featuresEnabled = [
-            "marketplace": true,
-            "notifications": true,
-            "stories": false,
-            "live_streams": false
-        ]
-        
-        remoteSettings = [
-            "max_posts_per_hour": 10,
-            "maintenance_message": "Estamos realizando mantenimiento programado.",
-            "force_update_message": "Por favor, actualiza la aplicación para continuar."
-        ]
-    }
-    
-    func isFeatureEnabled(_ feature: String) -> Bool {
-        return featuresEnabled[feature] ?? false
-    }
-    
-    func getSetting<T>(_ key: String, defaultValue: T) -> T {
-        return remoteSettings[key] as? T ?? defaultValue
-    }
-    
-    func isAppVersionSupported(_ currentVersion: String) -> Bool {
-        return currentVersion.compare(minimumAppVersion, options: .numeric) != .orderedAscending
-    }
-}
-
-// MARK: - Debug Configuration
-#if DEBUG
-struct DebugConfig {
-    static let showPerformanceOverlay = true
-    static let showMemoryUsage = true
-    static let enableNetworkLogging = true
-    static let simulateSlowNetwork = false
-    static let networkDelay: TimeInterval = 2.0
-    
-    // Mock data settings
-    static let useMockData = false
-    static let mockDataDelay: TimeInterval = 1.0
-    
-    // UI Testing
-    static let disableAnimations = false
-    static let showAccessibilityOutlines = false
-}
-#endif
-
 // MARK: - Build Configuration
 struct BuildConfig {
     static let appName = Bundle.main.infoDictionary?["CFBundleDisplayName"] as? String ?? "FigrClub"

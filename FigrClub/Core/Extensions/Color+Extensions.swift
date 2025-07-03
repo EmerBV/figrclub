@@ -40,3 +40,16 @@ extension Color {
         )
     }
 }
+
+extension Color {
+    static let figrCard = Color("CardColor")
+    
+    // Text Colors
+    static let figrTextTertiary = Color("TextTertiaryColor")
+    
+    // State Colors
+    static let figrInfo = Color("InfoColor")
+    
+    // Border Colors
+    static let figrDivider = Color("DividerColor")
+}

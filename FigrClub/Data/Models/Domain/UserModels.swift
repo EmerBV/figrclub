@@ -17,12 +17,28 @@ struct User: Codable, Identifiable {
     let userType: UserType
     let subscriptionType: SubscriptionType
     let isVerified: Bool
+    let isPrivate: Bool
     let profileImageUrl: String?
     let bio: String?
     let createdAt: String
+    let updatedAt: String?
     
     var fullName: String {
         return "\(firstName) \(lastName)"
+    }
+    
+    var displayName: String {
+        return username.isEmpty ? fullName : "@\(username)"
+    }
+    
+    var initials: String {
+        let firstInitial = firstName.first?.uppercased() ?? ""
+        let lastInitial = lastName.first?.uppercased() ?? ""
+        return firstInitial + lastInitial
+    }
+    
+    var formattedUsername: String {
+        return username.hasPrefix("@") ? username : "@\(username)"
     }
     
     // Custom init para debugging
@@ -43,9 +59,11 @@ struct User: Codable, Identifiable {
             userType = try container.decode(UserType.self, forKey: .userType)
             subscriptionType = try container.decode(SubscriptionType.self, forKey: .subscriptionType)
             isVerified = try container.decode(Bool.self, forKey: .isVerified)
+            isPrivate = try container.decode(Bool.self, forKey: .isPrivate)
             profileImageUrl = try container.decodeIfPresent(String.self, forKey: .profileImageUrl)
             bio = try container.decodeIfPresent(String.self, forKey: .bio)
             createdAt = try container.decode(String.self, forKey: .createdAt)
+            updatedAt = try container.decodeIfPresent(String.self, forKey: .updatedAt)
             
 #if DEBUG
             print("✅ User decoded successfully: \(email)")
@@ -72,14 +90,16 @@ struct User: Codable, Identifiable {
         try container.encode(userType, forKey: .userType)
         try container.encode(subscriptionType, forKey: .subscriptionType)
         try container.encode(isVerified, forKey: .isVerified)
+        try container.encode(isPrivate, forKey: .isPrivate)
         try container.encodeIfPresent(profileImageUrl, forKey: .profileImageUrl)
         try container.encodeIfPresent(bio, forKey: .bio)
         try container.encode(createdAt, forKey: .createdAt)
+        try container.encodeIfPresent(updatedAt, forKey: .updatedAt)
     }
     
     // CodingKeys
     enum CodingKeys: String, CodingKey {
-        case id, firstName, lastName, email, username, userType, subscriptionType, isVerified, profileImageUrl, bio, createdAt
+        case id, firstName, lastName, email, username, userType, subscriptionType, isVerified, isPrivate, profileImageUrl, bio, createdAt, updatedAt
     }
 }
 
@@ -94,9 +114,11 @@ extension User {
         userType: UserType,
         subscriptionType: SubscriptionType,
         isVerified: Bool,
+        isPrivate: Bool,
         profileImageUrl: String?,
         bio: String?,
-        createdAt: String
+        createdAt: String,
+        updatedAt: String?
     ) {
         self.id = id
         self.firstName = firstName
@@ -106,9 +128,31 @@ extension User {
         self.userType = userType
         self.subscriptionType = subscriptionType
         self.isVerified = isVerified
+        self.isPrivate = isPrivate
         self.profileImageUrl = profileImageUrl
         self.bio = bio
         self.createdAt = createdAt
+        self.updatedAt = updatedAt
+    }
+}
+
+extension User {
+    static func mock() -> User {
+        return User(
+            id: 1,
+            firstName: "Juan",
+            lastName: "Pérez",
+            email: "juan@example.com",
+            username: "juanperez",
+            userType: .regular,
+            subscriptionType: .free,
+            isVerified: false,
+            isPrivate: false,
+            profileImageUrl: nil,
+            bio: "Coleccionista de figuras de anime",
+            createdAt: "2024-01-01T00:00:00Z",
+            updatedAt: nil
+        )
     }
 }
 
@@ -123,19 +167,47 @@ struct UserStats: Codable {
     let postsCount: Int
     let followersCount: Int
     let followingCount: Int
-    let likesReceived: Int
+    let likesReceivedCount: Int
+    let marketplaceItemsCount: Int
+    let totalViews: Int
+    
+    var formattedFollowersCount: String {
+        return formatCount(followersCount)
+    }
+    
+    var formattedFollowingCount: String {
+        return formatCount(followingCount)
+    }
+    
+    var formattedPostsCount: String {
+        return formatCount(postsCount)
+    }
+    
+    private func formatCount(_ count: Int) -> String {
+        if count >= 1_000_000 {
+            return String(format: "%.1fM", Double(count) / 1_000_000)
+        } else if count >= 1_000 {
+            return String(format: "%.1fK", Double(count) / 1_000)
+        } else {
+            return "\(count)"
+        }
+    }
     
     // Inicializador por defecto
     init(
         postsCount: Int = 0,
         followersCount: Int = 0,
         followingCount: Int = 0,
-        likesReceived: Int = 0
+        likesReceivedCount: Int = 0,
+        marketplaceItemsCount: Int = 0,
+        totalViews: Int = 0
     ) {
         self.postsCount = postsCount
         self.followersCount = followersCount
         self.followingCount = followingCount
-        self.likesReceived = likesReceived
+        self.likesReceivedCount = likesReceivedCount
+        self.marketplaceItemsCount = marketplaceItemsCount
+        self.totalViews = totalViews
     }
 }
 
@@ -143,11 +215,6 @@ enum SubscriptionType: String, Codable, CaseIterable {
     case free = "FREE"
     case premium = "PREMIUM"
     case pro = "PRO"
-}
-
-struct AuthToken: Codable {
-    let id: Int
-    let token: String
 }
 
 struct LegalAcceptance: Codable {
@@ -158,26 +225,6 @@ struct LegalAcceptance: Codable {
 struct Consent: Codable {
     let consentType: String
     let isGranted: Bool
-}
-
-// MARK: - Device Token Models
-struct DeviceToken: Codable, Identifiable {
-    let id: Int
-    let deviceType: DeviceType
-    let deviceName: String?
-    let appVersion: String
-    let osVersion: String
-    let lastUsedAt: String
-    let notificationsEnabled: Bool
-    let marketingEnabled: Bool
-    let salesEnabled: Bool
-    let purchaseEnabled: Bool
-}
-
-enum DeviceType: String, Codable, CaseIterable {
-    case ios = "IOS"
-    case android = "ANDROID"
-    case web = "WEB"
 }
 
 // MARK: - UserType Extensions
@@ -200,3 +247,5 @@ extension UserType {
         }
     }
 }
+
+

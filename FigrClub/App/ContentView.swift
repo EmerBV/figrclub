@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import CoreData
 
 struct ContentView: View {
     @EnvironmentObject private var authManager: AuthManager
@@ -18,17 +17,62 @@ struct ContentView: View {
             case .loading:
                 SplashView()
                 
-            case .authenticated:
+            case .authenticated(let user):
                 MainTabView()
+                    .environmentObject(authManager)
                 
             case .unauthenticated:
                 AuthenticationFlowView()
+                    .environmentObject(authManager)
+                
+            case .error(let error):
+                ErrorView(error: error) {
+                    Task {
+                        await authManager.checkAuthenticationStatus()
+                    }
+                }
             }
         }
         .animation(.easeInOut(duration: AppConfig.UI.animationDuration), value: authManager.authState)
         .task {
             await authManager.checkAuthenticationStatus()
         }
+        .onAppear {
+            setupGlobalAppearance()
+        }
+    }
+    
+    private func setupGlobalAppearance() {
+        // Configure global UI appearance
+        setupNavigationBarAppearance()
+        setupTabBarAppearance()
+    }
+    
+    private func setupNavigationBarAppearance() {
+        let navigationBarAppearance = UINavigationBarAppearance()
+        navigationBarAppearance.configureWithDefaultBackground()
+        navigationBarAppearance.backgroundColor = UIColor(.figrBackground)
+        navigationBarAppearance.titleTextAttributes = [
+            .foregroundColor: UIColor(.figrTextPrimary),
+            .font: UIFont.systemFont(ofSize: 18, weight: .semibold)
+        ]
+        navigationBarAppearance.largeTitleTextAttributes = [
+            .foregroundColor: UIColor(.figrTextPrimary),
+            .font: UIFont.systemFont(ofSize: 32, weight: .bold)
+        ]
+        
+        UINavigationBar.appearance().standardAppearance = navigationBarAppearance
+        UINavigationBar.appearance().compactAppearance = navigationBarAppearance
+        UINavigationBar.appearance().scrollEdgeAppearance = navigationBarAppearance
+    }
+    
+    private func setupTabBarAppearance() {
+        let tabBarAppearance = UITabBarAppearance()
+        tabBarAppearance.configureWithDefaultBackground()
+        tabBarAppearance.backgroundColor = UIColor(.figrSurface)
+        
+        UITabBar.appearance().standardAppearance = tabBarAppearance
+        UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
     }
 }
 
@@ -48,4 +92,41 @@ extension AuthState: Equatable {
         }
     }
 }
+
+// MARK: - Button Style
+struct FigrButtonStyle: ButtonStyle {
+    let isEnabled: Bool
+    let isLoading: Bool
+    
+    init(isEnabled: Bool = true, isLoading: Bool = false) {
+        self.isEnabled = isEnabled
+        self.isLoading = isLoading
+    }
+    
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundColor(.white)
+            .font(.figrCallout.weight(.medium))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, Spacing.medium)
+            .background(
+                isEnabled ? Color.figrPrimary : Color.figrTextSecondary
+            )
+            .cornerRadius(AppConfig.UI.cornerRadius)
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+            .disabled(!isEnabled || isLoading)
+    }
+}
+
+// MARK: - Preview
+#if DEBUG
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+            .environmentObject(DependencyContainer.shared.resolve(AuthManager.self))
+            .environmentObject(RemoteConfigManager.shared)
+    }
+}
+#endif
 

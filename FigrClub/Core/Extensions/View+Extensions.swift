@@ -61,16 +61,6 @@ extension View {
         }
     }
     
-    /// Adds a toast overlay
-    func toast<T: View>(
-        isPresented: Binding<Bool>,
-        @ViewBuilder content: () -> T
-    ) -> some View {
-        self.overlay(
-            ToastView(isPresented: isPresented, content: content)
-        )
-    }
-    
     /// Keyboard dismiss on tap
     func dismissKeyboardOnTap() -> some View {
         self.onTapGesture {

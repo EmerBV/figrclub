@@ -318,57 +318,6 @@ extension View {
     }
 }
 
-// MARK: - Accessibility Announcements Manager
-@MainActor
-final class AccessibilityAnnouncementManager: ObservableObject {
-    static let shared = AccessibilityAnnouncementManager()
-    
-    @Published var currentAnnouncement: String?
-    
-    private init() {}
-    
-    /// Announce a message with optional delay
-    func announce(_ message: String, delay: TimeInterval = 0) {
-        if delay > 0 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                self.performAnnouncement(message)
-            }
-        } else {
-            performAnnouncement(message)
-        }
-    }
-    
-    /// Announce success message
-    func announceSuccess(_ message: String) {
-        announce("Éxito: \(message)")
-    }
-    
-    /// Announce error message
-    func announceError(_ message: String) {
-        announce("Error: \(message)")
-    }
-    
-    /// Announce loading state
-    func announceLoading(_ message: String = "Cargando") {
-        announce(message)
-    }
-    
-    /// Announce navigation change
-    func announceNavigation(_ screenName: String) {
-        announce("Navegando a \(screenName)")
-    }
-    
-    private func performAnnouncement(_ message: String) {
-        currentAnnouncement = message
-        AccessibilityHelper.announce(message)
-        
-        // Clear announcement after a delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.currentAnnouncement = nil
-        }
-    }
-}
-
 // MARK: - Accessibility Testing Helpers
 #if DEBUG
 struct AccessibilityTestingView: View {

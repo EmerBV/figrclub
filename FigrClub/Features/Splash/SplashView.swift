@@ -81,40 +81,6 @@ struct MaintenanceView: View {
     }
 }
 
-// MARK: - Performance Overlay (Debug)
-#if DEBUG
-struct PerformanceOverlayView: View {
-    @State private var memoryUsage: String = ""
-    @State private var timer: Timer?
-    
-    var body: some View {
-        VStack(alignment: .trailing, spacing: 4) {
-            Text("MEM: \(memoryUsage)")
-                .font(.caption2)
-                .foregroundColor(.white)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.black.opacity(0.7))
-                .cornerRadius(8)
-        }
-        .padding()
-        .onAppear {
-            startMemoryMonitoring()
-        }
-        .onDisappear {
-            timer?.invalidate()
-        }
-    }
-    
-    private func startMemoryMonitoring() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            let usage = MemoryManager.shared.getCurrentMemoryUsage()
-            memoryUsage = ByteCountFormatter.string(fromByteCount: Int64(usage), countStyle: .memory)
-        }
-    }
-}
-#endif
-
 // MARK: - Button Styles
 struct FilledButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {

@@ -165,8 +165,7 @@ final class AuthManager: AuthManagerProtocol {
         } catch {
             let apiError = error as? APIError ?? APIError(
                 message: "Login failed: \(error.localizedDescription)",
-                code: "LOGIN_FAILED",
-                timestamp: ISO8601DateFormatter().string(from: Date())
+                code: "LOGIN_FAILED"
             )
             
             Logger.shared.error("Login failed", error: apiError, category: "auth")
@@ -196,9 +195,11 @@ final class AuthManager: AuthManagerProtocol {
                 userType: request.userType,
                 subscriptionType: .free,
                 isVerified: response.emailVerified,
+                isPrivate: false,
                 profileImageUrl: nil,
                 bio: nil,
-                createdAt: ISO8601DateFormatter().string(from: Date())
+                createdAt: ISO8601DateFormatter().string(from: Date()),
+                updatedAt: ISO8601DateFormatter().string(from: Date())
             )
             
             Analytics.shared.logSignup(method: "email")
@@ -208,7 +209,7 @@ final class AuthManager: AuthManagerProtocol {
             let apiError = error as? APIError ?? APIError(
                 message: "Registration failed: \(error.localizedDescription)",
                 code: "REGISTRATION_FAILED",
-                timestamp: ISO8601DateFormatter().string(from: Date())
+                statusCode: error.localizedDescription.contains("400") ? 400 : 500,
             )
             
             Logger.shared.error("Registration failed", error: apiError, category: "auth")
@@ -251,8 +252,7 @@ final class AuthManager: AuthManagerProtocol {
         guard let userId = tokenManager.getUserId() else {
             let error = APIError(
                 message: "No user ID found",
-                code: "NO_USER_ID",
-                timestamp: ISO8601DateFormatter().string(from: Date())
+                code: "NO_USER_ID"
             )
             await setErrorState(error)
             return .failure(error)
@@ -273,8 +273,7 @@ final class AuthManager: AuthManagerProtocol {
         } catch {
             let apiError = error as? APIError ?? APIError(
                 message: "Failed to get user data: \(error.localizedDescription)",
-                code: "GET_USER_FAILED",
-                timestamp: ISO8601DateFormatter().string(from: Date())
+                code: "GET_USER_FAILED"
             )
             
             Logger.shared.error("Failed to get user data", error: apiError, category: "auth")

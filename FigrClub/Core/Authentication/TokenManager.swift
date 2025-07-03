@@ -16,10 +16,12 @@ final class TokenManager: ObservableObject {
     private let accessTokenKey = "access_token"
     private let refreshTokenKey = "refresh_token"
     private let userIdKey = "user_id"
+    private let tokenExpiryKey = "token_expiry"
     
     @Published var isAuthenticated = false
     
     private var cancellables = Set<AnyCancellable>()
+    private var refreshTask: Task<String?, Never>?
     
     private init() {
         // Configurar keychain con service específico para la app
@@ -32,7 +34,7 @@ final class TokenManager: ObservableObject {
     
     // MARK: - Public Methods
     
-    func saveTokens(accessToken: String, refreshToken: String? = nil, userId: Int) {
+    func saveTokens(accessToken: String, refreshToken: String? = nil, userId: Int, expiresIn: TimeInterval? = nil) {
         do {
             try keychain.set(accessToken, key: accessTokenKey)
             
@@ -42,18 +44,20 @@ final class TokenManager: ObservableObject {
             
             try keychain.set(String(userId), key: userIdKey)
             
+            // Save expiry time
+            if let expiresIn = expiresIn {
+                let expiryDate = Date().addingTimeInterval(expiresIn)
+                try keychain.set(ISO8601DateFormatter().string(from: expiryDate), key: tokenExpiryKey)
+            }
+            
             DispatchQueue.main.async {
                 self.isAuthenticated = true
             }
             
-#if DEBUG
-            print("✅ Tokens saved successfully for user: \(userId)")
-#endif
+            Logger.shared.info("Tokens saved successfully for user: \(userId)", category: "auth")
             
         } catch {
-#if DEBUG
-            print("❌ Failed to save tokens: \(error)")
-#endif
+            Logger.shared.error("Failed to save tokens", error: error, category: "auth")
         }
     }
     
@@ -61,9 +65,7 @@ final class TokenManager: ObservableObject {
         do {
             return try keychain.get(accessTokenKey)
         } catch {
-#if DEBUG
-            print("❌ Failed to get access token: \(error)")
-#endif
+            Logger.shared.error("Failed to get access token", error: error, category: "auth")
             return nil
         }
     }
@@ -72,24 +74,27 @@ final class TokenManager: ObservableObject {
         do {
             return try keychain.get(refreshTokenKey)
         } catch {
-#if DEBUG
-            print("❌ Failed to get refresh token: \(error)")
-#endif
+            Logger.shared.error("Failed to get refresh token", error: error, category: "auth")
             return nil
         }
     }
     
     func getUserId() -> Int? {
         do {
-            guard let userIdString = try keychain.get(userIdKey),
-                  let userId = Int(userIdString) else {
-                return nil
-            }
-            return userId
+            guard let userIdString = try keychain.get(userIdKey) else { return nil }
+            return Int(userIdString)
         } catch {
-#if DEBUG
-            print("❌ Failed to get user ID: \(error)")
-#endif
+            Logger.shared.error("Failed to get user ID", error: error, category: "auth")
+            return nil
+        }
+    }
+    
+    func getTokenExpiry() -> Date? {
+        do {
+            guard let expiryString = try keychain.get(tokenExpiryKey) else { return nil }
+            return ISO8601DateFormatter().date(from: expiryString)
+        } catch {
+            Logger.shared.error("Failed to get token expiry", error: error, category: "auth")
             return nil
         }
     }
@@ -99,148 +104,325 @@ final class TokenManager: ObservableObject {
             try keychain.remove(accessTokenKey)
             try keychain.remove(refreshTokenKey)
             try keychain.remove(userIdKey)
+            try keychain.remove(tokenExpiryKey)
             
             DispatchQueue.main.async {
                 self.isAuthenticated = false
             }
             
-#if DEBUG
-            print("✅ Tokens cleared successfully")
-#endif
+            Logger.shared.info("Tokens cleared successfully", category: "auth")
             
         } catch {
-#if DEBUG
-            print("❌ Failed to clear tokens: \(error)")
-#endif
+            Logger.shared.error("Failed to clear tokens", error: error, category: "auth")
         }
     }
     
-    func refreshAccessToken() async -> Result<String, APIError> {
+    // MARK: - Token Validation and Refresh
+    
+    func isTokenValid() -> Bool {
+        guard let accessToken = getAccessToken(), !accessToken.isEmpty else {
+            return false
+        }
+        
+        // Check if token is expired
+        if let expiryDate = getTokenExpiry() {
+            return expiryDate > Date().addingTimeInterval(300) // 5 minutes buffer
+        }
+        
+        // If no expiry date, assume valid for now
+        return true
+    }
+    
+    func isTokenExpired() -> Bool {
+        guard let expiryDate = getTokenExpiry() else {
+            return false // No expiry date, assume not expired
+        }
+        
+        return expiryDate <= Date()
+    }
+    
+    func willTokenExpireSoon(within timeInterval: TimeInterval = 300) -> Bool {
+        guard let expiryDate = getTokenExpiry() else {
+            return false
+        }
+        
+        return expiryDate <= Date().addingTimeInterval(timeInterval)
+    }
+    
+    // MARK: - Token Refresh
+    
+    func refreshTokenIfNeeded() async -> String? {
+        // If there's already a refresh in progress, wait for it
+        if let existingTask = refreshTask {
+            return await existingTask.value
+        }
+        
+        // Check if refresh is needed
+        guard !isTokenValid() else {
+            return getAccessToken()
+        }
+        
+        // Create refresh task
+        refreshTask = Task {
+            await performTokenRefresh()
+        }
+        
+        defer {
+            refreshTask = nil
+        }
+        
+        return await refreshTask?.value
+    }
+    
+    private func performTokenRefresh() async -> String? {
         guard let refreshToken = getRefreshToken() else {
-            clearTokens()
-            return .failure(APIError(
-                message: "No refresh token available",
-                code: "NO_REFRESH_TOKEN",
-                timestamp: ISO8601DateFormatter().string(from: Date())
-            ))
+            Logger.shared.warning("No refresh token available", category: "auth")
+            await clearTokensOnMainActor()
+            return nil
         }
         
         do {
-            let refreshRequest = RefreshTokenRequest(refreshToken: refreshToken)
+            Logger.shared.info("Attempting to refresh token", category: "auth")
+            
+            let request = RefreshTokenRequest(refreshToken: refreshToken)
+            
             let response: AuthResponse = try await APIService.shared
-                .request(endpoint: .refreshToken, body: refreshRequest)
+                .request(endpoint: .refreshToken, body: request)
                 .async()
             
             // Save new tokens
             saveTokens(
                 accessToken: response.authToken.token,
-                refreshToken: refreshToken, // Keep the same refresh token unless API provides a new one
-                userId: response.userId
+                refreshToken: response.refreshToken?.token,
+                userId: response.userId,
+                expiresIn: response.authToken.expiresIn
             )
             
-            return .success(response.authToken.token)
+            Logger.shared.info("Token refreshed successfully", category: "auth")
+            
+            return response.authToken.token
             
         } catch {
-            clearTokens()
+            Logger.shared.error("Failed to refresh token", error: error, category: "auth")
             
-            let apiError = error as? APIError ?? APIError(
-                message: "Failed to refresh token",
-                code: "REFRESH_FAILED",
-                timestamp: ISO8601DateFormatter().string(from: Date())
-            )
+            // If refresh fails, clear all tokens
+            await clearTokensOnMainActor()
             
-            return .failure(apiError)
+            return nil
         }
     }
     
-    // MARK: - Private Methods
+    @MainActor
+    private func clearTokensOnMainActor() {
+        clearTokens()
+    }
     
-    private func checkAuthenticationStatus() {
-        let hasAccessToken = getAccessToken() != nil
-        let hasUserId = getUserId() != nil
+    // MARK: - Authentication State
+    
+    func checkAuthenticationStatus() {
+        let hasValidToken = isTokenValid()
         
         DispatchQueue.main.async {
-            self.isAuthenticated = hasAccessToken && hasUserId
+            self.isAuthenticated = hasValidToken
         }
-    }
-    
-    // MARK: - Token Validation
-    
-    func isTokenExpired() -> Bool {
-        // Simple check - if no token exists, consider it expired
-        guard let token = getAccessToken() else { return true }
         
-        // TODO: Implement JWT token expiration check
-        // For now, assume token is valid if it exists
-        // You can decode the JWT and check the 'exp' claim
+        Logger.shared.info("Authentication status checked: \(hasValidToken)", category: "auth")
+    }
+    
+    // MARK: - Authorization Header
+    
+    func getAuthorizationHeader() -> String? {
+        guard let accessToken = getAccessToken() else {
+            return nil
+        }
         
-        return false
+        return "Bearer \(accessToken)"
     }
     
-    func shouldRefreshToken() -> Bool {
-        // TODO: Implement logic to check if token should be refreshed
-        // (e.g., if it expires in less than 5 minutes)
-        return isTokenExpired()
-    }
-    
-    // MARK: - Biometric Authentication Support
-    
-    func saveTokensWithBiometrics(accessToken: String, refreshToken: String? = nil, userId: Int) {
-        do {
-            let biometricKeychain = keychain.accessibility(.whenUnlockedThisDeviceOnly, authenticationPolicy: .biometryAny)
-            
-            try biometricKeychain.set(accessToken, key: accessTokenKey)
-            
-            if let refreshToken = refreshToken {
-                try biometricKeychain.set(refreshToken, key: refreshTokenKey)
-            }
-            
-            try biometricKeychain.set(String(userId), key: userIdKey)
-            
-            DispatchQueue.main.async {
-                self.isAuthenticated = true
-            }
-            
-#if DEBUG
-            print("✅ Tokens saved with biometric protection for user: \(userId)")
-#endif
-            
-        } catch {
-#if DEBUG
-            print("❌ Failed to save tokens with biometrics: \(error)")
-#endif
-            // Fallback to regular save
-            saveTokens(accessToken: accessToken, refreshToken: refreshToken, userId: userId)
+    func getAuthorizationHeaderAsync() async -> String? {
+        // Try to get current token first
+        if let token = getAccessToken(), isTokenValid() {
+            return "Bearer \(token)"
         }
+        
+        // If token is invalid, try to refresh
+        if let refreshedToken = await refreshTokenIfNeeded() {
+            return "Bearer \(refreshedToken)"
+        }
+        
+        return nil
     }
     
-    // MARK: - Debug Methods
+    // MARK: - Token Information
+    
+    func getTokenInfo() -> TokenInfo? {
+        guard let accessToken = getAccessToken(),
+              let userId = getUserId() else {
+            return nil
+        }
+        
+        return TokenInfo(
+            accessToken: accessToken,
+            refreshToken: getRefreshToken(),
+            userId: userId,
+            expiryDate: getTokenExpiry(),
+            isValid: isTokenValid(),
+            isExpired: isTokenExpired()
+        )
+    }
+    
+    // MARK: - Debug Information
     
 #if DEBUG
-    func debugPrintKeychain() {
-        print("🔑 Keychain Debug Info:")
-        print("- Has Access Token: \(getAccessToken() != nil)")
-        print("- Has Refresh Token: \(getRefreshToken() != nil)")
-        print("- User ID: \(getUserId() ?? 0)")
-        print("- Is Authenticated: \(isAuthenticated)")
-    }
-    
-    func clearAllKeychainData() {
-        do {
-            try keychain.removeAll()
-            DispatchQueue.main.async {
-                self.isAuthenticated = false
-            }
-            print("✅ All keychain data cleared")
-        } catch {
-            print("❌ Failed to clear keychain: \(error)")
-        }
+    func getDebugInfo() -> [String: Any] {
+        return [
+            "hasAccessToken": getAccessToken() != nil,
+            "hasRefreshToken": getRefreshToken() != nil,
+            "userId": getUserId() ?? "nil",
+            "expiryDate": getTokenExpiry()?.description ?? "nil",
+            "isAuthenticated": isAuthenticated,
+            "isTokenValid": isTokenValid(),
+            "isTokenExpired": isTokenExpired(),
+            "willExpireSoon": willTokenExpireSoon()
+        ]
     }
 #endif
 }
 
 // MARK: - Supporting Models
+
+struct TokenInfo {
+    let accessToken: String
+    let refreshToken: String?
+    let userId: Int
+    let expiryDate: Date?
+    let isValid: Bool
+    let isExpired: Bool
+    
+    var timeUntilExpiry: TimeInterval? {
+        guard let expiryDate = expiryDate else { return nil }
+        return expiryDate.timeIntervalSinceNow
+    }
+    
+    var formattedExpiryDate: String? {
+        guard let expiryDate = expiryDate else { return nil }
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: expiryDate)
+    }
+}
+
 struct RefreshTokenRequest: Codable {
     let refreshToken: String
+}
+
+struct AuthToken: Codable {
+    let token: String
+    let expiresIn: TimeInterval?
+    let tokenType: String
+    
+    init(token: String, expiresIn: TimeInterval? = nil, tokenType: String = "Bearer") {
+        self.token = token
+        self.expiresIn = expiresIn
+        self.tokenType = tokenType
+    }
+}
+
+struct AuthResponse: Codable {
+    let authToken: AuthToken
+    let refreshToken: AuthToken?
+    let userId: Int
+    let expiresAt: String?
+    
+    var expiryDate: Date? {
+        guard let expiresAt = expiresAt else { return nil }
+        return ISO8601DateFormatter().date(from: expiresAt)
+    }
+}
+
+// MARK: - Token Manager Extensions
+
+extension TokenManager {
+    
+    // Convenience method for logout
+    func logout() {
+        clearTokens()
+        
+        // Post logout notification
+        NotificationCenter.default.post(name: .userDidLogout, object: nil)
+        
+        Logger.shared.info("User logged out", category: "auth")
+    }
+    
+    // Check if user session is still valid
+    func validateSession() async -> Bool {
+        if isTokenValid() {
+            return true
+        }
+        
+        // Try to refresh token
+        let refreshedToken = await refreshTokenIfNeeded()
+        return refreshedToken != nil
+    }
+    
+    // Force token refresh (for testing or manual refresh)
+    func forceRefreshToken() async -> String? {
+        refreshTask?.cancel()
+        refreshTask = nil
+        
+        return await performTokenRefresh()
+    }
+}
+
+// MARK: - Notification Names
+
+extension Notification.Name {
+    static let userDidLogout = Notification.Name("userDidLogout")
+    static let tokenDidRefresh = Notification.Name("tokenDidRefresh")
+    static let tokenRefreshFailed = Notification.Name("tokenRefreshFailed")
+}
+
+// MARK: - Token Storage Security
+
+extension TokenManager {
+    
+    // Verify keychain accessibility
+    func verifyKeychainAccess() -> Bool {
+        do {
+            let testKey = "test_key"
+            let testValue = "test_value"
+            
+            try keychain.set(testValue, key: testKey)
+            let retrievedValue = try keychain.get(testKey)
+            try keychain.remove(testKey)
+            
+            return retrievedValue == testValue
+        } catch {
+            Logger.shared.error("Keychain access verification failed", error: error, category: "auth")
+            return false
+        }
+    }
+    
+    // Migration helper for old token storage
+    func migrateFromUserDefaults() {
+        // Check if tokens exist in UserDefaults (legacy storage)
+        if let legacyToken = UserDefaults.standard.string(forKey: "legacy_access_token"),
+           let legacyUserIdString = UserDefaults.standard.string(forKey: "legacy_user_id"),
+           let legacyUserId = Int(legacyUserIdString) {
+            
+            // Migrate to keychain
+            saveTokens(
+                accessToken: legacyToken,
+                userId: legacyUserId
+            )
+            
+            // Remove from UserDefaults
+            UserDefaults.standard.removeObject(forKey: "legacy_access_token")
+            UserDefaults.standard.removeObject(forKey: "legacy_user_id")
+            
+            Logger.shared.info("Migrated tokens from UserDefaults to Keychain", category: "auth")
+        }
+    }
 }
 

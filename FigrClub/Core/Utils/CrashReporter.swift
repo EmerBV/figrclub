@@ -26,7 +26,7 @@ final class CrashReporter {
         // Set custom keys
         Crashlytics.crashlytics().setCustomValue(AppConfig.AppInfo.version, forKey: "app_version")
         Crashlytics.crashlytics().setCustomValue(AppConfig.AppInfo.buildNumber, forKey: "build_number")
-        Crashlytics.crashlytics().setCustomValue(AppConfig.Environment.current.rawValue, forKey: "environment")
+        Crashlytics.crashlytics().setCustomValue(AppConfig.Environment.current, forKey: "environment")
     }
     
     func setUserId(_ userId: String) {

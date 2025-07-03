@@ -10,7 +10,7 @@ import SwiftUI
 
 extension Font {
     static let figrLargeTitle = Font.custom("SF Pro Display", size: 34).weight(.bold)
-    static let figrTitle = Font.custom("SF Pro Display", size: 28).weight(.bold)
+    static let figrTitle1 = Font.custom("SF Pro Display", size: 28).weight(.bold)
     static let figrTitle2 = Font.custom("SF Pro Display", size: 22).weight(.bold)
     static let figrTitle3 = Font.custom("SF Pro Display", size: 20).weight(.semibold)
     static let figrHeadline = Font.custom("SF Pro Text", size: 17).weight(.semibold)

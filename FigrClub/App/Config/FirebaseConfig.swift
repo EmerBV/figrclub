@@ -56,7 +56,7 @@ final class FirebaseConfig: NSObject {
         FirebaseAnalytics.Analytics.setDefaultEventParameters([
             "app_version": AppConfig.AppInfo.version,
             "build_number": AppConfig.AppInfo.buildNumber,
-            "environment": AppConfig.Environment.current.rawValue
+            "environment": AppConfig.Environment.current
         ])
         
         Logger.shared.info("Analytics configured successfully", category: "firebase")
@@ -75,7 +75,7 @@ final class FirebaseConfig: NSObject {
         // Set custom keys
         Crashlytics.crashlytics().setCustomValue(AppConfig.AppInfo.version, forKey: "app_version")
         Crashlytics.crashlytics().setCustomValue(AppConfig.AppInfo.buildNumber, forKey: "build_number")
-        Crashlytics.crashlytics().setCustomValue(AppConfig.Environment.current.rawValue, forKey: "environment")
+        Crashlytics.crashlytics().setCustomValue(AppConfig.Environment.current, forKey: "environment")
         
         Logger.shared.info("Crashlytics configured successfully", category: "firebase")
     }
@@ -289,13 +289,3 @@ final class RemoteFeatureFlags: ObservableObject {
     }
 }
 
-// MARK: - NotificationCenter Names
-extension Notification.Name {
-    static let openNotificationSettings = Notification.Name("openNotificationSettings")
-    static let navigateToPost = Notification.Name("navigateToPost")
-    static let navigateToProfile = Notification.Name("navigateToProfile")
-    static let navigateToMarketplaceItem = Notification.Name("navigateToMarketplaceItem")
-    static let navigateToConversation = Notification.Name("navigateToConversation")
-    static let fcmTokenReceived = Notification.Name("fcmTokenReceived")
-    static let handleNotificationTap = Notification.Name("handleNotificationTap")
-}

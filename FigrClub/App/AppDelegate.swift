@@ -29,7 +29,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         UNUserNotificationCenter.current().delegate = NotificationService.shared
         Messaging.messaging().delegate = NotificationService.shared
         
-        // Request permission
+        // Request authorization
         Task {
             await NotificationService.shared.requestPermission()
         }

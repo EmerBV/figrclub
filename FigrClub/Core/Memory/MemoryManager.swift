@@ -10,20 +10,26 @@ import SwiftUI
 import Combine
 
 // MARK: - Memory Manager
-final class MemoryManager {
+final class MemoryManager: ObservableObject {
     static let shared = MemoryManager()
+    
+    @Published var memoryUsage: UInt64 = 0
+    @Published var isMemoryPressureHigh = false
     
     private var memoryWarningToken: NSObjectProtocol?
     private var lowMemoryThreshold: UInt64 = 50 * 1024 * 1024 // 50MB
+    private var timer: Timer?
     
     private init() {
         setupMemoryWarningObserver()
+        startMemoryMonitoring()
     }
     
     deinit {
         if let token = memoryWarningToken {
             NotificationCenter.default.removeObserver(token)
         }
+        timer?.invalidate()
     }
     
     // MARK: - Memory Monitoring
@@ -37,6 +43,20 @@ final class MemoryManager {
         }
     }
     
+    private func startMemoryMonitoring() {
+        timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+            self?.updateMemoryUsage()
+        }
+    }
+    
+    private func updateMemoryUsage() {
+        let usage = getCurrentMemoryUsage()
+        DispatchQueue.main.async {
+            self.memoryUsage = usage
+            self.isMemoryPressureHigh = usage > self.lowMemoryThreshold
+        }
+    }
+    
     private func handleMemoryWarning() {
         Logger.shared.warning("Memory warning received", category: "memory")
         
@@ -47,6 +67,9 @@ final class MemoryManager {
         Task {
             await clearMemoryCaches()
         }
+        
+        // Update memory pressure state
+        isMemoryPressureHigh = true
     }
     
     @MainActor
@@ -74,6 +97,34 @@ final class MemoryManager {
     
     func isMemoryUsageHigh() -> Bool {
         return getCurrentMemoryUsage() > lowMemoryThreshold
+    }
+    
+    func getMemoryPressureLevel() -> MemoryPressureLevel {
+        let usage = getCurrentMemoryUsage()
+        let threshold = lowMemoryThreshold
+        
+        if usage > threshold * 2 {
+            return .critical
+        } else if usage > threshold {
+            return .warning
+        } else {
+            return .normal
+        }
+    }
+}
+
+// MARK: - Memory Pressure Level
+enum MemoryPressureLevel {
+    case normal
+    case warning
+    case critical
+    
+    var description: String {
+        switch self {
+        case .normal: return "Normal"
+        case .warning: return "Warning"
+        case .critical: return "Critical"
+        }
     }
 }
 
@@ -171,222 +222,49 @@ final class PublisherStorage {
     }
 }
 
-// MARK: - Enhanced BaseViewModel with Memory Management
-extension BaseViewModel {
-    
-    /// Safe publisher storage with automatic cleanup
-    private static var publisherStorages: [ObjectIdentifier: PublisherStorage] = [:]
-    private static let storageQueue = DispatchQueue(label: "com.figrclub.storage_queue", attributes: .concurrent)
-    
-    var publisherStorage: PublisherStorage {
-        let id = ObjectIdentifier(self)
-        
-        return Self.storageQueue.sync {
-            if let existing = Self.publisherStorages[id] {
-                return existing
-            }
-            
-            let newStorage = PublisherStorage()
-            Self.storageQueue.async(flags: .barrier) {
-                Self.publisherStorages[id] = newStorage
-            }
-            return newStorage
-        }
-    }
-    
-    /// Cleanup method to call in deinit
-    func cleanupMemory() {
-        let id = ObjectIdentifier(self)
-        Self.storageQueue.async(flags: .barrier) {
-            Self.publisherStorages[id]?.cancelAll()
-            Self.publisherStorages.removeValue(forKey: id)
-        }
-        
-        cancellables.removeAll()
-        errorTimer?.invalidate()
-        errorTimer = nil
-    }
-}
-
 // MARK: - Performance Monitor
 final class PerformanceMonitor {
     static let shared = PerformanceMonitor()
     
-    private var startTimes: [String: CFTimeInterval] = [:]
+    private var measurements: [String: TimeInterval] = [:]
     private let queue = DispatchQueue(label: "com.figrclub.performance", attributes: .concurrent)
     
     private init() {}
     
     func startMeasuring(_ identifier: String) {
         queue.async(flags: .barrier) {
-            self.startTimes[identifier] = CACurrentMediaTime()
+            self.measurements[identifier] = Date().timeIntervalSince1970
         }
     }
     
-    func endMeasuring(_ identifier: String, category: String = "performance") {
-        let endTime = CACurrentMediaTime()
-        
-        queue.async(flags: .barrier) {
-            guard let startTime = self.startTimes[identifier] else {
-                Logger.shared.warning("No start time found for identifier: \(identifier)", category: category)
-                return
-            }
-            
-            let duration = endTime - startTime
-            self.startTimes.removeValue(forKey: identifier)
-            
-            Logger.shared.info("⏱️ \(identifier): \(String(format: "%.3f", duration * 1000))ms", category: category)
-            
-            // Log slow operations
-            if duration > 1.0 {
-                Logger.shared.warning("🐌 Slow operation detected: \(identifier) took \(String(format: "%.3f", duration))s", category: category)
-            }
+    func endMeasuring(_ identifier: String) -> TimeInterval? {
+        return queue.sync {
+            guard let startTime = measurements[identifier] else { return nil }
+            let duration = Date().timeIntervalSince1970 - startTime
+            measurements.removeValue(forKey: identifier)
+            return duration
         }
     }
     
-    func measure<T>(_ identifier: String, category: String = "performance", operation: () throws -> T) rethrows -> T {
+    func measure<T>(_ identifier: String, operation: () throws -> T) rethrows -> T {
         startMeasuring(identifier)
-        defer { endMeasuring(identifier, category: category) }
+        defer {
+            if let duration = endMeasuring(identifier) {
+                Logger.shared.info("Performance: \(identifier) took \(String(format: "%.3f", duration))s", category: "performance")
+            }
+        }
         return try operation()
     }
     
-    func measureAsync<T>(_ identifier: String, category: String = "performance", operation: () async throws -> T) async rethrows -> T {
+    func measureAsync<T>(_ identifier: String, operation: () async throws -> T) async rethrows -> T {
         startMeasuring(identifier)
-        defer { endMeasuring(identifier, category: category) }
+        defer {
+            if let duration = endMeasuring(identifier) {
+                Logger.shared.info("Performance: \(identifier) took \(String(format: "%.3f", duration))s", category: "performance")
+            }
+        }
         return try await operation()
     }
-}
-
-// MARK: - View Performance Extensions
-extension View {
-    
-    /// Measure view rendering performance
-    func measureRenderTime(_ identifier: String) -> some View {
-        self
-            .onAppear {
-                PerformanceMonitor.shared.startMeasuring("render_\(identifier)")
-            }
-            .onDisappear {
-                PerformanceMonitor.shared.endMeasuring("render_\(identifier)", category: "ui")
-            }
-    }
-    
-    /// Optimize for large lists
-    func optimizedForLargeList() -> some View {
-        self
-            .drawingGroup() // Flatten view hierarchy for better performance
-    }
-    
-    /// Memory-efficient conditional rendering
-    func conditionalRender<T: View>(_ condition: Bool, @ViewBuilder content: () -> T) -> some View {
-        Group {
-            if condition {
-                content()
-            } else {
-                self
-            }
-        }
-    }
-}
-
-// MARK: - Lazy Loading Helper
-struct LazyView<Content: View>: View {
-    private let build: () -> Content
-    
-    init(_ build: @autoclosure @escaping () -> Content) {
-        self.build = build
-    }
-    
-    init(@ViewBuilder _ build: @escaping () -> Content) {
-        self.build = build
-    }
-    
-    var body: Content {
-        build()
-    }
-}
-
-// MARK: - Memory-Efficient Image View
-struct MemoryEfficientAsyncImage: View {
-    let url: URL?
-    let placeholder: AnyView?
-    
-    @State private var image: UIImage?
-    @State private var isLoading = false
-    
-    init(url: URL?, @ViewBuilder placeholder: () -> some View = { Color.gray.opacity(0.3) }) {
-        self.url = url
-        self.placeholder = AnyView(placeholder())
-    }
-    
-    var body: some View {
-        Group {
-            if let image = image {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } else {
-                placeholder
-                    .overlay(
-                        Group {
-                            if isLoading {
-                                ProgressView()
-                                    .scaleEffect(0.5)
-                            }
-                        }
-                    )
-            }
-        }
-        .onAppear {
-            loadImage()
-        }
-        .onDisappear {
-            cancelLoading()
-        }
-    }
-    
-    private func loadImage() {
-        guard let url = url, image == nil, !isLoading else { return }
-        
-        // Check cache first
-        let cacheKey = url.absoluteString
-        if let cachedImage = ImageCacheManager.shared.getImage(forKey: cacheKey) {
-            self.image = cachedImage
-            return
-        }
-        
-        isLoading = true
-        
-        Task {
-            do {
-                let (data, _) = try await URLSession.shared.data(from: url)
-                
-                await MainActor.run {
-                    if let loadedImage = UIImage(data: data) {
-                        // Cache the image
-                        ImageCacheManager.shared.setImage(loadedImage, forKey: cacheKey)
-                        self.image = loadedImage
-                    }
-                    self.isLoading = false
-                }
-            } catch {
-                await MainActor.run {
-                    self.isLoading = false
-                }
-                Logger.shared.error("Failed to load image", error: error, category: "images")
-            }
-        }
-    }
-    
-    private func cancelLoading() {
-        isLoading = false
-        // Cancel any ongoing network requests if needed
-    }
-}
-
-// MARK: - Notification Extensions
-extension Notification.Name {
-    static let memoryWarning = Notification.Name("com.figrclub.memory_warning")
 }
 
 // MARK: - Performance Testing View

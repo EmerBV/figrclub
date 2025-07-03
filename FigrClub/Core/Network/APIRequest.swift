@@ -54,12 +54,13 @@ struct CreatePostRequest: Codable {
     let publishNow: Bool
     let location: String?
     let hashtags: [String]?
+    let imageUrls: [String]?
 }
 
 struct CreateMarketplaceItemRequest: Codable {
     let title: String
     let description: String
-    let category: String
+    let categoryId: Int
     let basePrice: Double
     let currency: String
     let condition: ItemCondition
@@ -72,14 +73,6 @@ struct CreateMarketplaceItemRequest: Codable {
     let country: String
     let city: String
     let region: String?
-}
-
-struct RegisterDeviceTokenRequest: Codable {
-    let token: String
-    let deviceType: DeviceType
-    let deviceName: String?
-    let appVersion: String
-    let osVersion: String
 }
 
 struct UpdateNotificationPreferencesRequest: Codable {
@@ -101,7 +94,14 @@ struct ResetPasswordRequest: Codable {
 struct UpdateMarketplaceItemRequest: Codable {
     let title: String?
     let description: String?
-    let price: Double?
-    let condition: ItemCondition?
     let categoryId: Int?
+    let basePrice: Double?
+    let condition: ItemCondition?
+    let baseStockQuantity: Int?
+    let negotiable: Bool?
+    let acceptsOffers: Bool?
+    let allowsQuestions: Bool?
+    let freeShipping: Bool?
+    let pickupAvailable: Bool?
+    let status: ItemStatus?
 }

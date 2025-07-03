@@ -417,31 +417,6 @@ final class LoadCategoriesUseCaseImpl: LoadCategoriesUseCase {
     }
 }
 
-// MARK: - Use Case Error
-
-enum UseCaseError: LocalizedError {
-    case invalidInput(String)
-    case unauthorized
-    case notFound
-    case networkError
-    case unknownError
-    
-    var errorDescription: String? {
-        switch self {
-        case .invalidInput(let message):
-            return message
-        case .unauthorized:
-            return "No tienes autorización para realizar esta acción"
-        case .notFound:
-            return "El recurso solicitado no fue encontrado"
-        case .networkError:
-            return "Error de conexión. Verifica tu internet"
-        case .unknownError:
-            return "Ha ocurrido un error inesperado"
-        }
-    }
-}
-
 // MARK: - Use Case Factory
 
 final class UseCaseFactory {

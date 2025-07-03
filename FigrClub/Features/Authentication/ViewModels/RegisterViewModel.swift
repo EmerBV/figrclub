@@ -408,11 +408,11 @@ final class RegisterViewModel: ObservableObject {
         case 0...2:
             return .weak
         case 3...4:
-            return .medium
+            return .fair
         case 5...6:
-            return .strong
+            return .good
         default:
-            return .veryStrong
+            return .strong
         }
     }
     

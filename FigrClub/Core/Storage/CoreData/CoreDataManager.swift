@@ -29,7 +29,7 @@ final class CoreDataManager: ObservableObject {
         
         container.loadPersistentStores { [weak self] _, error in
             if let error = error {
-                Logger.shared.fatal("Core Data failed to load", error: error, category: "coredata")
+                Logger.shared.fatal("Core Data failed to load", category: "coredata")
                 fatalError("Core Data failed to load: \(error.localizedDescription)")
             } else {
                 Logger.shared.info("Core Data loaded successfully", category: "coredata")
@@ -67,13 +67,13 @@ final class CoreDataManager: ObservableObject {
         let contextToSave = context ?? viewContext
         
         guard contextToSave.hasChanges else {
-            Logger.shared.debug("No changes to save in Core Data context", category: "coredata")
+            Logger.shared.info("No changes to save in Core Data context", category: "coredata")
             return
         }
         
         do {
             try contextToSave.save()
-            Logger.shared.debug("Core Data context saved successfully", category: "coredata")
+            Logger.shared.info("Core Data context saved successfully", category: "coredata")
         } catch {
             Logger.shared.error("Failed to save Core Data context", error: error, category: "coredata")
             CrashReporter.shared.recordError(error, additionalInfo: ["context": "coredata_save"])
@@ -133,7 +133,7 @@ final class CoreDataManager: ObservableObject {
         
         do {
             let results = try contextToUse.fetch(request) as? [T] ?? []
-            Logger.shared.debug("Fetched \(results.count) objects of type \(T.self)", category: "coredata")
+            Logger.shared.info("Fetched \(results.count) objects of type \(T.self)", category: "coredata")
             return results
         } catch {
             Logger.shared.error("Failed to fetch \(T.self)", error: error, category: "coredata")
@@ -182,13 +182,13 @@ final class CoreDataManager: ObservableObject {
     func delete<T: NSManagedObject>(_ object: T, context: NSManagedObjectContext? = nil) {
         let contextToUse = context ?? viewContext
         contextToUse.delete(object)
-        Logger.shared.debug("Deleted object of type \(T.self)", category: "coredata")
+        Logger.shared.info("Deleted object of type \(T.self)", category: "coredata")
     }
     
     func delete<T: NSManagedObject>(_ objects: [T], context: NSManagedObjectContext? = nil) {
         let contextToUse = context ?? viewContext
         objects.forEach { contextToUse.delete($0) }
-        Logger.shared.debug("Deleted \(objects.count) objects of type \(T.self)", category: "coredata")
+        Logger.shared.info("Deleted \(objects.count) objects of type \(T.self)", category: "coredata")
     }
     
     // MARK: - Utility Methods

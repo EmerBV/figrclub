@@ -41,7 +41,7 @@ final class NotificationService: NSObject, ObservableObject {
     }
     
     // MARK: - Authorization
-    func requestAuthorization() async -> Bool {
+    func requestPermission() async -> Bool {
         do {
             let granted = try await UNUserNotificationCenter.current()
                 .requestAuthorization(options: [.alert, .badge, .sound])
@@ -293,21 +293,7 @@ extension NotificationService: MessagingDelegate {
             Logger.shared.warning("FCM token is nil", category: "notifications")
         }
     }
-    
-    // MessagingRemoteMessage was deprecated in Firebase 9.0+
-    // This method is optional and can be removed if not needed
-    /*
-    func messaging(_ messaging: Messaging, didReceive remoteMessage: MessagingRemoteMessage) {
-        Logger.shared.info("Received remote message: \(remoteMessage.appData)", category: "notifications")
-        
-        Analytics.shared.logEvent("fcm_message_received", parameters: [
-            "message_id": remoteMessage.messageID ?? "unknown"
-        ])
-    }
-    */
 }
-
-// Las definiciones de Notification.Name están en FirebaseConfig.swift
 
 // MARK: - Notification Preferences
 struct NotificationPreferences: Codable {
@@ -337,4 +323,41 @@ struct NotificationPreferences: Codable {
         }
     }
 }
+
+// MARK: - Supporting Models
+struct RegisterDeviceTokenRequest: Codable {
+    let token: String
+    let deviceType: DeviceType
+    let deviceName: String
+    let appVersion: String
+    let osVersion: String
+}
+
+enum DeviceType: String, Codable {
+    case ios = "IOS"
+    case android = "ANDROID"
+}
+
+struct DeviceToken: Codable {
+    let id: String
+    let token: String
+    let deviceType: DeviceType
+    let isActive: Bool
+    let createdAt: String
+    let updatedAt: String?
+}
+
+struct EmptyResponse: Codable {}
+
+// MARK: - Notification Names Extension
+extension Notification.Name {
+    static let fcmTokenReceived = Notification.Name("fcmTokenReceived")
+    static let handleNotificationTap = Notification.Name("handleNotificationTap")
+    static let navigateToPost = Notification.Name("navigateToPost")
+    static let navigateToProfile = Notification.Name("navigateToProfile")
+    static let navigateToMarketplaceItem = Notification.Name("navigateToMarketplaceItem")
+    static let navigateToConversation = Notification.Name("navigateToConversation")
+    static let memoryWarning = Notification.Name("memoryWarning")
+}
+
 

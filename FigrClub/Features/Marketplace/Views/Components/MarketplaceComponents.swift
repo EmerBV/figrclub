@@ -147,26 +147,3 @@ struct CategoryChip: View {
     }
 }
 
-// MARK: - Extensions for Display Names
-extension ItemCondition {
-    var displayName: String {
-        switch self {
-        case .new: return "Nuevo"
-        case .likeNew: return "Como nuevo"
-        case .good: return "Bueno"
-        case .fair: return "Regular"
-        case .poor: return "Malo"
-        }
-    }
-}
-
-extension ItemStatus {
-    var displayName: String {
-        switch self {
-        case .available: return "Disponible"
-        case .sold: return "Vendido"
-        case .reserved: return "Reservado"
-        case .inactive: return "Inactivo"
-        }
-    }
-}

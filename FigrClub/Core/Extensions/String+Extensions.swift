@@ -71,9 +71,9 @@ extension String {
         
         switch score {
         case 0...2: return .weak
-        case 3...4: return .medium
-        case 5...6: return .strong
-        default: return .veryStrong
+        case 3...4: return .fair
+        case 5...6: return .good
+        default: return .strong
         }
     }
     

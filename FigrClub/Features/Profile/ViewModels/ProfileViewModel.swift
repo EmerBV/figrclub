@@ -137,7 +137,7 @@ extension UserStats {
             ("Posts", formatCount(postsCount)),
             ("Seguidores", formatCount(followersCount)),
             ("Siguiendo", formatCount(followingCount)),
-            ("Likes", formatCount(likesReceived))
+            ("Likes", formatCount(likesReceivedCount))
         ]
     }
     

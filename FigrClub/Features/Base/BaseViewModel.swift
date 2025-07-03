@@ -6,281 +6,398 @@
 //
 
 import Foundation
+import SwiftUI
 import Combine
 
-// MARK: - Error Handling Protocol
-protocol ErrorHandling: ObservableObject {
-    var errorMessage: String? { get set }
-    var showError: Bool { get set }
-    
-    func showErrorMessage(_ message: String)
-    func hideError()
-}
-
-// MARK: - Loading State Protocol
-protocol LoadingStateManaging: ObservableObject {
-    var isLoading: Bool { get set }
-    var isLoadingMore: Bool { get set }
-}
-
-// MARK: - View State Enum
-enum ViewState<T> {
-    case idle
-    case loading
-    case loaded(T)
-    case error(String)
-    case loadingMore(T) // For pagination
-    
-    var isLoading: Bool {
-        switch self {
-        case .loading: return true
-        default: return false
-        }
-    }
-    
-    var isLoadingMore: Bool {
-        switch self {
-        case .loadingMore: return true
-        default: return false
-        }
-    }
-    
-    var data: T? {
-        switch self {
-        case .loaded(let data), .loadingMore(let data):
-            return data
-        default:
-            return nil
-        }
-    }
-    
-    var errorMessage: String? {
-        switch self {
-        case .error(let message):
-            return message
-        default:
-            return nil
-        }
-    }
-}
-
-// MARK: - Base ViewModel
 @MainActor
-class BaseViewModel: ObservableObject, ErrorHandling, LoadingStateManaging {
+open class BaseViewModel: ObservableObject {
     
     // MARK: - Published Properties
+    @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var showError = false
-    @Published var isLoading = false
-    @Published var isLoadingMore = false
     
     // MARK: - Private Properties
-    private var errorTimer: Timer?
-    protected var cancellables = Set<AnyCancellable>()
+    var cancellables = Set<AnyCancellable>()
+    
+    // MARK: - Initialization
+    init() {
+        setupErrorHandling()
+    }
+    
+    deinit {
+        cancellables.removeAll()
+    }
     
     // MARK: - Error Handling
+    private func setupErrorHandling() {
+        $errorMessage
+            .map { $0 != nil }
+            .assign(to: &$showError)
+    }
+    
     func showErrorMessage(_ message: String) {
         errorMessage = message
         showError = true
         
-        // Auto-hide after 3 seconds
-        errorTimer?.invalidate()
-        errorTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
-            Task { @MainActor in
-                self?.hideError()
-            }
+        // Auto-hide error after 3 seconds
+        Task {
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            hideError()
         }
-        
-        Logger.shared.error("ViewModel Error: \(message)", category: "viewmodel")
     }
     
     func hideError() {
         errorMessage = nil
         showError = false
-        errorTimer?.invalidate()
-        errorTimer = nil
     }
     
     // MARK: - Loading State Management
-    func setLoadingState(_ loading: Bool) {
+    func setLoading(_ loading: Bool) {
         isLoading = loading
     }
     
-    func setLoadingMoreState(_ loadingMore: Bool) {
-        isLoadingMore = loadingMore
-    }
-    
-    // MARK: - Lifecycle
-    deinit {
-        errorTimer?.invalidate()
-        cancellables.removeAll()
-    }
-}
-
-// MARK: - Paginated ViewModel Base
-@MainActor
-class PaginatedViewModel<T>: BaseViewModel {
-    
-    // MARK: - Published Properties
-    @Published var items: [T] = []
-    @Published var currentPage = 0
-    @Published var hasMorePages = true
-    
-    // MARK: - Protected Properties
-    protected let pageSize: Int
-    
-    // MARK: - Initialization
-    init(pageSize: Int = AppConfig.Pagination.defaultPageSize) {
-        self.pageSize = pageSize
-        super.init()
-    }
-    
-    // MARK: - Pagination Methods
-    func resetPagination() {
-        currentPage = 0
-        hasMorePages = true
-        items.removeAll()
-    }
-    
-    func updatePagination(from response: PaginatedResponse<T>) {
-        currentPage = response.page
-        hasMorePages = !response.last
-    }
-    
-    func appendItems(_ newItems: [T], from response: PaginatedResponse<T>) where T: Identifiable, T.ID: Hashable {
-        // Remove duplicates based on ID
-        let existingIds = Set(items.map { $0.id })
-        let filteredNewItems = newItems.filter { !existingIds.contains($0.id) }
+    // MARK: - Async Operation Helpers
+    func executeWithLoading<T>(
+        _ operation: @escaping () async throws -> T,
+        onSuccess: @escaping (T) -> Void = { _ in },
+        onError: @escaping (Error) -> Void = { _ in }
+    ) async {
+        setLoading(true)
         
-        items.append(contentsOf: filteredNewItems)
-        updatePagination(from: response)
+        do {
+            let result = try await operation()
+            onSuccess(result)
+            hideError()
+        } catch {
+            handleError(error)
+            onError(error)
+        }
         
-        if filteredNewItems.count != newItems.count {
-            Logger.shared.warning("Filtered out \(newItems.count - filteredNewItems.count) duplicate items", category: "pagination")
+        setLoading(false)
+    }
+    
+    func executeWithLoadingMore<T>(
+        _ operation: @escaping () async throws -> T,
+        onSuccess: @escaping (T) -> Void = { _ in },
+        onError: @escaping (Error) -> Void = { _ in }
+    ) async {
+        // Similar to executeWithLoading but for pagination
+        do {
+            let result = try await operation()
+            onSuccess(result)
+        } catch {
+            handleError(error)
+            onError(error)
         }
     }
     
-    func replaceItems(_ newItems: [T], from response: PaginatedResponse<T>) {
-        items = newItems
-        updatePagination(from: response)
+    // MARK: - Error Handling
+    private func handleError(_ error: Error) {
+        let errorHandler = DefaultErrorHandler()
+        let message = errorHandler.getUserFriendlyMessage(for: error)
+        showErrorMessage(message)
+        
+        // Log error
+        Logger.shared.error("ViewModel error", error: error, category: "viewmodel")
+    }
+}
+
+// MARK: - Paginated ViewModel
+@MainActor
+open class PaginatedViewModel<T: Identifiable>: BaseViewModel {
+    
+    // MARK: - Published Properties
+    @Published var items: [T] = []
+    @Published var isLoadingMore = false
+    @Published var hasMoreData = true
+    
+    // MARK: - Pagination Properties
+    var currentPage = 0
+    var pageSize = 20
+    var totalPages = 0
+    var totalElements = 0
+    
+    // MARK: - Abstract Methods (Must be overridden)
+    open func loadFirstPage() async {
+        fatalError("loadFirstPage() must be overridden")
     }
     
-    // MARK: - Abstract Methods (Override in subclasses)
-    func loadFirstPage() async {
-        fatalError("loadFirstPage() must be overridden in subclass")
-    }
-    
-    func loadNextPage() async {
-        fatalError("loadNextPage() must be overridden in subclass")
+    open func loadNextPage() async {
+        fatalError("loadNextPage() must be overridden")
     }
     
     // MARK: - Public Methods
     func refresh() async {
-        resetPagination()
+        currentPage = 0
+        hasMoreData = true
         await loadFirstPage()
     }
     
     func loadMore() async {
-        guard !isLoadingMore && hasMorePages else { return }
+        guard !isLoadingMore && hasMoreData else { return }
+        
+        isLoadingMore = true
         await loadNextPage()
+        isLoadingMore = false
+    }
+    
+    // MARK: - Helper Methods
+    func replaceItems<U: Codable>(_ newItems: [T], from response: PaginatedResponse<U>) {
+        items = newItems
+        updatePaginationData(from: response)
+    }
+    
+    func appendItems<U: Codable>(_ newItems: [T], from response: PaginatedResponse<U>) {
+        items.append(contentsOf: newItems)
+        updatePaginationData(from: response)
+    }
+    
+    private func updatePaginationData<U: Codable>(from response: PaginatedResponse<U>) {
+        currentPage = response.currentPage
+        totalPages = response.totalPages
+        totalElements = response.totalElements
+        hasMoreData = currentPage < totalPages - 1
     }
 }
 
-// MARK: - Search ViewModel Base
+// MARK: - Searchable ViewModel
 @MainActor
-class SearchableViewModel<T>: PaginatedViewModel<T> {
+open class SearchableViewModel<T: Identifiable>: PaginatedViewModel<T> {
     
     // MARK: - Published Properties
     @Published var searchText = ""
     @Published var isSearching = false
     
     // MARK: - Private Properties
-    private var searchTask: Task<Void, Never>?
+    private var searchCancellable: AnyCancellable?
     
     // MARK: - Initialization
-    override init(pageSize: Int = AppConfig.Pagination.defaultPageSize) {
-        super.init(pageSize: pageSize)
-        setupSearchObserver()
+    override init() {
+        super.init()
+        setupSearch()
     }
     
     // MARK: - Search Setup
-    private func setupSearchObserver() {
-        $searchText
+    private func setupSearch() {
+        searchCancellable = $searchText
             .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
             .removeDuplicates()
-            .sink { [weak self] searchText in
-                self?.handleSearchTextChange(searchText)
+            .sink { [weak self] _ in
+                Task {
+                    await self?.performSearch()
+                }
             }
-            .store(in: &cancellables)
     }
     
-    private func handleSearchTextChange(_ searchText: String) {
-        // Cancel previous search
-        searchTask?.cancel()
-        
-        searchTask = Task { [weak self] in
-            await self?.performSearch(searchText)
-        }
+    private func performSearch() async {
+        isSearching = true
+        await refresh()
+        isSearching = false
     }
     
-    // MARK: - Abstract Methods
-    func performSearch(_ query: String) async {
-        fatalError("performSearch(_:) must be overridden in subclass")
-    }
-    
-    // MARK: - Public Methods
     func clearSearch() {
         searchText = ""
     }
+}
+
+// MARK: - Form ViewModel
+@MainActor
+open class FormViewModel: BaseViewModel {
     
-    // MARK: - Lifecycle
-    deinit {
-        searchTask?.cancel()
+    // MARK: - Published Properties
+    @Published var isFormValid = false
+    @Published var validationErrors: [String: String] = [:]
+    
+    // MARK: - Validation
+    func setValidationError(for field: String, message: String?) {
+        if let message = message {
+            validationErrors[field] = message
+        } else {
+            validationErrors.removeValue(forKey: field)
+        }
+        
+        updateFormValidation()
+    }
+    
+    func clearValidationErrors() {
+        validationErrors.removeAll()
+        updateFormValidation()
+    }
+    
+    private func updateFormValidation() {
+        isFormValid = validationErrors.isEmpty
+    }
+    
+    func getValidationError(for field: String) -> String? {
+        return validationErrors[field]
+    }
+    
+    func hasValidationError(for field: String) -> Bool {
+        return validationErrors[field] != nil
     }
 }
 
-// MARK: - State Management Extensions
-extension BaseViewModel {
+// MARK: - Validation State
+enum ValidationState {
+    case idle
+    case valid
+    case invalid(String)
     
-    /// Execute async operation with loading state management
-    func executeWithLoading<T>(
-        _ operation: @escaping () async throws -> T,
-        onSuccess: @escaping (T) -> Void = { _ in },
-        onError: @escaping (Error) -> Void = { _ in }
-    ) async {
-        guard !isLoading else { return }
-        
-        setLoadingState(true)
-        
-        do {
-            let result = try await operation()
-            onSuccess(result)
-        } catch {
-            onError(error)
-            showErrorMessage(error.localizedDescription)
+    var isValid: Bool {
+        if case .valid = self {
+            return true
         }
-        
-        setLoadingState(false)
+        return false
     }
     
-    /// Execute async operation with loadingMore state management
-    func executeWithLoadingMore<T>(
-        _ operation: @escaping () async throws -> T,
-        onSuccess: @escaping (T) -> Void = { _ in },
-        onError: @escaping (Error) -> Void = { _ in }
-    ) async {
-        guard !isLoadingMore else { return }
-        
-        setLoadingMoreState(true)
-        
-        do {
-            let result = try await operation()
-            onSuccess(result)
-        } catch {
-            onError(error)
-            showErrorMessage(error.localizedDescription)
+    var errorMessage: String? {
+        if case .invalid(let message) = self {
+            return message
         }
-        
-        setLoadingMoreState(false)
+        return nil
     }
 }
+
+// MARK: - Supporting Models
+struct PaginatedResponse<T: Codable>: Codable {
+    let content: [T]
+    let totalElements: Int
+    let totalPages: Int
+    let currentPage: Int
+    let size: Int
+    let numberOfElements: Int
+    let first: Bool
+    let last: Bool
+    let empty: Bool
+}
+
+// MARK: - Publisher Extensions for Async/Await
+extension AnyPublisher {
+    func async() async throws -> Output {
+        try await withCheckedThrowingContinuation { continuation in
+            var cancellable: AnyCancellable?
+            
+            cancellable = self
+                .first()
+                .sink(
+                    receiveCompletion: { completion in
+                        switch completion {
+                        case .finished:
+                            break
+                        case .failure(let error):
+                            continuation.resume(throwing: error)
+                        }
+                        cancellable?.cancel()
+                    },
+                    receiveValue: { value in
+                        continuation.resume(returning: value)
+                        cancellable?.cancel()
+                    }
+                )
+        }
+    }
+}
+
+// MARK: - Default Error Handler
+final class DefaultErrorHandler: ErrorHandler {
+    
+    func handle(_ error: Error) -> ErrorRecoveryStrategy {
+        if let apiError = error as? APIError {
+            return handleAPIError(apiError)
+        }
+        
+        if let urlError = error as? URLError {
+            return handleURLError(urlError)
+        }
+        
+        return .showError
+    }
+    
+    func getUserFriendlyMessage(for error: Error) -> String {
+        if let apiError = error as? APIError {
+            return getUserFriendlyAPIErrorMessage(apiError)
+        }
+        
+        if let urlError = error as? URLError {
+            return getUserFriendlyURLErrorMessage(urlError)
+        }
+        
+        return "Ha ocurrido un error inesperado. Por favor, inténtalo de nuevo."
+    }
+    
+    private func handleAPIError(_ error: APIError) -> ErrorRecoveryStrategy {
+        switch error.statusCode {
+        case 401:
+            return .refreshTokenAndRetry
+        case 500...599:
+            return .retry(maxAttempts: 3, delay: 2.0)
+        case 400...499:
+            return .showError
+        default:
+            return .retry(maxAttempts: 2, delay: 1.0)
+        }
+    }
+    
+    private func handleURLError(_ error: URLError) -> ErrorRecoveryStrategy {
+        switch error.code {
+        case .networkConnectionLost, .notConnectedToInternet:
+            return .retry(maxAttempts: 3, delay: 5.0)
+        case .timedOut:
+            return .retry(maxAttempts: 2, delay: 3.0)
+        default:
+            return .showError
+        }
+    }
+    
+    private func getUserFriendlyAPIErrorMessage(_ error: APIError) -> String {
+        switch error.statusCode {
+        case 400:
+            return "Los datos enviados no son válidos. Por favor, revisa la información."
+        case 401:
+            return "Tu sesión ha expirado. Por favor, inicia sesión nuevamente."
+        case 403:
+            return "No tienes permisos para realizar esta acción."
+        case 404:
+            return "El recurso solicitado no fue encontrado."
+        case 422:
+            return "Los datos enviados contienen errores. Por favor, revísalos."
+        case 500...599:
+            return "Error del servidor. Por favor, inténtalo más tarde."
+        default:
+            return error.message
+        }
+    }
+    
+    private func getUserFriendlyURLErrorMessage(_ error: URLError) -> String {
+        switch error.code {
+        case .networkConnectionLost:
+            return "Se perdió la conexión a internet. Por favor, verifica tu conexión."
+        case .notConnectedToInternet:
+            return "No hay conexión a internet. Por favor, conecta tu dispositivo."
+        case .timedOut:
+            return "La conexión tardó demasiado. Por favor, inténtalo de nuevo."
+        case .cannotConnectToHost:
+            return "No se puede conectar al servidor. Por favor, inténtalo más tarde."
+        default:
+            return "Error de conexión. Por favor, verifica tu internet e inténtalo de nuevo."
+        }
+    }
+}
+
+// MARK: - Error Handler Protocol
+protocol ErrorHandler {
+    func handle(_ error: Error) -> ErrorRecoveryStrategy
+    func getUserFriendlyMessage(for error: Error) -> String
+}
+
+// MARK: - Error Recovery Strategy
+enum ErrorRecoveryStrategy {
+    case retry(maxAttempts: Int, delay: TimeInterval)
+    case refreshTokenAndRetry
+    case showError
+    case silent
+    case logout
+}
+
+
