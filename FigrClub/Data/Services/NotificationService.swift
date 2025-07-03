@@ -323,15 +323,4 @@ struct DeviceToken: Codable {
 
 struct EmptyResponse: Codable {}
 
-// MARK: - Notification Names Extension
-extension Notification.Name {
-    static let fcmTokenReceived = Notification.Name("fcmTokenReceived")
-    static let handleNotificationTap = Notification.Name("handleNotificationTap")
-    static let navigateToPost = Notification.Name("navigateToPost")
-    static let navigateToProfile = Notification.Name("navigateToProfile")
-    static let navigateToMarketplaceItem = Notification.Name("navigateToMarketplaceItem")
-    static let navigateToConversation = Notification.Name("navigateToConversation")
-    static let memoryWarning = Notification.Name("memoryWarning")
-}
-
 

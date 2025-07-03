@@ -30,9 +30,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         Messaging.messaging().delegate = NotificationService.shared
         
         // Request authorization
-        Task {
-            await NotificationService.shared.requestPermission()
-        }
+        NotificationService.shared.requestNotificationPermissions()
     }
     
     // MARK: - Push Notification Handlers

@@ -135,7 +135,7 @@ struct PostHeaderView: View {
         HStack(spacing: Spacing.small) {
             // User Avatar usando Kingfisher
             FigrKingfisherAvatar(
-                imageURL: nil, // TODO: Añadir profileImageUrl cuando esté disponible en el modelo
+                imageURL: nil, // El modelo Post actual no incluye userProfileImageUrl
                 size: 40,
                 fallbackText: String(post.userFullName.prefix(1)).uppercased()
             )

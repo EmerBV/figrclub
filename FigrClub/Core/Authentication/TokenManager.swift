@@ -338,13 +338,7 @@ extension TokenManager {
     }
 }
 
-// MARK: - Notification Names
-
-extension Notification.Name {
-    static let userDidLogout = Notification.Name("userDidLogout")
-    static let tokenDidRefresh = Notification.Name("tokenDidRefresh")
-    static let tokenRefreshFailed = Notification.Name("tokenRefreshFailed")
-}
+// MARK: - Notification Names are now defined in NotificationCenter+Extensions.swift
 
 // MARK: - Token Storage Security
 

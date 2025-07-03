@@ -209,7 +209,7 @@ final class AuthManager: AuthManagerProtocol {
             let apiError = error as? APIError ?? APIError(
                 message: "Registration failed: \(error.localizedDescription)",
                 code: "REGISTRATION_FAILED",
-                statusCode: error.localizedDescription.contains("400") ? 400 : 500,
+                statusCode: error.localizedDescription.contains("400") ? 400 : 500
             )
             
             Logger.shared.error("Registration failed", error: apiError, category: "auth")

@@ -10,10 +10,12 @@ import Combine
 
 // MARK: - Post Repository Protocol
 protocol PostRepository {
-    func getPosts(page: Int, size: Int) async throws -> PaginatedResponse<Post>
+    func getFeed(page: Int, size: Int) async throws -> PaginatedResponse<Post>
     func getUserPosts(userId: Int, page: Int, size: Int) async throws -> PaginatedResponse<Post>
     func getPost(id: Int) async throws -> Post
     func createPost(_ request: CreatePostRequest) async throws -> Post
+    func updatePost(id: Int, request: UpdatePostRequest) async throws -> Post
+    func deletePost(id: Int) async throws -> Void
     func likePost(id: Int) async throws -> Post
     func unlikePost(id: Int) async throws -> Post
 }

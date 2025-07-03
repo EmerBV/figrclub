@@ -117,16 +117,22 @@ final class RegisterViewModel: ObservableObject {
     func checkUsernameAvailability() async {
         guard !username.isEmpty && username.count >= 3 else { return }
         
-        // TODO: Implement username availability check with API
-        // This is a placeholder for the actual implementation
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            // Simulate API call result
-            if self?.username.lowercased() == "admin" || self?.username.lowercased() == "test" {
-                self?.usernameValidationState = .invalid("Este nombre de usuario no está disponible")
-            } else if self?.usernameValidationState != .invalid("") {
-                self?.usernameValidationState = .valid
+        // Implementar verificación de disponibilidad de username
+        do {
+            // Simulate API call - en producción hacer llamada real al endpoint
+            try await Task.sleep(nanoseconds: 500_000_000) // 0.5 segundos
+            
+            await MainActor.run {
+                // Simular verificación - reemplazar con llamada real al API
+                let unavailableUsernames = ["admin", "test", "user", "figrclub", "support"]
+                if unavailableUsernames.contains(username.lowercased()) {
+                    usernameValidationState = .invalid("Este nombre de usuario no está disponible")
+                } else if usernameValidationState == .valid || usernameValidationState == .idle {
+                    usernameValidationState = .valid
+                }
             }
+        } catch {
+            Logger.shared.error("Username availability check failed", error: error, category: "auth")
         }
     }
     

@@ -64,10 +64,10 @@ enum AppConfig {
     }
     
     // MARK: - Feature Flags
-    enum FeatureFlags {
+    enum Features {
         static let enableAnalytics = true
         static let enableCrashReporting = !Environment.isDevelopment
-        static let enablePushNotifications = true
+        static let pushNotificationsEnabled = true
         static let enableDebugMenu = Environment.isDevelopment
         static let enablePerformanceMonitoring = true
         static let enableOfflineMode = true
@@ -150,13 +150,9 @@ enum AppConfig {
     
     // MARK: - Notifications
     enum Notifications {
-        static let openNotificationSettings = Notification.Name("openNotificationSettings")
-        static let userDidLogin = Notification.Name("userDidLogin")
-        static let userDidLogout = Notification.Name("userDidLogout")
-        static let tokenExpired = Notification.Name("tokenExpired")
+        static let lowMemoryWarning = Notification.Name("lowMemoryWarning")
         static let networkStatusChanged = Notification.Name("networkStatusChanged")
         static let appDidBecomeActive = Notification.Name("appDidBecomeActive")
-        static let lowMemoryWarning = Notification.Name("lowMemoryWarning")
     }
     
     // MARK: - Deep Links

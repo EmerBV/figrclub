@@ -8,7 +8,6 @@
 import Foundation
 import SwiftUI
 import Swinject
-import SwinjectAutoregistration
 
 final class DependencyContainer {
     static let shared = DependencyContainer()
@@ -76,42 +75,42 @@ private extension DependencyContainer {
     func registerRepositories() {
         // Post Repository
         container.register(PostRepository.self) { resolver in
-            PostRepositoryImpl(
+            RemotePostRepository(
                 apiService: resolver.resolve(APIServiceProtocol.self)!
             )
         }
         
         // User Repository
         container.register(UserRepository.self) { resolver in
-            UserRepositoryImpl(
+            RemoteUserRepository(
                 apiService: resolver.resolve(APIServiceProtocol.self)!
             )
         }
         
         // Marketplace Repository
         container.register(MarketplaceRepository.self) { resolver in
-            MarketplaceRepositoryImpl(
+            RemoteMarketplaceRepository(
                 apiService: resolver.resolve(APIServiceProtocol.self)!
             )
         }
         
         // Notification Repository
         container.register(NotificationRepository.self) { resolver in
-            NotificationRepositoryImpl(
+            RemoteNotificationRepository(
                 apiService: resolver.resolve(APIServiceProtocol.self)!
             )
         }
         
         // Category Repository
         container.register(CategoryRepository.self) { resolver in
-            CategoryRepositoryImpl(
+            RemoteCategoryRepository(
                 apiService: resolver.resolve(APIServiceProtocol.self)!
             )
         }
         
         // Auth Repository
         container.register(AuthRepository.self) { resolver in
-            AuthRepositoryImpl(
+            RemoteAuthRepository(
                 apiService: resolver.resolve(APIServiceProtocol.self)!
             )
         }

@@ -34,7 +34,7 @@ final class LoadPostsUseCaseImpl: LoadPostsUseCase {
     func execute(_ input: LoadPostsInput) async throws -> PaginatedResponse<Post> {
         Logger.shared.info("Loading posts - Page: \(input.page), Size: \(input.size)", category: "usecase")
         
-        let result = try await repository.getPosts(page: input.page, size: input.size)
+        let result = try await repository.getFeed(page: input.page, size: input.size)
         
         Logger.shared.info("Loaded \(result.content.count) posts successfully", category: "usecase")
         Analytics.shared.logEvent("posts_loaded", parameters: [

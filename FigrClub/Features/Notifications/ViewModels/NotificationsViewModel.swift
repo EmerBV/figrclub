@@ -64,11 +64,26 @@ final class NotificationsViewModel: PaginatedViewModel<AppNotification> {
     }
     
     func markAllAsRead() {
-        // TODO: Implement mark all as read use case
+        // Implementar marca todas como leídas con use case optimizado
         let unreadNotifications = items.filter { !$0.isRead }
+        guard !unreadNotifications.isEmpty else { return }
         
-        for notification in unreadNotifications {
-            markAsRead(notification)
+        Task {
+            do {
+                // En producción, usar un endpoint optimizado para marcar todas como leídas
+                for notification in unreadNotifications {
+                    let updatedNotification = try await markNotificationAsReadUseCase.execute(notification.id)
+                    updateNotification(updatedNotification)
+                }
+                updateUnreadCount()
+                
+                // Alternativamente, se podría implementar un MarkAllNotificationsAsReadUseCase
+                // que haga una sola llamada al backend para mayor eficiencia
+                Logger.shared.info("All notifications marked as read", category: "notifications")
+                
+            } catch {
+                showErrorMessage("Error al marcar todas como leídas: \(error.localizedDescription)")
+            }
         }
     }
     
