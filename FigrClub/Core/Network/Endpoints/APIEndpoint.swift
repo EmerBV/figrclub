@@ -16,6 +16,15 @@ enum HTTPMethod: String {
     case PATCH = "PATCH"
 }
 
+// MARK: - HTTPMethod Extension
+extension HTTPMethod {
+    static let get = HTTPMethod.GET
+    static let post = HTTPMethod.POST
+    static let put = HTTPMethod.PUT
+    static let delete = HTTPMethod.DELETE
+    static let patch = HTTPMethod.PATCH
+}
+
 // MARK: - API Endpoint
 enum APIEndpoint {
     // MARK: - Authentication
@@ -457,31 +466,76 @@ struct RetryConfiguration {
 
 // MARK: - Request Validation
 extension APIEndpoint {
-    func validate(request: URLRequest) -> RequestValidationResult {
-        var errors: [RequestValidationError] = []
-        
-        // Validate URL
-        guard let url = request.url else {
-            errors.append(.invalidURL)
+    func validateEndpoint() throws {
+        switch self {
+        case .getUserById(let id), .updateUser(let id), .getUserStats(let id),
+                .getPost(let id), .updatePost(let id), .deletePost(let id),
+                .likePost(let id), .unlikePost(let id), .followUser(let id),
+                .unfollowUser(let id), .getMarketplaceItem(let id),
+                .updateMarketplaceItem(let id), .deleteMarketplaceItem(let id),
+                .favoriteMarketplaceItem(let id), .unfavoriteMarketplaceItem(let id),
+                .getCategory(let id), .updateComment(let id), .deleteComment(let id),
+                .likeComment(let id), .unlikeComment(let id),
+                .markNotificationAsRead(let id), .deleteNotification(let id),
+                .deleteFile(let id):
+            guard id > 0 else {
+                throw APIError(
+                    message: "Invalid ID parameter",
+                    code: "INVALID_ID"
+                )
+            }
+            
+        case .getFollowers(let userId, _, _), .getFollowing(let userId, _, _),
+                .userPosts(let userId, _, _), .getComments(let postId, _, _):
+            guard userId > 0 || postId > 0 else {
+                throw APIError(
+                    message: "Invalid ID parameter",
+                    code: "INVALID_ID"
+                )
+            }
+            
+        case .getMarketplaceItemsByCategory(let categoryId, _, _):
+            guard categoryId > 0 else {
+                throw APIError(
+                    message: "Invalid category ID",
+                    code: "INVALID_CATEGORY_ID"
+                )
+            }
+            
+        case .searchMarketplaceItems(let query, _, _):
+            guard !query.isEmpty else {
+                throw APIError(
+                    message: "Search query cannot be empty",
+                    code: "EMPTY_QUERY"
+                )
+            }
+            
+        default:
+            break
         }
-        
-        // Validate method
-        guard request.httpMethod == method.rawValue else {
-            errors.append(.invalidMethod)
+    }
+}
+
+// MARK: - APIEndpoint Query Parameters Extension
+extension APIEndpoint {
+    var queryParameters: [String: Any]? {
+        switch self {
+        case .publicFeed(let page, let size),
+                .userPosts(_, let page, let size),
+                .getFollowers(_, let page, let size),
+                .getFollowing(_, let page, let size),
+                .marketplaceItems(let page, let size),
+                .getComments(_, let page, let size),
+                .getNotifications(let page, let size),
+                .getMarketplaceItemsByCategory(_, let page, let size):
+            return ["page": page, "size": size]
+            
+        case .searchMarketplaceItems(let query, let page, let size):
+            return ["q": query, "page": page, "size": size]
+            
+        default:
+            return nil
         }
-        
-        // Validate authentication
-        if requiresAuthentication && request.value(forHTTPHeaderField: "Authorization") == nil {
-            errors.append(.missingAuthentication)
-        }
-        
-        // Validate content type for POST/PUT requests
-        if [.POST, .PUT, .PATCH].contains(method) &&
-            request.value(forHTTPHeaderField: "Content-Type") == nil {
-            errors.append(.missingContentType)
-        }
-        
-        return errors.isEmpty ? .valid : .invalid(errors)
     }
 }
 

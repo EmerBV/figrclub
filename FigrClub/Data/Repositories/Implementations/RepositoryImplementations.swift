@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 
 // MARK: - Remote Post Repository
 final class RemotePostRepository: PostRepository {
@@ -266,6 +267,216 @@ final class RemoteAuthRepository: AuthRepository {
         let _: EmptyResponse = try await apiService
             .request(endpoint: .resetPassword, body: request)
             .async()
+    }
+}
+
+// MARK: - Post Repository Implementation
+final class PostRepositoryImpl: PostRepository {
+    private let apiService: APIServiceProtocol
+    
+    init(apiService: APIServiceProtocol) {
+        self.apiService = apiService
+    }
+    
+    func getPublicFeed(page: Int, size: Int) -> AnyPublisher<PageResponse<Post>, APIError> {
+        apiService.request(endpoint: .publicFeed(page: page, size: size), body: nil)
+    }
+    
+    func getUserPosts(userId: Int, page: Int, size: Int) -> AnyPublisher<PageResponse<Post>, APIError> {
+        apiService.request(endpoint: .userPosts(userId: userId, page: page, size: size), body: nil)
+    }
+    
+    func getPost(by id: Int) -> AnyPublisher<Post, APIError> {
+        apiService.request(endpoint: .getPost(id), body: nil)
+    }
+    
+    func createPost(_ request: CreatePostRequest) -> AnyPublisher<Post, APIError> {
+        apiService.request(endpoint: .createPost, body: request)
+    }
+    
+    func updatePost(id: Int, request: CreatePostRequest) -> AnyPublisher<Post, APIError> {
+        apiService.request(endpoint: .updatePost(id), body: request)
+    }
+    
+    func deletePost(id: Int) -> AnyPublisher<Void, APIError> {
+        apiService.request(endpoint: .deletePost(id), body: nil)
+    }
+    
+    func likePost(id: Int) -> AnyPublisher<Void, APIError> {
+        apiService.request(endpoint: .likePost(id), body: nil)
+    }
+    
+    func unlikePost(id: Int) -> AnyPublisher<Void, APIError> {
+        apiService.request(endpoint: .unlikePost(id), body: nil)
+    }
+}
+
+// MARK: - User Repository Implementation
+final class UserRepositoryImpl: UserRepository {
+    private let apiService: APIServiceProtocol
+    
+    init(apiService: APIServiceProtocol) {
+        self.apiService = apiService
+    }
+    
+    func getCurrentUser() -> AnyPublisher<User, APIError> {
+        apiService.request(endpoint: .getCurrentUser, body: nil)
+    }
+    
+    func getUser(by id: Int) -> AnyPublisher<User, APIError> {
+        apiService.request(endpoint: .getUserById(id), body: nil)
+    }
+    
+    func updateUser(id: Int, request: UpdateUserRequest) -> AnyPublisher<User, APIError> {
+        apiService.request(endpoint: .updateUser(id), body: request)
+    }
+    
+    func getUserStats(userId: Int) -> AnyPublisher<UserStats, APIError> {
+        apiService.request(endpoint: .getUserStats(userId), body: nil)
+    }
+    
+    func getFollowers(userId: Int, page: Int, size: Int) -> AnyPublisher<PageResponse<User>, APIError> {
+        apiService.request(endpoint: .getFollowers(userId: userId, page: page, size: size), body: nil)
+    }
+    
+    func getFollowing(userId: Int, page: Int, size: Int) -> AnyPublisher<PageResponse<User>, APIError> {
+        apiService.request(endpoint: .getFollowing(userId: userId, page: page, size: size), body: nil)
+    }
+    
+    func followUser(id: Int) -> AnyPublisher<Void, APIError> {
+        apiService.request(endpoint: .followUser(id), body: nil)
+    }
+    
+    func unfollowUser(id: Int) -> AnyPublisher<Void, APIError> {
+        apiService.request(endpoint: .unfollowUser(id), body: nil)
+    }
+}
+
+// MARK: - Marketplace Repository Implementation
+final class MarketplaceRepositoryImpl: MarketplaceRepository {
+    private let apiService: APIServiceProtocol
+    
+    init(apiService: APIServiceProtocol) {
+        self.apiService = apiService
+    }
+    
+    func getMarketplaceItems(page: Int, size: Int) -> AnyPublisher<PageResponse<MarketplaceItem>, APIError> {
+        apiService.request(endpoint: .marketplaceItems(page: page, size: size), body: nil)
+    }
+    
+    func getMarketplaceItem(by id: Int) -> AnyPublisher<MarketplaceItem, APIError> {
+        apiService.request(endpoint: .getMarketplaceItem(id), body: nil)
+    }
+    
+    func createMarketplaceItem(_ request: CreateMarketplaceItemRequest) -> AnyPublisher<MarketplaceItem, APIError> {
+        apiService.request(endpoint: .createMarketplaceItem, body: request)
+    }
+    
+    func updateMarketplaceItem(id: Int, request: UpdateMarketplaceItemRequest) -> AnyPublisher<MarketplaceItem, APIError> {
+        apiService.request(endpoint: .updateMarketplaceItem(id), body: request)
+    }
+    
+    func deleteMarketplaceItem(id: Int) -> AnyPublisher<Void, APIError> {
+        apiService.request(endpoint: .deleteMarketplaceItem(id), body: nil)
+    }
+    
+    func searchMarketplaceItems(query: String, page: Int, size: Int) -> AnyPublisher<PageResponse<MarketplaceItem>, APIError> {
+        apiService.request(endpoint: .searchMarketplaceItems(query: query, page: page, size: size), body: nil)
+    }
+    
+    func getMarketplaceItemsByCategory(categoryId: Int, page: Int, size: Int) -> AnyPublisher<PageResponse<MarketplaceItem>, APIError> {
+        apiService.request(endpoint: .getMarketplaceItemsByCategory(categoryId: categoryId, page: page, size: size), body: nil)
+    }
+    
+    func favoriteMarketplaceItem(id: Int) -> AnyPublisher<Void, APIError> {
+        apiService.request(endpoint: .favoriteMarketplaceItem(id), body: nil)
+    }
+    
+    func unfavoriteMarketplaceItem(id: Int) -> AnyPublisher<Void, APIError> {
+        apiService.request(endpoint: .unfavoriteMarketplaceItem(id), body: nil)
+    }
+}
+
+// MARK: - Notification Repository Implementation
+final class NotificationRepositoryImpl: NotificationRepository {
+    private let apiService: APIServiceProtocol
+    
+    init(apiService: APIServiceProtocol) {
+        self.apiService = apiService
+    }
+    
+    func getNotifications(page: Int, size: Int) -> AnyPublisher<PageResponse<NotificationItem>, APIError> {
+        apiService.request(endpoint: .getNotifications(page: page, size: size), body: nil)
+    }
+    
+    func markNotificationAsRead(id: Int) -> AnyPublisher<Void, APIError> {
+        apiService.request(endpoint: .markNotificationAsRead(id), body: nil)
+    }
+    
+    func markAllNotificationsAsRead() -> AnyPublisher<Void, APIError> {
+        apiService.request(endpoint: .markAllNotificationsAsRead, body: nil)
+    }
+    
+    func deleteNotification(id: Int) -> AnyPublisher<Void, APIError> {
+        apiService.request(endpoint: .deleteNotification(id), body: nil)
+    }
+    
+    func getNotificationPreferences() -> AnyPublisher<NotificationPreferences, APIError> {
+        apiService.request(endpoint: .getNotificationPreferences, body: nil)
+    }
+    
+    func updateNotificationPreferences(_ request: UpdateNotificationPreferencesRequest) -> AnyPublisher<NotificationPreferences, APIError> {
+        apiService.request(endpoint: .updateNotificationPreferences, body: request)
+    }
+}
+
+// MARK: - Category Repository Implementation
+final class CategoryRepositoryImpl: CategoryRepository {
+    private let apiService: APIServiceProtocol
+    
+    init(apiService: APIServiceProtocol) {
+        self.apiService = apiService
+    }
+    
+    func getCategories() -> AnyPublisher<[Category], APIError> {
+        apiService.request(endpoint: .getCategories, body: nil)
+    }
+    
+    func getCategory(by id: Int) -> AnyPublisher<Category, APIError> {
+        apiService.request(endpoint: .getCategory(id), body: nil)
+    }
+}
+
+// MARK: - Auth Repository Implementation
+final class AuthRepositoryImpl: AuthRepository {
+    private let apiService: APIServiceProtocol
+    
+    init(apiService: APIServiceProtocol) {
+        self.apiService = apiService
+    }
+    
+    func login(_ request: LoginRequest) -> AnyPublisher<AuthResponse, APIError> {
+        apiService.request(endpoint: .login, body: request)
+    }
+    
+    func register(_ request: RegisterRequest) -> AnyPublisher<AuthResponse, APIError> {
+        apiService.request(endpoint: .register, body: request)
+    }
+    
+    func logout() -> AnyPublisher<Void, APIError> {
+        apiService.request(endpoint: .logout, body: nil)
+    }
+    
+    func refreshToken(_ request: RefreshTokenRequest) -> AnyPublisher<AuthResponse, APIError> {
+        apiService.request(endpoint: .refreshToken, body: request)
+    }
+    
+    func forgotPassword(_ request: ForgotPasswordRequest) -> AnyPublisher<Void, APIError> {
+        apiService.request(endpoint: .forgotPassword, body: request)
+    }
+    
+    func resetPassword(_ request: ResetPasswordRequest) -> AnyPublisher<Void, APIError> {
+        apiService.request(endpoint: .resetPassword, body: request)
     }
 }
 

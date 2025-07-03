@@ -5,19 +5,22 @@
 //  Created by Emerson Balahan Varona on 27/6/25.
 //
 
-import Foundation
 import SwiftUI
 
+// MARK: - Font Extensions
 extension Font {
-    static let figrLargeTitle = Font.custom("SF Pro Display", size: 34).weight(.bold)
-    static let figrTitle1 = Font.custom("SF Pro Display", size: 28).weight(.bold)
-    static let figrTitle2 = Font.custom("SF Pro Display", size: 22).weight(.bold)
-    static let figrTitle3 = Font.custom("SF Pro Display", size: 20).weight(.semibold)
-    static let figrHeadline = Font.custom("SF Pro Text", size: 17).weight(.semibold)
-    static let figrBody = Font.custom("SF Pro Text", size: 17).weight(.regular)
-    static let figrCallout = Font.custom("SF Pro Text", size: 16).weight(.regular)
-    static let figrSubheadline = Font.custom("SF Pro Text", size: 15).weight(.regular)
-    static let figrFootnote = Font.custom("SF Pro Text", size: 13).weight(.regular)
-    static let figrCaption = Font.custom("SF Pro Text", size: 12).weight(.regular)
-    static let figrCaption2 = Font.custom("SF Pro Text", size: 11).weight(.regular)
+    // Títulos
+    static let figrLargeTitle = Font.system(size: 34, weight: .bold, design: .rounded)
+    static let figrTitle = Font.system(size: 28, weight: .bold, design: .rounded)
+    static let figrTitle2 = Font.system(size: 22, weight: .semibold, design: .rounded)
+    static let figrTitle3 = Font.system(size: 20, weight: .semibold, design: .rounded)
+    
+    // Texto
+    static let figrHeadline = Font.system(size: 17, weight: .semibold, design: .default)
+    static let figrBody = Font.system(size: 17, weight: .regular, design: .default)
+    static let figrCallout = Font.system(size: 16, weight: .regular, design: .default)
+    static let figrSubheadline = Font.system(size: 15, weight: .regular, design: .default)
+    static let figrFootnote = Font.system(size: 13, weight: .regular, design: .default)
+    static let figrCaption = Font.system(size: 12, weight: .regular, design: .default)
+    static let figrCaption2 = Font.system(size: 11, weight: .regular, design: .default)
 }

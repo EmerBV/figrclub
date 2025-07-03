@@ -9,278 +9,201 @@ import Foundation
 import SwiftUI
 
 // MARK: - App Configuration
-struct AppConfig {
+enum AppConfig {
+    
+    // MARK: - App Info
+    enum AppInfo {
+        static let bundleIdentifier = Bundle.main.bundleIdentifier ?? "com.figrclub.app"
+        static let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+        static let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+        static let appName = "FigrClub"
+        static let appStoreId = "1234567890" // Reemplazar con ID real
+    }
     
     // MARK: - Environment
     enum Environment {
-        case development
-        case staging
-        case production
-        
-        static var current: Environment {
+        static let current: String = {
 #if DEBUG
-            return .development
-#elseif STAGING
-            return .staging
+            return "development"
 #else
-            return .production
+            return "production"
 #endif
+        }()
+        
+        static var isDevelopment: Bool {
+            current == "development"
+        }
+        
+        static var isProduction: Bool {
+            current == "production"
         }
     }
     
     // MARK: - API Configuration
-    struct API {
-        static var baseURL: String {
+    enum API {
+        static let baseURL: String = {
             switch Environment.current {
-            case .development:
+            case "development":
                 return "http://localhost:9092/figrclub/api/v1"
-            case .staging:
+            case "staging":
                 return "http://localhost:9092/figrclub/api/v1"
-            case .production:
+            case "production":
+                return "http://localhost:9092/figrclub/api/v1"
+            default:
                 return "http://localhost:9092/figrclub/api/v1"
             }
-        }
+        }()
         
         static let timeout: TimeInterval = 30.0
         static let maxRetries = 3
         static let retryDelay: TimeInterval = 1.0
-    }
-    
-    // MARK: - Pagination
-    struct Pagination {
-        static let defaultPageSize = 20
-        static let maxPageSize = 100
-        static let preloadThreshold = 5 // Load more when 5 items from bottom
-    }
-    
-    // MARK: - Cache Configuration
-    struct Cache {
-        static let maxMemoryUsage = 50 * 1024 * 1024 // 50MB
-        static let maxImageCacheCount = 100
-        static let cacheExpirationTime: TimeInterval = 24 * 60 * 60 // 24 hours
-    }
-    
-    // MARK: - Image Configuration
-    struct Images {
-        static let maxUploadSize = 10 * 1024 * 1024 // 10MB
-        static let allowedFormats = ["jpg", "jpeg", "png", "heic"]
-        static let compressionQuality: CGFloat = 0.8
-        static let maxDimension: CGFloat = 2048
-    }
-    
-    // MARK: - UI Configuration
-    struct UI {
-        static let animationDuration: Double = 0.3
-        static let hapticFeedbackEnabled = true
-        static let cornerRadius: CGFloat = 12
-        static let borderWidth: CGFloat = 1
-    }
-    
-    // MARK: - Security
-    struct Security {
-        static let keychainService = "com.figrclub.keychain"
-        static let biometricEnabled = true
-        static let sessionTimeout: TimeInterval = 30 * 60 // 30 minutes
-    }
-    
-    // MARK: - Features
-    struct Features {
-        static let darkModeEnabled = true
-        static let pushNotificationsEnabled = true
-        static let analyticsEnabled = true
-        static let crashReportingEnabled = true
-        static let debugLoggingEnabled = Environment.current != .production
-    }
-    
-    // MARK: - Limits
-    struct Limits {
-        static let maxPostContentLength = 2000
-        static let maxBioLength = 500
-        static let maxUsernameLength = 30
-        static let minPasswordLength = 8
-        static let maxImagesPerPost = 10
-    }
-    
-    // MARK: - URLs
-    struct URLs {
-        static let privacyPolicy = "https://figrclub.com/privacy"
-        static let termsOfService = "https://figrclub.com/terms"
-        static let support = "https://figrclub.com/support"
-        static let appStore = "https://apps.apple.com/app/figrclub/id123456789"
-    }
-    
-    // MARK: - Social
-    struct Social {
-        static let twitterURL = "https://twitter.com/figrclub"
-        static let instagramURL = "https://instagram.com/figrclub"
-        static let discordURL = "https://discord.gg/figrclub"
-    }
-    
-    // MARK: - Firebase Configuration
-    struct Firebase {
-        static var projectId: String {
-            switch Environment.current {
-            case .development:
-                return "figrclub-dev"
-            case .staging:
-                return "figrclub-staging"
-            case .production:
-                return "figrclub-prod"
-            }
-        }
+        
+        // API Keys
+        static let apiKey = ProcessInfo.processInfo.environment["API_KEY"] ?? ""
+        static let googleMapsApiKey = ProcessInfo.processInfo.environment["GOOGLE_MAPS_API_KEY"] ?? ""
     }
     
     // MARK: - Feature Flags
-    struct FeatureFlags {
-        static let enableBiometricAuth = true
+    enum FeatureFlags {
+        static let enableAnalytics = true
+        static let enableCrashReporting = !Environment.isDevelopment
         static let enablePushNotifications = true
-        static let enableAnalytics = Environment.current != .development
-        static let enableCrashReporting = Environment.current == .production
-        static let showDebugInfo = Environment.current == .development
-        static let enableBetaFeatures = Environment.current != .production
+        static let enableDebugMenu = Environment.isDevelopment
+        static let enablePerformanceMonitoring = true
+        static let enableOfflineMode = true
+        static let enableBiometricAuth = true
+        static let enableSocialLogin = true
     }
     
-    // MARK: - App Information
-    struct AppInfo {
-        static let name = "FigrClub"
-        static let bundleId = "com.emerbv.FigrClub"
-        static let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
-        static let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
-        static let minimumOSVersion = "15.0"
+    // MARK: - UI Configuration
+    enum UI {
+        static let cornerRadius: CGFloat = 12
+        static let borderWidth: CGFloat = 1
+        static let shadowRadius: CGFloat = 8
+        static let animationDuration: TimeInterval = 0.3
+        
+        // Layout
+        static let maxContentWidth: CGFloat = 600
+        static let tabBarHeight: CGFloat = 49
+        static let navigationBarHeight: CGFloat = 44
+        
+        // Grid
+        static let gridColumns = 2
+        static let gridSpacing: CGFloat = 16
+        
+        // Images
+        static let profileImageSize: CGFloat = 100
+        static let thumbnailSize: CGFloat = 80
+        static let iconSize: CGFloat = 24
     }
     
-    // MARK: - Storage Configuration
-    struct Storage {
-        static let coreDataModelName = "FigrClub"
-        static let keychainService = "com.emerbv.FigrClub.keychain"
-        static let userDefaultsSuiteName = "group.com.emerbv.FigrClub"
+    // MARK: - Cache Configuration
+    enum Cache {
+        static let imageCacheMemoryLimit: Int = 100 * 1024 * 1024 // 100 MB
+        static let imageCacheDiskLimit: Int = 500 * 1024 * 1024 // 500 MB
+        static let imageCacheExpiration: TimeInterval = 7 * 24 * 60 * 60 // 7 días
+        static let dataCacheExpiration: TimeInterval = 60 * 60 // 1 hora
+        static let userDataCacheExpiration: TimeInterval = 5 * 60 // 5 minutos
     }
     
-    // MARK: - Validation Rules
-    struct Validation {
+    // MARK: - Pagination
+    enum Pagination {
+        static let defaultPageSize = 20
+        static let maxPageSize = 100
+        static let initialPage = 0
+        static let prefetchThreshold = 5
+    }
+    
+    // MARK: - Validation
+    enum Validation {
         static let minPasswordLength = 8
         static let maxPasswordLength = 128
         static let minUsernameLength = 3
-        static let maxUsernameLength = 30
+        static let maxUsernameLength = 20
         static let maxBioLength = 500
-        static let maxPostContentLength = 5000
+        static let maxPostLength = 5000
+        static let maxCommentLength = 1000
+        static let maxTitleLength = 100
+        static let maxHashtagLength = 30
+        static let maxHashtagsPerPost = 10
     }
     
-    // MARK: - External Services
-    struct ExternalServices {
-        static var revenueCatAPIKey: String {
-            switch Environment.current {
-            case .development:
-                return "rc_dev_key"
-            case .staging:
-                return "rc_staging_key"
-            case .production:
-                return "rc_prod_key"
-            }
-        }
-        
-        static var stripePublishableKey: String {
-            switch Environment.current {
-            case .development:
-                return "pk_test_dev"
-            case .staging:
-                return "pk_test_staging"
-            case .production:
-                return "pk_live_prod"
-            }
-        }
+    // MARK: - Upload Limits
+    enum Upload {
+        static let maxImageSize: Int64 = 10 * 1024 * 1024 // 10 MB
+        static let maxVideoSize: Int64 = 100 * 1024 * 1024 // 100 MB
+        static let maxImagesPerPost = 10
+        static let supportedImageFormats = ["jpg", "jpeg", "png", "heic", "heif"]
+        static let supportedVideoFormats = ["mp4", "mov", "m4v"]
+        static let imageCompressionQuality: CGFloat = 0.8
     }
     
-    // MARK: - Deep Linking
-    struct DeepLinking {
-        static let scheme = "figrclub"
-        static let host = "app"
-        
-        enum Routes: String, CaseIterable {
-            case profile = "/profile"
-            case post = "/post"
-            case marketplace = "/marketplace"
-            case chat = "/chat"
-            case notifications = "/notifications"
-        }
+    // MARK: - Security
+    enum Security {
+        static let keychainServiceName = "com.figrclub.keychain"
+        static let pinCodeLength = 6
+        static let maxLoginAttempts = 5
+        static let lockoutDuration: TimeInterval = 300 // 5 minutos
+        static let sessionTimeout: TimeInterval = 3600 // 1 hora
+        static let tokenRefreshThreshold: TimeInterval = 300 // 5 minutos antes de expirar
     }
     
     // MARK: - Notifications
-    struct Notifications {
-        static let categories: [String] = [
-            "LIKE",
-            "COMMENT",
-            "FOLLOW",
-            "NEW_POST",
-            "MARKETPLACE_SALE",
-            "MARKETPLACE_QUESTION",
-            "SYSTEM"
-        ]
+    enum Notifications {
+        static let openNotificationSettings = Notification.Name("openNotificationSettings")
+        static let userDidLogin = Notification.Name("userDidLogin")
+        static let userDidLogout = Notification.Name("userDidLogout")
+        static let tokenExpired = Notification.Name("tokenExpired")
+        static let networkStatusChanged = Notification.Name("networkStatusChanged")
+        static let appDidBecomeActive = Notification.Name("appDidBecomeActive")
+        static let lowMemoryWarning = Notification.Name("lowMemoryWarning")
+    }
+    
+    // MARK: - Deep Links
+    enum DeepLinks {
+        static let scheme = "figrclub"
+        static let universalLinkDomain = "figrclub.com"
+        
+        enum Path {
+            static let profile = "profile"
+            static let post = "post"
+            static let marketplace = "marketplace"
+            static let notifications = "notifications"
+            static let settings = "settings"
+        }
+    }
+    
+    // MARK: - Social Media
+    enum SocialMedia {
+        static let instagramURL = "https://instagram.com/figrclub"
+        static let twitterURL = "https://twitter.com/figrclub"
+        static let facebookURL = "https://facebook.com/figrclub"
+        static let linkedInURL = "https://linkedin.com/company/figrclub"
+        static let youtubeURL = "https://youtube.com/figrclub"
+    }
+    
+    // MARK: - Support
+    enum Support {
+        static let email = "support@figrclub.com"
+        static let websiteURL = "https://figrclub.com"
+        static let privacyPolicyURL = "https://figrclub.com/privacy"
+        static let termsOfServiceURL = "https://figrclub.com/terms"
+        static let faqURL = "https://figrclub.com/faq"
     }
 }
 
-// MARK: - Environment Detection
-extension AppConfig.Environment {
-    var isDebug: Bool {
-        return self == .development
-    }
-    
-    var isProduction: Bool {
-        return self == .production
-    }
-    
-    var displayName: String {
-        switch self {
-        case .development:
-            return "Development"
-        case .staging:
-            return "Staging"
-        case .production:
-            return "Production"
-        }
-    }
+// MARK: - Debug Configuration
+#if DEBUG
+enum DebugConfig {
+    static let showPerformanceOverlay = false
+    static let showNetworkLogs = true
+    static let mockAPIResponses = false
+    static let forceOnboarding = false
+    static let skipAuthentication = false
+    static let testUserEmail = "test@figrclub.com"
+    static let testUserPassword = "Test1234!"
 }
-
-// MARK: - Validation Helpers
-extension AppConfig.Validation {
-    static func isValidPassword(_ password: String) -> Bool {
-        return password.count >= minPasswordLength && password.count <= maxPasswordLength
-    }
-    
-    static func isValidUsername(_ username: String) -> Bool {
-        let trimmed = username.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.count >= minUsernameLength && trimmed.count <= maxUsernameLength
-    }
-    
-    static func isValidBio(_ bio: String) -> Bool {
-        return bio.count <= maxBioLength
-    }
-    
-    static func isValidPostContent(_ content: String) -> Bool {
-        let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
-        return !trimmed.isEmpty && trimmed.count <= maxPostContentLength
-    }
-}
-
-// MARK: - Configuration Validation
-extension AppConfig {
-    static func validateConfiguration() -> Bool {
-        // Validate required configurations
-        guard !API.baseURL.isEmpty else {
-            fatalError("API base URL is not configured")
-        }
-        
-        guard !Firebase.projectId.isEmpty else {
-            fatalError("Firebase project ID is not configured")
-        }
-        
-        guard !AppInfo.bundleId.isEmpty else {
-            fatalError("Bundle ID is not configured")
-        }
-        
-        return true
-    }
-}
+#endif
 
 // MARK: - Build Configuration
 struct BuildConfig {

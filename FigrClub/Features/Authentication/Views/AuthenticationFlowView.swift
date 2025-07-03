@@ -500,41 +500,6 @@ struct PasswordStrengthIndicator: View {
     }
 }
 
-// MARK: - Password Strength
-enum PasswordStrength {
-    case weak
-    case fair
-    case good
-    case strong
-    
-    var level: Int {
-        switch self {
-        case .weak: return 1
-        case .fair: return 2
-        case .good: return 3
-        case .strong: return 4
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .weak: return .figrError
-        case .fair: return .orange
-        case .good: return .yellow
-        case .strong: return .figrSuccess
-        }
-    }
-    
-    var description: String {
-        switch self {
-        case .weak: return "Débil"
-        case .fair: return "Regular"
-        case .good: return "Buena"
-        case .strong: return "Fuerte"
-        }
-    }
-}
-
 // MARK: - View Modifiers
 extension View {
     func hapticFeedback() -> some View {

@@ -9,13 +9,15 @@ import Foundation
 import Combine
 
 extension Publisher {
-    /// Converts Publisher to async/await
     func async() async throws -> Output {
         try await withCheckedThrowingContinuation { continuation in
             var cancellable: AnyCancellable?
-            cancellable = first()
-                .sink(
-                    receiveCompletion: { completion in
+            var finished = false
+            
+            cancellable = self.sink(
+                receiveCompletion: { completion in
+                    if !finished {
+                        finished = true
                         switch completion {
                         case .finished:
                             break
@@ -23,27 +25,17 @@ extension Publisher {
                             continuation.resume(throwing: error)
                         }
                         cancellable?.cancel()
-                    },
-                    receiveValue: { value in
+                    }
+                },
+                receiveValue: { value in
+                    if !finished {
+                        finished = true
                         continuation.resume(returning: value)
                         cancellable?.cancel()
                     }
-                )
+                }
+            )
         }
-    }
-    
-    /// Retry with exponential backoff
-    func retryWithBackoff(
-        maxRetries: Int = 3,
-        baseDelay: TimeInterval = 1.0
-    ) -> AnyPublisher<Output, Failure> {
-        self.retry(maxRetries)
-            .catch { error -> AnyPublisher<Output, Failure> in
-                // If all retries failed, return the error
-                return Fail(error: error)
-                    .eraseToAnyPublisher()
-            }
-            .eraseToAnyPublisher()
     }
 }
 

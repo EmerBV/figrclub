@@ -149,31 +149,6 @@ final class TokenManager: ObservableObject {
         return expiryDate <= Date().addingTimeInterval(timeInterval)
     }
     
-    // MARK: - Token Refresh
-    
-    func refreshTokenIfNeeded() async -> String? {
-        // If there's already a refresh in progress, wait for it
-        if let existingTask = refreshTask {
-            return await existingTask.value
-        }
-        
-        // Check if refresh is needed
-        guard !isTokenValid() else {
-            return getAccessToken()
-        }
-        
-        // Create refresh task
-        refreshTask = Task {
-            await performTokenRefresh()
-        }
-        
-        defer {
-            refreshTask = nil
-        }
-        
-        return await refreshTask?.value
-    }
-    
     private func performTokenRefresh() async -> String? {
         guard let refreshToken = getRefreshToken() else {
             Logger.shared.warning("No refresh token available", category: "auth")
@@ -329,18 +304,6 @@ struct AuthToken: Codable {
     }
 }
 
-struct AuthResponse: Codable {
-    let authToken: AuthToken
-    let refreshToken: AuthToken?
-    let userId: Int
-    let expiresAt: String?
-    
-    var expiryDate: Date? {
-        guard let expiresAt = expiresAt else { return nil }
-        return ISO8601DateFormatter().date(from: expiresAt)
-    }
-}
-
 // MARK: - Token Manager Extensions
 
 extension TokenManager {
@@ -422,6 +385,71 @@ extension TokenManager {
             UserDefaults.standard.removeObject(forKey: "legacy_user_id")
             
             Logger.shared.info("Migrated tokens from UserDefaults to Keychain", category: "auth")
+        }
+    }
+}
+
+extension TokenManager {
+    
+    // MARK: - Token Refresh Methods
+    func shouldRefreshToken() -> Bool {
+        guard let expiryDate = getTokenExpiry() else {
+            return false
+        }
+        
+        let timeUntilExpiry = expiryDate.timeIntervalSinceNow
+        let refreshThreshold = AppConfig.Security.tokenRefreshThreshold
+        
+        // Refrescar si queda menos tiempo del umbral
+        return timeUntilExpiry < refreshThreshold && timeUntilExpiry > 0
+    }
+    
+    func refreshAccessToken() async -> Result<String, APIError> {
+        guard let refreshToken = getRefreshToken() else {
+            return .failure(APIError(
+                message: "No refresh token available",
+                code: "NO_REFRESH_TOKEN"
+            ))
+        }
+        
+        do {
+            let request = RefreshTokenRequest(refreshToken: refreshToken)
+            let response: AuthResponse = try await APIService.shared
+                .request(endpoint: .refreshToken, body: request)
+                .async()
+            
+            // Guardar los nuevos tokens
+            saveTokens(
+                accessToken: response.authToken.token,
+                refreshToken: response.refreshToken?.token,
+                userId: response.userId
+            )
+            
+            Logger.shared.info("Token refreshed successfully", category: "auth")
+            return .success(response.authToken.token)
+            
+        } catch {
+            let apiError = error as? APIError ?? APIError(
+                message: "Failed to refresh token",
+                code: "TOKEN_REFRESH_FAILED"
+            )
+            Logger.shared.error("Token refresh failed", error: apiError, category: "auth")
+            return .failure(apiError)
+        }
+    }
+    
+    func refreshTokenIfNeeded() async -> String? {
+        if !shouldRefreshToken() {
+            return getAccessToken()
+        }
+        
+        let result = await refreshAccessToken()
+        
+        switch result {
+        case .success(let token):
+            return token
+        case .failure:
+            return nil
         }
     }
 }

@@ -76,6 +76,47 @@ struct ContentView: View {
     }
 }
 
+extension ContentView {
+    var mainTabView: some View {
+        TabView {
+            NavigationView {
+                FeedView()
+            }
+            .tabItem {
+                Label("Feed", systemImage: "house.fill")
+            }
+            
+            NavigationView {
+                MarketplaceView()
+            }
+            .tabItem {
+                Label("Marketplace", systemImage: "cart.fill")
+            }
+            
+            NavigationView {
+                CreatePostView()
+            }
+            .tabItem {
+                Label("Crear", systemImage: "plus.circle.fill")
+            }
+            
+            NavigationView {
+                NotificationsView()
+            }
+            .tabItem {
+                Label("Notificaciones", systemImage: "bell.fill")
+            }
+            
+            NavigationView {
+                ProfileView()
+            }
+            .tabItem {
+                Label("Perfil", systemImage: "person.fill")
+            }
+        }
+    }
+}
+
 // MARK: - Auth State Pattern Matching Extension
 extension AuthState: Equatable {
     static func == (lhs: AuthState, rhs: AuthState) -> Bool {

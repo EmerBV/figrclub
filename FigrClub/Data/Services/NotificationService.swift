@@ -5,234 +5,184 @@
 //  Created by Emerson Balahan Varona on 30/6/25.
 //
 
-import Foundation
 import UIKit
 import UserNotifications
 import FirebaseMessaging
-import Combine
 
 // MARK: - Notification Service
-final class NotificationService: NSObject, ObservableObject {
+final class NotificationService: NSObject {
     static let shared = NotificationService()
     
-    // MARK: - Published Properties
-    @Published var isAuthorized = false
-    @Published var authorizationStatus: UNAuthorizationStatus = .notDetermined
+    private let notificationCenter = UNUserNotificationCenter.current()
+    private var fcmToken: String?
     
-    // MARK: - Private Properties
-    private let apiService: APIServiceProtocol = APIService.shared
-    private var cancellables = Set<AnyCancellable>()
-    
-    // MARK: - Initialization
-    override init() {
+    private override init() {
         super.init()
-        configure()
-        setupObservers()
+        notificationCenter.delegate = self
     }
     
     // MARK: - Configuration
     func configure() {
-        UNUserNotificationCenter.current().delegate = self
-        Messaging.messaging().delegate = self
-        
-        getNotificationSettings()
-        
-        Logger.shared.info("NotificationService configured", category: "notifications")
+        requestNotificationPermissions()
+        registerForRemoteNotifications()
+        setupCategories()
     }
     
-    // MARK: - Authorization
-    func requestPermission() async -> Bool {
-        do {
-            let granted = try await UNUserNotificationCenter.current()
-                .requestAuthorization(options: [.alert, .badge, .sound])
-            
-            await MainActor.run {
-                isAuthorized = granted
+    // MARK: - Permissions
+    func requestNotificationPermissions() {
+        let options: UNAuthorizationOptions = [.alert, .badge, .sound, .provisional]
+        
+        notificationCenter.requestAuthorization(options: options) { granted, error in
+            if let error = error {
+                Logger.shared.error("Failed to request notification permissions", error: error, category: "notifications")
+                return
             }
             
+            Logger.shared.info("Notification permissions granted: \(granted)", category: "notifications")
+            
             if granted {
-                await MainActor.run {
+                DispatchQueue.main.async {
                     UIApplication.shared.registerForRemoteNotifications()
                 }
             }
-            
-            Logger.shared.info("Notification authorization: \(granted)", category: "notifications")
-            return granted
-            
-        } catch {
-            Logger.shared.error("Failed to request authorization", error: error, category: "notifications")
-            return false
         }
     }
     
-    func getNotificationSettings() {
-        UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
-            DispatchQueue.main.async {
-                self?.authorizationStatus = settings.authorizationStatus
-                self?.isAuthorized = settings.authorizationStatus == .authorized
-            }
-            
-            Logger.shared.info("Notification status: \(settings.authorizationStatus.rawValue)", category: "notifications")
+    // MARK: - Registration
+    private func registerForRemoteNotifications() {
+        DispatchQueue.main.async {
+            UIApplication.shared.registerForRemoteNotifications()
         }
     }
     
-    // MARK: - Device Token Management
-    func registerDeviceToken(_ token: String) async {
-        let request = RegisterDeviceTokenRequest(
-            token: token,
-            deviceType: .ios,
-            deviceName: UIDevice.current.name,
-            appVersion: AppConfig.AppInfo.version,
-            osVersion: UIDevice.current.systemVersion
+    // MARK: - Categories
+    private func setupCategories() {
+        // Acciones para notificaciones de posts
+        let likeAction = UNNotificationAction(
+            identifier: "LIKE_ACTION",
+            title: "Me gusta",
+            options: []
         )
         
+        let commentAction = UNNotificationAction(
+            identifier: "COMMENT_ACTION",
+            title: "Comentar",
+            options: [.foreground]
+        )
+        
+        let postCategory = UNNotificationCategory(
+            identifier: "POST_CATEGORY",
+            actions: [likeAction, commentAction],
+            intentIdentifiers: [],
+            options: []
+        )
+        
+        // Acciones para notificaciones de seguimiento
+        let followBackAction = UNNotificationAction(
+            identifier: "FOLLOW_BACK_ACTION",
+            title: "Seguir también",
+            options: []
+        )
+        
+        let viewProfileAction = UNNotificationAction(
+            identifier: "VIEW_PROFILE_ACTION",
+            title: "Ver perfil",
+            options: [.foreground]
+        )
+        
+        let followCategory = UNNotificationCategory(
+            identifier: "FOLLOW_CATEGORY",
+            actions: [followBackAction, viewProfileAction],
+            intentIdentifiers: [],
+            options: []
+        )
+        
+        notificationCenter.setNotificationCategories([postCategory, followCategory])
+    }
+    
+    // MARK: - Token Management
+    func setFCMToken(_ token: String) {
+        self.fcmToken = token
+        Logger.shared.info("FCM token set", category: "notifications")
+        
+        // Enviar token al backend si el usuario está autenticado
+        if TokenManager.shared.isAuthenticated {
+            Task {
+                await registerDeviceToken(token)
+            }
+        }
+    }
+    
+    private func registerDeviceToken(_ token: String) async {
         do {
-            let _: DeviceToken = try await apiService
+            let request = RegisterDeviceTokenRequest(
+                token: token,
+                platform: "iOS",
+                deviceId: UIDevice.current.identifierForVendor?.uuidString ?? ""
+            )
+            
+            let _: Void = try await APIService.shared
                 .request(endpoint: .registerDeviceToken, body: request)
                 .async()
             
             Logger.shared.info("Device token registered successfully", category: "notifications")
-            
         } catch {
             Logger.shared.error("Failed to register device token", error: error, category: "notifications")
         }
     }
     
-    // MARK: - Notification Handling
-    func handleNotificationTap(userInfo: [AnyHashable: Any]) {
-        Logger.shared.info("Handling notification tap: \(userInfo)", category: "notifications")
-        
-        // Extract notification data
-        guard let entityType = userInfo["entityType"] as? String,
-              let entityId = userInfo["entityId"] as? Int else {
-            Logger.shared.warning("Invalid notification data", category: "notifications")
-            return
+    // MARK: - Badge Management
+    func clearBadge() {
+        DispatchQueue.main.async {
+            UIApplication.shared.applicationIconBadgeNumber = 0
         }
-        
-        // Navigate based on entity type
-        switch entityType {
-        case "POST":
-            NotificationCenter.default.post(
-                name: .navigateToPost,
-                object: nil,
-                userInfo: ["postId": entityId]
-            )
-        case "USER":
-            NotificationCenter.default.post(
-                name: .navigateToProfile,
-                object: nil,
-                userInfo: ["userId": entityId]
-            )
-        case "MARKETPLACE_ITEM":
-            NotificationCenter.default.post(
-                name: .navigateToMarketplaceItem,
-                object: nil,
-                userInfo: ["itemId": entityId]
-            )
-        case "CONVERSATION":
-            NotificationCenter.default.post(
-                name: .navigateToConversation,
-                object: nil,
-                userInfo: ["conversationId": entityId]
-            )
-        default:
-            Logger.shared.info("Unknown entity type: \(entityType)", category: "notifications")
-        }
-        
-        Analytics.shared.logEvent("notification_tapped", parameters: [
-            "entity_type": entityType,
-            "entity_id": entityId
-        ])
     }
     
-    // MARK: - Badge Management
-    func updateBadgeCount(_ count: Int) {
+    func setBadge(_ count: Int) {
         DispatchQueue.main.async {
             UIApplication.shared.applicationIconBadgeNumber = count
         }
     }
     
-    func clearBadge() {
-        updateBadgeCount(0)
-    }
-    
-    // MARK: - Private Methods
-    private func setupObservers() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(applicationDidBecomeActive),
-            name: UIApplication.didBecomeActiveNotification,
-            object: nil
+    // MARK: - Local Notifications
+    func scheduleLocalNotification(
+        title: String,
+        body: String,
+        identifier: String,
+        timeInterval: TimeInterval,
+        repeats: Bool = false
+    ) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        
+        let trigger = UNTimeIntervalNotificationTrigger(
+            timeInterval: timeInterval,
+            repeats: repeats
         )
         
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(applicationDidEnterBackground),
-            name: UIApplication.didEnterBackgroundNotification,
-            object: nil
+        let request = UNNotificationRequest(
+            identifier: identifier,
+            content: content,
+            trigger: trigger
         )
         
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleFCMTokenReceived(_:)),
-            name: .fcmTokenReceived,
-            object: nil
-        )
-        
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleNotificationTapFromFirebase(_:)),
-            name: .handleNotificationTap,
-            object: nil
-        )
-    }
-    
-    // MARK: - App State Observers
-    
-    @objc private func applicationDidBecomeActive() {
-        getNotificationSettings()
-        clearBadge()
-    }
-    
-    @objc private func applicationDidEnterBackground() {
-        // Save any pending notification state
-    }
-    
-    @objc private func handleFCMTokenReceived(_ notification: Notification) {
-        guard let token = notification.userInfo?["token"] as? String else { return }
-        
-        Task {
-            await registerDeviceToken(token)
+        notificationCenter.add(request) { error in
+            if let error = error {
+                Logger.shared.error("Failed to schedule local notification", error: error, category: "notifications")
+            } else {
+                Logger.shared.info("Local notification scheduled: \(identifier)", category: "notifications")
+            }
         }
     }
     
-    @objc private func handleNotificationTapFromFirebase(_ notification: Notification) {
-        guard let userInfo = notification.userInfo else { return }
-        handleNotificationTap(userInfo: userInfo)
+    func cancelNotification(identifier: String) {
+        notificationCenter.removePendingNotificationRequests(withIdentifiers: [identifier])
     }
     
-    // MARK: - Testing
-    
-    func sendTestNotification() async {
-        guard isAuthorized else {
-            Logger.shared.warning("Cannot send test notification - not authorized", category: "notifications")
-            return
-        }
-        
-        do {
-            let _: EmptyResponse = try await apiService
-                .request(endpoint: .testNotification, body: nil)
-                .async()
-            
-            Logger.shared.info("Test notification sent", category: "notifications")
-            
-        } catch {
-            Logger.shared.error("Failed to send test notification", error: error, category: "notifications")
-        }
-    }
-    
-    deinit {
-        NotificationCenter.default.removeObserver(self)
+    func cancelAllNotifications() {
+        notificationCenter.removeAllPendingNotificationRequests()
     }
 }
 
@@ -244,14 +194,8 @@ extension NotificationService: UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        Logger.shared.info("Will present notification: \(notification.request.identifier)", category: "notifications")
-        
-        // Show notification in foreground
-        completionHandler([.alert, .sound, .badge])
-        
-        Analytics.shared.logEvent("notification_received_foreground", parameters: [
-            "notification_id": notification.request.identifier
-        ])
+        // Mostrar notificaciones incluso cuando la app está en primer plano
+        completionHandler([.banner, .badge, .sound])
     }
     
     func userNotificationCenter(
@@ -259,24 +203,63 @@ extension NotificationService: UNUserNotificationCenterDelegate {
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        Logger.shared.info("Did receive notification response: \(response.notification.request.identifier)", category: "notifications")
-        
         let userInfo = response.notification.request.content.userInfo
         
-        // Handle notification tap
-        handleNotificationTap(userInfo: userInfo)
+        // Manejar acciones de notificación
+        switch response.actionIdentifier {
+        case "LIKE_ACTION":
+            handleLikeAction(userInfo: userInfo)
+        case "COMMENT_ACTION":
+            handleCommentAction(userInfo: userInfo)
+        case "FOLLOW_BACK_ACTION":
+            handleFollowBackAction(userInfo: userInfo)
+        case "VIEW_PROFILE_ACTION":
+            handleViewProfileAction(userInfo: userInfo)
+        case UNNotificationDefaultActionIdentifier:
+            handleDefaultAction(userInfo: userInfo)
+        default:
+            break
+        }
         
         completionHandler()
     }
     
-    func userNotificationCenter(
-        _ center: UNUserNotificationCenter,
-        openSettingsFor notification: UNNotification?
-    ) {
-        Logger.shared.info("User opened notification settings", category: "notifications")
-        
-        Analytics.shared.logEvent("notification_settings_opened", parameters: [:])
+    // MARK: - Action Handlers
+    private func handleLikeAction(userInfo: [AnyHashable: Any]) {
+        guard let postId = userInfo["postId"] as? String else { return }
+        Logger.shared.info("Like action for post: \(postId)", category: "notifications")
+        // Implementar lógica de like
     }
+    
+    private func handleCommentAction(userInfo: [AnyHashable: Any]) {
+        guard let postId = userInfo["postId"] as? String else { return }
+        Logger.shared.info("Comment action for post: \(postId)", category: "notifications")
+        // Navegar a la pantalla de comentarios
+    }
+    
+    private func handleFollowBackAction(userInfo: [AnyHashable: Any]) {
+        guard let userId = userInfo["userId"] as? String else { return }
+        Logger.shared.info("Follow back action for user: \(userId)", category: "notifications")
+        // Implementar lógica de follow back
+    }
+    
+    private func handleViewProfileAction(userInfo: [AnyHashable: Any]) {
+        guard let userId = userInfo["userId"] as? String else { return }
+        Logger.shared.info("View profile action for user: \(userId)", category: "notifications")
+        // Navegar al perfil del usuario
+    }
+    
+    private func handleDefaultAction(userInfo: [AnyHashable: Any]) {
+        Logger.shared.info("Default notification action", category: "notifications")
+        // Manejar acción por defecto
+    }
+}
+
+// MARK: - Register Device Token Request
+struct RegisterDeviceTokenRequest: Codable {
+    let token: String
+    let platform: String
+    let deviceId: String
 }
 
 // MARK: - MessagingDelegate
@@ -322,15 +305,6 @@ struct NotificationPreferences: Codable {
             UserDefaults.standard.set(data, forKey: Self.userDefaultsKey)
         }
     }
-}
-
-// MARK: - Supporting Models
-struct RegisterDeviceTokenRequest: Codable {
-    let token: String
-    let deviceType: DeviceType
-    let deviceName: String
-    let appVersion: String
-    let osVersion: String
 }
 
 enum DeviceType: String, Codable {

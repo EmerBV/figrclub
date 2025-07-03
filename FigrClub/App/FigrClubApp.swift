@@ -208,36 +208,40 @@ final class RemoteConfigManager: ObservableObject {
     static let shared = RemoteConfigManager()
     
     @Published var isMaintenanceMode = false
-    @Published var minimumAppVersion = "1.0.0"
-    @Published var featuresEnabled: [String: Bool] = [:]
+    @Published var maintenanceMessage = "Estamos realizando mejoras en FigrClub. Volveremos pronto."
+    @Published var estimatedMaintenanceEnd: Date?
+    @Published var minAppVersion = "1.0.0"
+    @Published var forceUpdateEnabled = false
+    @Published var features: [String: Bool] = [:]
     
     private init() {
         loadRemoteConfig()
     }
     
     func loadRemoteConfig() {
-        // Load configuration from Firebase Remote Config
-        // For now, using default values
+        // En producción, esto cargaría desde Firebase Remote Config
+#if DEBUG
+        // Valores por defecto para desarrollo
         isMaintenanceMode = false
-        minimumAppVersion = "1.0.0"
-        featuresEnabled = [
-            "newPostCreation": true,
-            "marketplaceEnabled": true,
-            "pushNotifications": true,
-            "analytics": true
+        forceUpdateEnabled = false
+        features = [
+            "marketplace": true,
+            "stories": false,
+            "live": false,
+            "darkMode": true
         ]
-        
-        Logger.shared.info("Remote config loaded", category: "config")
+#else
+        fetchRemoteConfig()
+#endif
     }
     
-    func getSetting(_ key: String, defaultValue: String) -> String {
-        // Get setting from remote config
-        // For now, return default value
-        return defaultValue
+    private func fetchRemoteConfig() {
+        // Implementar fetch desde Firebase Remote Config
+        Logger.shared.info("Fetching remote config", category: "config")
     }
     
-    func getBoolSetting(_ key: String, defaultValue: Bool) -> Bool {
-        return featuresEnabled[key] ?? defaultValue
+    func isFeatureEnabled(_ feature: String) -> Bool {
+        return features[feature] ?? false
     }
 }
 
@@ -265,138 +269,6 @@ final class AccessibilityAnnouncementManager: ObservableObject {
         announce(status, priority: .announcement)
     }
 }
-
-// MARK: - Logger Implementation
-final class Logger {
-    static let shared = Logger()
-    
-    private init() {}
-    
-    func info(_ message: String, category: String = "general") {
-        log(level: .info, message: message, category: category)
-    }
-    
-    func warning(_ message: String, category: String = "general") {
-        log(level: .warning, message: message, category: category)
-    }
-    
-    func error(_ message: String, error: Error? = nil, category: String = "general") {
-        var logMessage = message
-        if let error = error {
-            logMessage += " - Error: \(error.localizedDescription)"
-        }
-        log(level: .error, message: logMessage, category: category)
-    }
-    
-    func fatal(_ message: String, category: String = "general") {
-        log(level: .fatal, message: message, category: category)
-    }
-    
-    private func log(level: LogLevel, message: String, category: String) {
-        let timestamp = ISO8601DateFormatter().string(from: Date())
-        let logMessage = "[\(timestamp)] [\(level.rawValue.uppercased())] [\(category)] \(message)"
-        
-#if DEBUG
-        print(logMessage)
-#endif
-        
-        // Send to crash reporting service in production
-#if !DEBUG
-        if level == .error || level == .fatal {
-            // Send to Crashlytics or similar service
-        }
-#endif
-    }
-}
-
-enum LogLevel: String {
-    case info = "info"
-    case warning = "warning"
-    case error = "error"
-    case fatal = "fatal"
-}
-
-// MARK: - Analytics Implementation
-final class Analytics {
-    static let shared = Analytics()
-    
-    private var isConfigured = false
-    
-    private init() {}
-    
-    func configure() {
-        isConfigured = true
-        Logger.shared.info("Analytics configured", category: "analytics")
-    }
-    
-    func logEvent(_ name: String, parameters: [String: Any] = [:]) {
-        guard isConfigured else { return }
-        
-        Logger.shared.info("Analytics event: \(name) with parameters: \(parameters)", category: "analytics")
-        
-        // Send to Firebase Analytics
-#if !DEBUG
-        // FirebaseAnalytics.Analytics.logEvent(name, parameters: parameters)
-#endif
-    }
-    
-    func logScreenView(screenName: String) {
-        logEvent("screen_view", parameters: ["screen_name": screenName])
-    }
-    
-    func logLogin(method: String) {
-        logEvent("login", parameters: ["method": method])
-    }
-    
-    func logPostCreated(postType: String) {
-        logEvent("post_created", parameters: ["post_type": postType])
-    }
-    
-    func resume() {
-        Logger.shared.info("Analytics resumed", category: "analytics")
-    }
-    
-    func pause() {
-        Logger.shared.info("Analytics paused", category: "analytics")
-    }
-}
-
-// MARK: - Debug Configuration
-#if DEBUG
-struct DebugConfig {
-    static let showPerformanceOverlay = false
-    static let enableNetworkLogging = true
-    static let useMockData = false
-    static let bypassAuthentication = false
-}
-
-struct PerformanceOverlayView: View {
-    @StateObject private var memoryManager = MemoryManager.shared
-    
-    var body: some View {
-        VStack(alignment: .trailing, spacing: 4) {
-            Text("MEM: \(ByteCountFormatter.string(fromByteCount: Int64(memoryManager.memoryUsage), countStyle: .memory))")
-                .font(.caption2)
-                .foregroundColor(.white)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.black.opacity(0.7))
-                .cornerRadius(8)
-            
-            if memoryManager.isMemoryPressureHigh {
-                Text("HIGH MEMORY")
-                    .font(.caption2)
-                    .foregroundColor(.red)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.black.opacity(0.7))
-                    .cornerRadius(8)
-            }
-        }
-        .padding()
-    }
-}
-#endif
 
 // MARK: - App Delegate Implementation (Additional Methods)
 extension AppDelegate {

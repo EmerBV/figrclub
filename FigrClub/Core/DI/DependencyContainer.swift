@@ -118,6 +118,59 @@ private extension DependencyContainer {
     }
 }
 
+// MARK: - ViewModels Registration
+extension DependencyContainer {
+    func registerViewModels() {
+        // Login ViewModel
+        container.register(LoginViewModel.self) { resolver in
+            let viewModel = LoginViewModel()
+            return viewModel
+        }
+        
+        // Register ViewModel
+        container.register(RegisterViewModel.self) { resolver in
+            let authManager = resolver.resolve(AuthManager.self)
+            let viewModel = RegisterViewModel(authManager: authManager)
+            return viewModel
+        }
+        
+        // Feed ViewModel
+        container.register(FeedViewModel.self) { resolver in
+            let viewModel = FeedViewModel()
+            return viewModel
+        }
+        
+        // Marketplace ViewModel
+        container.register(MarketplaceViewModel.self) { resolver in
+            let viewModel = MarketplaceViewModel()
+            return viewModel
+        }
+        
+        // Notifications ViewModel
+        container.register(NotificationsViewModel.self) { resolver in
+            let viewModel = NotificationsViewModel()
+            return viewModel
+        }
+        
+        // Profile ViewModel
+        container.register(ProfileViewModel.self) { resolver in
+            let viewModel = ProfileViewModel()
+            return viewModel
+        }
+        
+        // Create Post ViewModel
+        container.register(CreatePostViewModel.self) { resolver in
+            let createPostUseCase = resolver.resolve(CreatePostUseCase.self)!
+            let uploadImageUseCase = resolver.resolve(UploadImageUseCase.self)!
+            let viewModel = CreatePostViewModel(
+                createPostUseCase: createPostUseCase,
+                uploadImageUseCase: uploadImageUseCase
+            )
+            return viewModel
+        }
+    }
+}
+
 // MARK: - Use Cases Registration
 private extension DependencyContainer {
     
@@ -200,70 +253,6 @@ private extension DependencyContainer {
                 authRepository: resolver.resolve(AuthRepository.self)!,
                 userRepository: resolver.resolve(UserRepository.self)!,
                 tokenManager: resolver.resolve(TokenManager.self)!
-            )
-        }
-    }
-}
-
-// MARK: - ViewModels Registration
-private extension DependencyContainer {
-    
-    func registerViewModels() {
-        // Authentication ViewModels
-        container.register(LoginViewModel.self) { resolver in
-            LoginViewModel(
-                loginUseCase: resolver.resolve(LoginUseCase.self)!,
-                authManager: resolver.resolve(AuthManager.self)!
-            )
-        }
-        
-        container.register(RegisterViewModel.self) { resolver in
-            RegisterViewModel(
-                registerUseCase: resolver.resolve(RegisterUseCase.self)!,
-                authManager: resolver.resolve(AuthManager.self)!
-            )
-        }
-        
-        // Main Feature ViewModels
-        container.register(FeedViewModel.self) { resolver in
-            FeedViewModel(
-                loadPostsUseCase: resolver.resolve(LoadPostsUseCase.self)!,
-                togglePostLikeUseCase: resolver.resolve(TogglePostLikeUseCase.self)!
-            )
-        }
-        
-        container.register(MarketplaceViewModel.self) { resolver in
-            MarketplaceViewModel(
-                loadMarketplaceItemsUseCase: resolver.resolve(LoadMarketplaceItemsUseCase.self)!,
-                loadCategoriesUseCase: resolver.resolve(LoadCategoriesUseCase.self)!
-            )
-        }
-        
-        container.register(ProfileViewModel.self) { resolver in
-            ProfileViewModel(
-                loadUserProfileUseCase: resolver.resolve(LoadUserProfileUseCase.self)!,
-                loadUserPostsUseCase: resolver.resolve(LoadUserPostsUseCase.self)!,
-                toggleFollowUserUseCase: resolver.resolve(ToggleFollowUserUseCase.self)!,
-                authManager: resolver.resolve(AuthManager.self)!
-            )
-        }
-        
-        container.register(NotificationsViewModel.self) { resolver in
-            NotificationsViewModel(
-                loadNotificationsUseCase: resolver.resolve(LoadNotificationsUseCase.self)!,
-                markNotificationAsReadUseCase: resolver.resolve(MarkNotificationAsReadUseCase.self)!
-            )
-        }
-        
-        container.register(CreatePostViewModel.self) { resolver in
-            CreatePostViewModel(
-                createPostUseCase: resolver.resolve(CreatePostUseCase.self)!
-            )
-        }
-        
-        container.register(CommentsViewModel.self) { resolver in
-            CommentsViewModel(
-                apiService: resolver.resolve(APIServiceProtocol.self)!
             )
         }
     }

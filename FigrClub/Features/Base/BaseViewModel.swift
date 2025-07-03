@@ -103,6 +103,20 @@ open class BaseViewModel: ObservableObject {
     }
 }
 
+extension BaseViewModel {
+    func handlePaginationCorrectly(currentPage: Int?, totalPages: Int?) {
+        // Manejar opcionales correctamente
+        guard let currentPage = currentPage,
+              let totalPages = totalPages else {
+            return
+        }
+        
+        hasMorePages = currentPage < totalPages - 1
+        self.currentPage = currentPage
+        self.totalPages = totalPages
+    }
+}
+
 // MARK: - Paginated ViewModel
 @MainActor
 open class PaginatedViewModel<T: Identifiable>: BaseViewModel {
@@ -235,27 +249,6 @@ open class FormViewModel: BaseViewModel {
     
     func hasValidationError(for field: String) -> Bool {
         return validationErrors[field] != nil
-    }
-}
-
-// MARK: - Validation State
-enum ValidationState {
-    case idle
-    case valid
-    case invalid(String)
-    
-    var isValid: Bool {
-        if case .valid = self {
-            return true
-        }
-        return false
-    }
-    
-    var errorMessage: String? {
-        if case .invalid(let message) = self {
-            return message
-        }
-        return nil
     }
 }
 

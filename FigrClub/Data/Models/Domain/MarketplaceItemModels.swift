@@ -64,6 +64,8 @@ struct MarketplaceItem: Codable, Identifiable {
     
     var statusDescription: String {
         switch status {
+        case .active:
+            return "Activo"
         case .available:
             return "Disponible"
         case .sold:
@@ -72,6 +74,8 @@ struct MarketplaceItem: Codable, Identifiable {
             return "Reservado"
         case .inactive:
             return "Inactivo"
+        case .deleted:
+            return "Eliminado"
         }
     }
     
@@ -133,17 +137,21 @@ enum ItemCondition: String, Codable, CaseIterable {
 }
 
 enum ItemStatus: String, Codable, CaseIterable {
+    case active = "ACTIVE"
     case available = "AVAILABLE"
     case sold = "SOLD"
     case reserved = "RESERVED"
     case inactive = "INACTIVE"
+    case deleted = "DELETED"
     
     var displayName: String {
         switch self {
+        case .active: return "Activo"
         case .available: return "Disponible"
         case .sold: return "Vendido"
         case .reserved: return "Reservado"
         case .inactive: return "Inactivo"
+        case .deleted: return "Eliminado"
         }
     }
 }
@@ -204,34 +212,36 @@ enum SortDirection: String, Codable, CaseIterable {
 }
 
 // MARK: - Marketplace Item Extensions
-extension MarketplaceItem {
-    
-    static func mock() -> MarketplaceItem {
-        return MarketplaceItem(
-            id: 1,
-            title: "Figura de Goku Super Saiyan",
-            description: "Figura coleccionable de Dragon Ball Z en perfecto estado. Incluye base y efectos especiales.",
-            price: 49.99,
-            currency: "EUR",
-            condition: .likeNew,
-            category: Category.mock(),
-            images: [
-                "https://example.com/image1.jpg",
-                "https://example.com/image2.jpg"
-            ],
-            seller: User.mock(),
-            status: .available,
-            createdAt: "2024-01-15T10:30:00Z",
-            updatedAt: nil,
-            stockQuantity: 1,
-            viewsCount: 125,
-            favoritesCount: 8,
-            location: ItemLocation(country: "España", city: "Madrid", region: "Madrid"),
-            isFavoritedByCurrentUser: false,
-            canEdit: false,
-            canDelete: false,
-            canMakeOffer: true,
-            canAskQuestion: true
-        )
-    }
-}
+/*
+ extension MarketplaceItem {
+ 
+ static func mock() -> MarketplaceItem {
+ return MarketplaceItem(
+ id: 1,
+ title: "Figura de Goku Super Saiyan",
+ description: "Figura coleccionable de Dragon Ball Z en perfecto estado. Incluye base y efectos especiales.",
+ price: 49.99,
+ currency: "EUR",
+ condition: .likeNew,
+ category: Category.mock(),
+ images: [
+ "https://example.com/image1.jpg",
+ "https://example.com/image2.jpg"
+ ],
+ seller: User.mock(),
+ status: .available,
+ createdAt: "2024-01-15T10:30:00Z",
+ updatedAt: nil,
+ stockQuantity: 1,
+ viewsCount: 125,
+ favoritesCount: 8,
+ location: ItemLocation(country: "España", city: "Madrid", region: "Madrid"),
+ isFavoritedByCurrentUser: false,
+ canEdit: false,
+ canDelete: false,
+ canMakeOffer: true,
+ canAskQuestion: true
+ )
+ }
+ }
+ */

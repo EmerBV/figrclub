@@ -643,3 +643,24 @@ final class AuthManager: AuthManagerProtocol {
         Logger.shared.debug("Auth state: error (\(error.message))", category: "auth")
     }
 }
+
+extension AuthManager {
+    func checkAuthenticationStatus() async {
+        if tokenManager.isAuthenticated {
+            // Si hay token, intentar obtener datos del usuario
+            let result = await getCurrentUser()
+            
+            switch result {
+            case .success:
+                // Usuario autenticado correctamente
+                Logger.shared.info("User authenticated from saved token", category: "auth")
+            case .failure:
+                // Token inválido o expirado
+                logout()
+            }
+        } else {
+            // No hay token guardado
+            await setUnauthenticatedState()
+        }
+    }
+}
