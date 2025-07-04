@@ -12,7 +12,7 @@ import SwiftUI
 struct Comment: Identifiable, Codable {
     let id: Int
     let content: String
-    let author: User
+    let author: User  // ← Tiene la propiedad author
     let postId: Int
     let createdAt: String
     let updatedAt: String?
@@ -21,8 +21,15 @@ struct Comment: Identifiable, Codable {
 }
 
 struct CreateCommentRequest: Codable {
-    let content: String
     let postId: Int
+    let content: String
+    var parentCommentId: Int? = nil
+    
+    init(content: String, postId: Int, parentCommentId: Int? = nil) {
+        self.content = content
+        self.postId = postId
+        self.parentCommentId = parentCommentId
+    }
 }
 
 // MARK: - Comments View
@@ -134,6 +141,6 @@ struct CommentInputView: View {
             .disabled(commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
         .padding()
-        .background(.figrSurface)
+        //.background(.figrSurface)
     }
 }

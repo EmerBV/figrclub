@@ -12,13 +12,13 @@ import Combine
 final class FeedViewModel: PaginatedViewModel<Post> {
     
     // MARK: - Use Cases
-    private let loadPostsUseCase: LoadPostsUseCase
-    private let togglePostLikeUseCase: TogglePostLikeUseCase
+    private let loadPostsUseCase: any LoadPostsUseCase
+    private let togglePostLikeUseCase: any TogglePostLikeUseCase
     
     // MARK: - Initialization
     init(
-        loadPostsUseCase: LoadPostsUseCase,
-        togglePostLikeUseCase: TogglePostLikeUseCase
+        loadPostsUseCase: any LoadPostsUseCase,
+        togglePostLikeUseCase: any TogglePostLikeUseCase
     ) {
         self.loadPostsUseCase = loadPostsUseCase
         self.togglePostLikeUseCase = togglePostLikeUseCase

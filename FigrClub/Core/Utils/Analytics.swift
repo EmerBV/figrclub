@@ -132,3 +132,71 @@ final class Analytics {
         // Reanudar analytics si es necesario
     }
 }
+
+extension Analytics {
+    
+    // MARK: - Social Events
+    func logPostLike(postId: String) {
+        logEvent("post_like", parameters: [
+            "post_id": postId
+        ])
+    }
+    
+    func logPostUnlike(postId: String) {
+        logEvent("post_unlike", parameters: [
+            "post_id": postId
+        ])
+    }
+    
+    func logPostShare(postId: String, method: String) {
+        logEvent("post_share", parameters: [
+            "post_id": postId,
+            "method": method
+        ])
+    }
+    
+    func logPostComment(postId: String) {
+        logEvent("post_comment", parameters: [
+            "post_id": postId
+        ])
+    }
+    
+    // MARK: - User Events
+    func logUserFollow(targetUserId: String) {
+        logEvent("user_follow", parameters: [
+            "target_user_id": targetUserId
+        ])
+    }
+    
+    func logUserUnfollow(targetUserId: String) {
+        logEvent("user_unfollow", parameters: [
+            "target_user_id": targetUserId
+        ])
+    }
+    
+    // MARK: - Marketplace Events
+    func logItemView(itemId: String, categoryId: String? = nil) {
+        var parameters: [String: Any] = [
+            "item_id": itemId
+        ]
+        
+        if let categoryId = categoryId {
+            parameters["category_id"] = categoryId
+        }
+        
+        logEvent("item_view", parameters: parameters)
+    }
+    
+    func logItemFavorite(itemId: String) {
+        logEvent("item_favorite", parameters: [
+            "item_id": itemId
+        ])
+    }
+    
+    func logItemSearch(query: String, resultsCount: Int) {
+        logEvent("item_search", parameters: [
+            "search_query": query,
+            "results_count": resultsCount
+        ])
+    }
+}

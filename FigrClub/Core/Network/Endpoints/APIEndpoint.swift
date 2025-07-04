@@ -476,12 +476,20 @@ extension APIEndpoint {
                 .favoriteMarketplaceItem(let id), .unfavoriteMarketplaceItem(let id),
                 .getCategory(let id), .updateComment(let id), .deleteComment(let id),
                 .likeComment(let id), .unlikeComment(let id),
-                .markNotificationAsRead(let id), .deleteNotification(let id),
-                .deleteFile(let id):
+                .markNotificationAsRead(let id), .deleteNotification(let id):
             guard id > 0 else {
                 throw APIError(
                     message: "Invalid ID parameter",
                     code: "INVALID_ID"
+                )
+            }
+            
+            // Validación separada para deleteFile que usa String
+        case .deleteFile(let fileId):
+            guard !fileId.isEmpty else {
+                throw APIError(
+                    message: "Invalid file ID parameter",
+                    code: "INVALID_FILE_ID"
                 )
             }
             

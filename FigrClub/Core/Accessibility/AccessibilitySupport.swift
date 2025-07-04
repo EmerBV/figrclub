@@ -181,18 +181,18 @@ extension MarketplaceItemCard {
     }
     
     private var accessibilityItemLabel: String {
-        var components: [String] = []
+        var parts: [String] = [item.title]
         
-        components.append("Producto: \(item.title)")
-        components.append("Precio: \(item.formattedPrice)")
-        components.append("Condición: \(item.condition.displayName)")
-        components.append("Vendedor: \(item.sellerName)")
-        
-        if let description = item.description, !description.isEmpty {
-            components.append("Descripción: \(description)")
+        // item.description es String, no String?, así que no necesita unwrapping condicional
+        if !item.description.isEmpty {
+            parts.append(item.description)
         }
         
-        return components.joined(separator: ". ")
+        parts.append("Precio: \(item.formattedPrice)")
+        parts.append("Vendedor: \(item.sellerName)")
+        parts.append("Condición: \(item.formattedCondition)")
+        
+        return parts.joined(separator: ". ")
     }
 }
 

@@ -12,13 +12,16 @@ import Kingfisher
 // MARK: - Post Card View
 struct PostCardView: View {
     let post: Post
+    let onLikeToggle: ((Post) -> Void)?
+    
     @State private var isLiked: Bool
     @State private var likesCount: Int
     @State private var showComments = false
     @State private var showShareSheet = false
     
-    init(post: Post) {
+    init(post: Post, onLikeToggle: ((Post) -> Void)? = nil) {
         self.post = post
+        self.onLikeToggle = onLikeToggle
         self._isLiked = State(initialValue: post.isLikedByCurrentUser ?? false)
         self._likesCount = State(initialValue: post.likesCount)
     }
@@ -87,39 +90,16 @@ struct PostCardView: View {
     }
     
     private func toggleLike() {
-        let previousState = isLiked
-        let previousCount = likesCount
-        
-        // Optimistic update
+        // Actualización optimística local
         isLiked.toggle()
         likesCount += isLiked ? 1 : -1
         
-        // Haptic feedback
-        HapticManager.shared.impact(.light)
+        // Analytics
+        let action = isLiked ? "like" : "unlike"
+        Analytics.shared.logEvent("post_\(action)", parameters: ["post_id": post.id])
         
-        Task.detached(priority: .userInitiated) {
-            do {
-                if isLiked {
-                    let _: EmptyResponse = try await APIService.shared
-                        .request(endpoint: .likePost(post.id), body: nil)
-                        .async()
-                    
-                    Analytics.shared.logPostLike(postId: String(post.id))
-                } else {
-                    let _: EmptyResponse = try await APIService.shared
-                        .request(endpoint: .unlikePost(post.id), body: nil)
-                        .async()
-                }
-            } catch {
-                // Revert optimistic update on MainActor
-                await MainActor.run {
-                    isLiked = previousState
-                    likesCount = previousCount
-                }
-                
-                Logger.shared.error("Failed to toggle like", error: error, category: "social")
-            }
-        }
+        // Delegar al ViewModel
+        onLikeToggle?(post)
     }
     
     private func createShareContent() -> String {
@@ -768,40 +748,40 @@ struct ShareSheet: UIViewControllerRepresentable {
 
 // MARK: - Comments View Placeholder
 /*
-struct CommentsView: View {
-    let postId: Int
-    
-    var body: some View {
-        NavigationView {
-            VStack {
-                Text("Comentarios")
-                    .font(.figrTitle2)
-                    .padding()
-                
-                Text("Post ID: \(postId)")
-                    .font(.figrCaption)
-                    .foregroundColor(.secondary)
-                
-                Spacer()
-                
-                Text("🚧 En desarrollo")
-                    .font(.figrHeadline)
-                    .foregroundColor(.secondary)
-                
-                Spacer()
-            }
-            .navigationTitle("Comentarios")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cerrar") {
-                        // Handle close
-                    }
-                }
-            }
-        }
-    }
-}
+ struct CommentsView: View {
+ let postId: Int
+ 
+ var body: some View {
+ NavigationView {
+ VStack {
+ Text("Comentarios")
+ .font(.figrTitle2)
+ .padding()
+ 
+ Text("Post ID: \(postId)")
+ .font(.figrCaption)
+ .foregroundColor(.secondary)
+ 
+ Spacer()
+ 
+ Text("🚧 En desarrollo")
+ .font(.figrHeadline)
+ .foregroundColor(.secondary)
+ 
+ Spacer()
+ }
+ .navigationTitle("Comentarios")
+ .navigationBarTitleDisplayMode(.inline)
+ .toolbar {
+ ToolbarItem(placement: .navigationBarTrailing) {
+ Button("Cerrar") {
+ // Handle close
+ }
+ }
+ }
+ }
+ }
+ }
  */
 
 // MARK: - Post Status Helpers

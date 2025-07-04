@@ -16,9 +16,11 @@ final class CoreDataManager: ObservableObject {
     // MARK: - Published Properties
     @Published var isLoading = false
     
+    private static let modelName = "FigrClub"
+    
     // MARK: - Core Data Stack
     lazy var persistentContainer: NSPersistentContainer = {
-        let container = NSPersistentContainer(name: AppConfig.Storage.coreDataModelName)
+        let container = NSPersistentContainer(name: Self.modelName)
         
         // Configure store description
         let description = container.persistentStoreDescriptions.first
@@ -76,7 +78,7 @@ final class CoreDataManager: ObservableObject {
             Logger.shared.info("Core Data context saved successfully", category: "coredata")
         } catch {
             Logger.shared.error("Failed to save Core Data context", error: error, category: "coredata")
-            CrashReporter.shared.recordError(error, additionalInfo: ["context": "coredata_save"])
+            CrashReporter.shared.recordError(error, userInfo: ["context": "coredata_save"])
         }
     }
     

@@ -184,13 +184,5 @@ struct DebugLogsView: View {
     }
 }
 
-// MARK: - DateFormatter Extension
-extension DateFormatter {
-    static let logTimestamp: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss.SSS"
-        return formatter
-    }()
-}
 #endif
 

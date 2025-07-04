@@ -313,12 +313,12 @@ enum DeviceType: String, Codable {
 }
 
 struct DeviceToken: Codable {
-    let id: String
+    let id: Int
     let token: String
-    let deviceType: DeviceType
+    let platform: String
+    let deviceId: String
     let isActive: Bool
     let createdAt: String
-    let updatedAt: String?
 }
 
 struct EmptyResponse: Codable {}

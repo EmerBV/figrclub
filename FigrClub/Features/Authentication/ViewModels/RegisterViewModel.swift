@@ -425,16 +425,20 @@ final class RegisterViewModel: ObservableObject {
     // MARK: - Helper Methods
     
     private func createLegalAcceptances() -> [LegalAcceptance] {
-        let timestamp = ISO8601DateFormatter().string(from: Date())
-        
         var acceptances: [LegalAcceptance] = []
         
         if acceptedTerms {
-            acceptances.append(LegalAcceptance(documentType: "TERMS_OF_SERVICE", acceptedAt: timestamp))
+            acceptances.append(LegalAcceptance(
+                type: .termsOfService,
+                version: "1.0"
+            ))
         }
         
         if acceptedPrivacy {
-            acceptances.append(LegalAcceptance(documentType: "PRIVACY_POLICY", acceptedAt: timestamp))
+            acceptances.append(LegalAcceptance(
+                type: .privacyPolicy,
+                version: "1.0"
+            ))
         }
         
         return acceptances
@@ -442,7 +446,10 @@ final class RegisterViewModel: ObservableObject {
     
     private func createConsents() -> [Consent] {
         return [
-            Consent(consentType: "MARKETING_EMAILS", isGranted: acceptedMarketing)
+            Consent(
+                type: .emailNotifications,
+                granted: acceptedMarketing
+            )
         ]
     }
     

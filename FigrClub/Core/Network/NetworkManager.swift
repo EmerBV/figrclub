@@ -49,10 +49,7 @@ final class NetworkManager {
                     } else {
                         let apiError = APIError(
                             message: "Request failed: \(error.localizedDescription)",
-                            code: "REQUEST_FAILED",
-                            timestamp: ISO8601DateFormatter().string(from: Date()),
-                            statusCode: nil,
-                            details: nil
+                            code: "REQUEST_FAILED"
                         )
                         promise(.failure(apiError))
                     }
@@ -76,10 +73,7 @@ final class NetworkManager {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw APIError(
                 message: "Invalid response type",
-                code: "INVALID_RESPONSE",
-                timestamp: ISO8601DateFormatter().string(from: Date()),
-                statusCode: nil,
-                details: nil
+                code: "INVALID_RESPONSE"
             )
         }
         
@@ -98,10 +92,7 @@ final class NetworkManager {
         guard var urlComponents = URLComponents(string: baseURL + endpoint.path) else {
             throw APIError(
                 message: "Invalid URL",
-                code: "INVALID_URL",
-                timestamp: ISO8601DateFormatter().string(from: Date()),
-                statusCode: nil,
-                details: nil
+                code: "INVALID_URL"
             )
         }
         
@@ -115,10 +106,7 @@ final class NetworkManager {
         guard let url = urlComponents.url else {
             throw APIError(
                 message: "Failed to construct URL",
-                code: "URL_CONSTRUCTION_ERROR",
-                timestamp: ISO8601DateFormatter().string(from: Date()),
-                statusCode: nil,
-                details: nil
+                code: "URL_CONSTRUCTION_ERROR"
             )
         }
         
@@ -143,10 +131,7 @@ final class NetworkManager {
             } catch {
                 throw APIError(
                     message: "Failed to encode request body",
-                    code: "ENCODING_ERROR",
-                    timestamp: ISO8601DateFormatter().string(from: Date()),
-                    statusCode: nil,
-                    details: ["encoding_error": error.localizedDescription]
+                    code: "ENCODING_ERROR"
                 )
             }
         }
@@ -167,20 +152,14 @@ final class NetworkManager {
         if let errorResponse = try? decoder.decode(APIErrorResponse.self, from: data) {
             throw APIError(
                 message: errorResponse.message,
-                code: errorResponse.code ?? "API_ERROR",
-                timestamp: errorResponse.timestamp,
-                statusCode: statusCode,
-                details: nil
+                code: errorResponse.code ?? "API_ERROR"
             )
         }
         
         // Fallback error
         throw APIError(
             message: HTTPURLResponse.localizedString(forStatusCode: statusCode),
-            code: "HTTP_\(statusCode)",
-            timestamp: ISO8601DateFormatter().string(from: Date()),
-            statusCode: statusCode,
-            details: nil
+            code: "HTTP_\(statusCode)"
         )
     }
     
@@ -196,10 +175,7 @@ final class NetworkManager {
                 guard let responseData = apiResponse.data else {
                     throw APIError(
                         message: "No data in API response",
-                        code: "EMPTY_DATA",
-                        timestamp: String(apiResponse.timestamp),
-                        statusCode: apiResponse.status,
-                        details: nil
+                        code: "EMPTY_DATA"
                     )
                 }
                 return responseData
@@ -207,10 +183,7 @@ final class NetworkManager {
                 Logger.shared.error("Failed to decode response", error: error, category: "network")
                 throw APIError(
                     message: "Failed to decode server response",
-                    code: "DECODING_ERROR",
-                    timestamp: ISO8601DateFormatter().string(from: Date()),
-                    statusCode: nil,
-                    details: ["decoding_error": error.localizedDescription]
+                    code: "DECODING_ERROR"
                 )
             }
         }

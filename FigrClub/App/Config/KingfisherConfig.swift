@@ -173,7 +173,7 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
             }
             .onFailure { error in
                 Logger.shared.error("Image loading failed", error: error, category: "kingfisher")
-                Analytics.shared.logError(error: error, context: "image_loading")
+                Analytics.shared.logError(error, context: "image_loading")
             }
             .fade(duration: 0.25)
             .resizable()

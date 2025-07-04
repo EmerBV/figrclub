@@ -20,10 +20,12 @@ final class DependencyContainer {
     
     private func setupDependencies() {
         registerCoreServices()
-        registerManagers()
+        Task { @MainActor in
+            registerManagers()
+            registerViewModels()
+        }
         registerRepositories()
         registerUseCases()
-        registerViewModels()
         
         Logger.shared.info("Dependency container configured successfully", category: "di")
     }
@@ -119,7 +121,7 @@ private extension DependencyContainer {
 
 // MARK: - ViewModels Registration
 @MainActor
-extension DependencyContainer {
+private extension DependencyContainer {
     func registerViewModels() {
         // Login ViewModel
         container.register(LoginViewModel.self) { resolver in
@@ -265,9 +267,7 @@ private extension DependencyContainer {
         
         container.register(RegisterUseCase.self) { resolver in
             RegisterUseCaseImpl(
-                authRepository: resolver.resolve(AuthRepository.self)!,
-                userRepository: resolver.resolve(UserRepository.self)!,
-                tokenManager: resolver.resolve(TokenManager.self)!
+                authRepository: resolver.resolve(AuthRepository.self)!
             )
         }
     }
@@ -280,22 +280,6 @@ extension DependencyContainer {
         guard let resolved = container.resolve(type) else {
             Logger.shared.fatal("Could not resolve \(type)", category: "di")
             fatalError("Could not resolve \(type)")
-        }
-        return resolved
-    }
-    
-    func resolve<T, Arg>(_ type: T.Type, argument: Arg) -> T {
-        guard let resolved = container.resolve(type, argument: argument) else {
-            Logger.shared.fatal("Could not resolve \(type) with argument \(Arg.self)", category: "di")
-            fatalError("Could not resolve \(type) with argument \(Arg.self)")
-        }
-        return resolved
-    }
-    
-    func resolve<T, Arg1, Arg2>(_ type: T.Type, argument1: Arg1, argument2: Arg2) -> T {
-        guard let resolved = container.resolve(type, argument: argument1, argument2) else {
-            Logger.shared.fatal("Could not resolve \(type) with arguments", category: "di")
-            fatalError("Could not resolve \(type) with arguments")
         }
         return resolved
     }

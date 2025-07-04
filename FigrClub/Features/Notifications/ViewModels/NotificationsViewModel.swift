@@ -15,13 +15,13 @@ final class NotificationsViewModel: PaginatedViewModel<AppNotification> {
     @Published var unreadCount = 0
     
     // MARK: - Use Cases
-    private let loadNotificationsUseCase: LoadNotificationsUseCase
-    private let markNotificationAsReadUseCase: MarkNotificationAsReadUseCase
+    private let loadNotificationsUseCase: any LoadNotificationsUseCase
+    private let markNotificationAsReadUseCase: any MarkNotificationAsReadUseCase
     
     // MARK: - Initialization
-    nonisolated init(
-        loadNotificationsUseCase: LoadNotificationsUseCase,
-        markNotificationAsReadUseCase: MarkNotificationAsReadUseCase
+    init(
+        loadNotificationsUseCase: any LoadNotificationsUseCase,
+        markNotificationAsReadUseCase: any MarkNotificationAsReadUseCase
     ) {
         self.loadNotificationsUseCase = loadNotificationsUseCase
         self.markNotificationAsReadUseCase = markNotificationAsReadUseCase
