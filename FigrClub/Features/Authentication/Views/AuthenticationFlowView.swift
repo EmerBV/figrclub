@@ -165,9 +165,8 @@ struct AuthTabButton: View {
     }
 }
 
-// MARK: - Login View (Simplified)
 struct LoginView: View {
-    @StateObject private var viewModel = DependencyContainer.shared.makeLoginViewModel()
+    @StateObject private var viewModel = ViewModelFactory.shared.makeLoginViewModel()
     
     var body: some View {
         VStack(spacing: Spacing.large) {
@@ -243,137 +242,6 @@ struct LoginView: View {
     }
 }
 
-// MARK: - Register View (Simplified)
-struct RegisterView: View {
-    @StateObject private var viewModel = DependencyContainer.shared.makeRegisterViewModel()
-    
-    var body: some View {
-        VStack(spacing: Spacing.large) {
-            // Name Fields
-            HStack(spacing: Spacing.medium) {
-                VStack(alignment: .leading, spacing: Spacing.small) {
-                    Text("Nombre")
-                        .font(.figrCallout.weight(.medium))
-                        .foregroundColor(.figrTextPrimary)
-                    
-                    AuthTextField(
-                        text: $viewModel.firstName,
-                        placeholder: "Nombre",
-                        validationState: viewModel.firstNameValidationState
-                    )
-                }
-                
-                VStack(alignment: .leading, spacing: Spacing.small) {
-                    Text("Apellido")
-                        .font(.figrCallout.weight(.medium))
-                        .foregroundColor(.figrTextPrimary)
-                    
-                    AuthTextField(
-                        text: $viewModel.lastName,
-                        placeholder: "Apellido",
-                        validationState: viewModel.lastNameValidationState
-                    )
-                }
-            }
-            
-            // Email Field
-            VStack(alignment: .leading, spacing: Spacing.small) {
-                Text("Email")
-                    .font(.figrCallout.weight(.medium))
-                    .foregroundColor(.figrTextPrimary)
-                
-                AuthTextField(
-                    text: $viewModel.email,
-                    placeholder: "tu@email.com",
-                    keyboardType: .emailAddress,
-                    validationState: viewModel.emailValidationState
-                )
-            }
-            
-            // Username Field
-            VStack(alignment: .leading, spacing: Spacing.small) {
-                Text("Nombre de usuario")
-                    .font(.figrCallout.weight(.medium))
-                    .foregroundColor(.figrTextPrimary)
-                
-                AuthTextField(
-                    text: $viewModel.username,
-                    placeholder: "@usuario",
-                    validationState: viewModel.usernameValidationState
-                )
-            }
-            
-            // Password Field
-            VStack(alignment: .leading, spacing: Spacing.small) {
-                Text("Contraseña")
-                    .font(.figrCallout.weight(.medium))
-                    .foregroundColor(.figrTextPrimary)
-                
-                FigrSecureField(
-                    text: $viewModel.password,
-                    placeholder: "Mínimo 8 caracteres",
-                    validationState: viewModel.passwordValidationState
-                )
-                
-                if !viewModel.password.isEmpty {
-                    PasswordStrengthIndicator(strength: viewModel.passwordStrength)
-                }
-            }
-            
-            // Confirm Password Field
-            VStack(alignment: .leading, spacing: Spacing.small) {
-                Text("Confirmar contraseña")
-                    .font(.figrCallout.weight(.medium))
-                    .foregroundColor(.figrTextPrimary)
-                
-                FigrSecureField(
-                    text: $viewModel.confirmPassword,
-                    placeholder: "Repite tu contraseña",
-                    validationState: viewModel.confirmPasswordValidationState
-                )
-            }
-            
-            // Terms & Privacy
-            VStack(spacing: Spacing.small) {
-                FigrCheckbox(
-                    isChecked: $viewModel.acceptedTerms,
-                    title: "Acepto los Términos de Servicio"
-                )
-                
-                FigrCheckbox(
-                    isChecked: $viewModel.acceptedPrivacy,
-                    title: "Acepto la Política de Privacidad"
-                )
-            }
-            
-            // Register Button
-            FigrButton(
-                title: "Crear Cuenta",
-                isLoading: viewModel.isLoading,
-                isEnabled: viewModel.isFormValid && !viewModel.isLoading
-            ) {
-                Task {
-                    await viewModel.register()
-                }
-            }
-            .hapticFeedback()
-        }
-        .toast(isPresented: $viewModel.showError) {
-            HStack {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundColor(.figrError)
-                
-                Text(viewModel.errorMessage ?? "Error desconocido")
-                    .font(.figrCallout)
-                    .foregroundColor(.figrTextPrimary)
-            }
-            .padding()
-            .background(Color.figrSurface)
-            .cornerRadius(AppConfig.UI.cornerRadius)
-            .shadow(radius: 4)
-        }
-    }
-}
 
 // MARK: - Supporting Components
 struct AuthTextField: View {
@@ -544,13 +412,3 @@ extension View {
         )
     }
 }
-
-// MARK: - Preview
-#if DEBUG
-struct AuthenticationFlowView_Previews: PreviewProvider {
-    static var previews: some View {
-        AuthenticationFlowView()
-            .dependencyInjection()
-    }
-}
-#endif

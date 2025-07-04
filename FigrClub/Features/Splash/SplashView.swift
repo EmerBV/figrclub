@@ -108,6 +108,7 @@ struct MaintenanceView: View {
 }
 
 // MARK: - Performance Overlay View
+#if DEBUG
 struct PerformanceOverlayView: View {
     @StateObject private var performanceMonitor = PerformanceMonitor.shared
     @State private var isExpanded = false
@@ -223,6 +224,7 @@ struct PerformanceOverlayView: View {
         return String(format: "%.0fMB", mb)
     }
 }
+#endif
 
 // MARK: - Metric Row
 struct MetricRow: View {

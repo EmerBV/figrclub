@@ -88,13 +88,6 @@ extension View {
     }
 }
 
-// MARK: - MarketplaceItem Model Equatable Extension
-extension MarketplaceItem: Equatable {
-    static func == (lhs: MarketplaceItem, rhs: MarketplaceItem) -> Bool {
-        return lhs.id == rhs.id
-    }
-}
-
 #if DEBUG
 extension View {
     func debugPrint(_ value: Any) -> some View {

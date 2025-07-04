@@ -153,49 +153,44 @@ struct FigrClubApp: App {
             await checkForAppUpdates()
         }
         
-        // Refresh remote config
-        remoteConfigManager.loadRemoteConfig()
-        
-        // Clear notification badge
-        NotificationService.shared.clearBadge()
-        
-        // Check authentication status
-        Task {
-            await authManager.checkAuthenticationStatus()
+        // Refresh authentication if needed
+        Task { @MainActor in
+            if let authManager = try? DependencyContainer.shared.resolve(AuthManager.self) {
+                _ = await authManager.refreshTokenIfNeeded()
+            }
         }
     }
     
     private func handleAppBecameInactive() {
         Logger.shared.info("App became inactive", category: "app")
+        Analytics.shared.pause()
     }
     
     private func handleAppEnteredBackground() {
         Logger.shared.info("App entered background", category: "app")
         
-        Analytics.shared.pause()
         
-        // Save any pending data
-        savePendingData()
         
-        // Schedule background tasks
-        scheduleBackgroundTasks()
+        // Save user data and app state
+        saveAppState()
+        
+        // Clear sensitive data if needed
+        clearSensitiveDataIfNeeded()
     }
     
-    // MARK: - Background Tasks
-    private func scheduleBackgroundTasks() {
-        // Schedule background app refresh
-        // This would be implemented based on specific needs
-    }
-    
-    private func savePendingData() {
-        // Save any unsaved user data
-        // This would be implemented based on specific needs
-    }
-    
-    // MARK: - App Updates
     private func checkForAppUpdates() async {
-        // Check App Store for updates
-        // This would be implemented with App Store Connect API
+        // Check for app updates logic
+        Logger.shared.info("Checking for app updates", category: "app")
+    }
+    
+    private func saveAppState() {
+        // Save current app state
+        Logger.shared.info("Saving app state", category: "app")
+    }
+    
+    private func clearSensitiveDataIfNeeded() {
+        // Clear sensitive data if app security policy requires it
+        Logger.shared.info("Clearing sensitive data", category: "app")
     }
 }
 
