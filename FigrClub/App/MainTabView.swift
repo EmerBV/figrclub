@@ -174,7 +174,7 @@ struct SearchBar: View {
         }
         .padding(.horizontal, Spacing.medium)
         .padding(.vertical, Spacing.small)
-        .background(.figrSurface)
+        .background(Color.figrSurface)
         .cornerRadius(CornerRadius.medium)
     }
 }

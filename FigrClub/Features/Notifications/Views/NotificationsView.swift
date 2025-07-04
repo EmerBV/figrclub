@@ -9,6 +9,10 @@ import SwiftUI
 
 // MARK: - Notifications View
 struct NotificationsView: View {
+    var body: some View {}
+    
+    
+    /*
     @StateObject private var viewModel = DependencyContainer.shared.resolve(NotificationsViewModel.self)
     
     var body: some View {
@@ -42,4 +46,5 @@ struct NotificationsView: View {
             Analytics.shared.logScreenView(screenName: "NotificationsView")
         }
     }
+     */
 }

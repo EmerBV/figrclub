@@ -119,7 +119,7 @@ struct DebugInfoView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("🏗️ Debug Info")
                 .font(.figrCaption.bold())
-            Text("Environment: \(AppConfig.Environment.current.displayName)")
+            Text("Environment: \(AppConfig.Environment.current)")
             Text("Version: \(AppConfig.AppInfo.version)")
             Text("Build: \(AppConfig.AppInfo.buildNumber)")
             Text("API: \(AppConfig.API.baseURL)")

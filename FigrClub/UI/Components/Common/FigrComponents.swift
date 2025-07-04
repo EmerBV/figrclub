@@ -344,7 +344,7 @@ struct LoadingView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.figrBackground)
+        .background(Color.figrBackground)
     }
 }
 
@@ -390,7 +390,7 @@ struct ErrorView: View {
         }
         .padding(.horizontal, Spacing.xLarge)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.figrBackground)
+        .background(Color.figrBackground)
     }
 }
 
@@ -441,7 +441,7 @@ struct EmptyStateView: View {
         }
         .padding(.horizontal, Spacing.xLarge)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.figrBackground)
+        .background(Color.figrBackground)
     }
 }
 
@@ -650,7 +650,7 @@ struct FigrComponents_Previews: PreviewProvider {
             }
             .padding()
         }
-        .background(.figrBackground)
+        .background(Color.figrBackground)
     }
 }
 #endif

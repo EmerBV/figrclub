@@ -24,11 +24,11 @@ struct CreatePostView: View {
                     TextEditor(text: $viewModel.content)
                         .frame(minHeight: 150)
                         .padding()
-                        .background(.figrSurface)
+                        .background(Color.figrSurface)
                         .cornerRadius(CornerRadius.medium)
                         .overlay(
                             RoundedRectangle(cornerRadius: CornerRadius.medium)
-                                .stroke(.figrBorder, lineWidth: 1)
+                                .stroke(Color.figrBorder, lineWidth: 1)
                         )
                 }
                 

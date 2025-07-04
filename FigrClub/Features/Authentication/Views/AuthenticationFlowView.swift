@@ -76,7 +76,7 @@ struct AuthenticationFlowView: View {
                                 }
                             }
                         }
-                        .background(.figrSurface)
+                        .background(Color.figrSurface)
                         .cornerRadius(AppConfig.UI.cornerRadius)
                         .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                         
@@ -236,7 +236,7 @@ struct LoginView: View {
                     .foregroundColor(.figrTextPrimary)
             }
             .padding()
-            .background(.figrSurface)
+            .background(Color.figrSurface)
             .cornerRadius(AppConfig.UI.cornerRadius)
             .shadow(radius: 4)
         }
@@ -368,7 +368,7 @@ struct RegisterView: View {
                     .foregroundColor(.figrTextPrimary)
             }
             .padding()
-            .background(.figrSurface)
+            .background(Color.figrSurface)
             .cornerRadius(AppConfig.UI.cornerRadius)
             .shadow(radius: 4)
         }
@@ -407,7 +407,7 @@ struct AuthTextFieldStyle: TextFieldStyle {
         configuration
             .padding(.horizontal, Spacing.medium)
             .padding(.vertical, Spacing.small)
-            .background(.figrSurface)
+            .background(Color.figrSurface)
             .cornerRadius(AppConfig.UI.cornerRadius)
             .overlay(
                 RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)

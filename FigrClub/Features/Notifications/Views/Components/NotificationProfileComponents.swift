@@ -41,7 +41,7 @@ struct NotificationRowView: View {
             // Unread indicator
             if !notification.isRead {
                 Circle()
-                    .fill(.figrPrimary)
+                    .fill(Color.figrPrimary)
                     .frame(width: 8, height: 8)
             }
         }
@@ -111,7 +111,7 @@ struct ProfileStatsView: View {
             Spacer()
             StatItem(title: "Siguiendo", value: stats?.followingCount ?? 0)
             Spacer()
-            StatItem(title: "Likes", value: stats?.likesReceived ?? 0)
+            StatItem(title: "Likes", value: stats?.likesCount ?? 0)
         }
         .padding(.horizontal, Spacing.xLarge)
     }

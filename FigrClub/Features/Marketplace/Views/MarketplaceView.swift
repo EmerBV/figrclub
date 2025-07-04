@@ -9,6 +9,9 @@ import SwiftUI
 
 // MARK: - Marketplace View
 struct MarketplaceView: View {
+    var body: some View {}
+    
+    /*
     @StateObject private var viewModel = DependencyContainer.shared.resolve(MarketplaceViewModel.self)
     
     var body: some View {
@@ -76,4 +79,5 @@ struct MarketplaceView: View {
             Analytics.shared.logScreenView(screenName: "MarketplaceView")
         }
     }
+     */
 }

@@ -15,14 +15,15 @@ struct FeedView: View {
         NavigationView {
             ScrollView {
                 LazyVStack(spacing: Spacing.medium) {
-                    // FIX: Debug header en modo Debug
+                    // Debug header en modo Debug
 #if DEBUG
                     debugHeader
 #endif
                     
-                    if viewModel.isLoading && viewModel.posts.isEmpty {
+                    // ✅ Corrección: Usar 'items' en lugar de 'posts'
+                    if viewModel.isLoading && viewModel.items.isEmpty {
                         LoadingView(message: "Cargando posts...")
-                    } else if viewModel.posts.isEmpty && !viewModel.isLoading {
+                    } else if viewModel.items.isEmpty && !viewModel.isLoading {
                         EmptyStateView(
                             title: "No hay posts",
                             message: "Sé el primero en compartir algo increíble",
@@ -32,27 +33,32 @@ struct FeedView: View {
                             // Handle create post
                         }
                     } else {
-                        // FIX: Mejorar el rendering de posts
-                        ForEach(Array(viewModel.posts.enumerated()), id: \.element.id) { index, post in
-                            PostCardView(post: post)
-                                .onAppear {
+                        // ✅ Corrección: Usar 'items' y agregar closure para like
+                        ForEach(Array(viewModel.items.enumerated()), id: \.element.id) { index, post in
+                            PostCardView(
+                                post: post,
+                                onLikeToggle: { post in
+                                    viewModel.toggleLike(for: post) // ✅ Delegar al ViewModel
+                                }
+                            )
+                            .onAppear {
 #if DEBUG
-                                    print("📱 Post \(index) appeared: ID \(post.id)")
+                                print("📱 Post \(index) appeared: ID \(post.id)")
 #endif
-                                    
-                                    // FIX: Verificar correctamente si es el último post
-                                    if index == viewModel.posts.count - 1 && !viewModel.isLoadingMore {
+                                
+                                // ✅ Corrección: Verificar si es el último post y usar loadMore()
+                                if index == viewModel.items.count - 1 && !viewModel.isLoadingMore {
 #if DEBUG
-                                        print("🔄 Triggering load more for post \(index)")
+                                    print("🔄 Triggering load more for post \(index)")
 #endif
-                                        Task {
-                                            await viewModel.loadMorePosts()
-                                        }
+                                    Task {
+                                        await viewModel.loadMore() // ✅ Método correcto de PaginatedViewModel
                                     }
                                 }
+                            }
                         }
                         
-                        // FIX: Indicador de carga más visible
+                        // Indicador de carga más visible
                         if viewModel.isLoadingMore {
                             HStack {
                                 ProgressView()
@@ -72,16 +78,16 @@ struct FeedView: View {
 #if DEBUG
                 print("🔄 Manual refresh triggered")
 #endif
-                await viewModel.refreshPosts()
+                // ✅ Corrección: Usar refresh() de PaginatedViewModel
+                await viewModel.refresh()
             }
             .navigationTitle("Feed")
             .navigationBarTitleDisplayMode(.large)
-            // FIX: Toolbar con botón de debug
             .toolbar {
 #if DEBUG
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Debug") {
-                        viewModel.debugPostsState()
+                        debugPostsState() // ✅ Método local de debug
                     }
                     .font(.caption)
                 }
@@ -92,16 +98,16 @@ struct FeedView: View {
 #if DEBUG
             print("📱 FeedView appeared, loading posts...")
 #endif
-            await viewModel.loadPosts()
+            // ✅ Corrección: Usar refresh() en lugar de loadPosts()
+            await viewModel.refresh()
         }
         .onAppear {
             Analytics.shared.logScreenView(screenName: "FeedView")
         }
-        // FIX: Error handling mejorado
         .alert("Error", isPresented: $viewModel.showError) {
             Button("Reintentar") {
                 Task {
-                    await viewModel.loadPosts()
+                    await viewModel.refresh() // ✅ Método correcto
                 }
             }
             Button("Cancelar", role: .cancel) { }
@@ -110,7 +116,7 @@ struct FeedView: View {
         }
     }
     
-    // MARK: - Debug Views
+    // MARK: - Debug Methods
 #if DEBUG
     private var debugHeader: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -118,12 +124,13 @@ struct FeedView: View {
                 .font(.figrCaption.bold())
                 .foregroundColor(.red)
             
-            Text("Posts: \(viewModel.posts.count) | Loading: \(viewModel.isLoading ? "✅" : "❌") | Loading More: \(viewModel.isLoadingMore ? "✅" : "❌")")
+            // ✅ Corrección: Usar 'items' en lugar de 'posts'
+            Text("Posts: \(viewModel.items.count) | Loading: \(viewModel.isLoading ? "✅" : "❌") | Loading More: \(viewModel.isLoadingMore ? "✅" : "❌")")
                 .font(.figrCaption2)
                 .foregroundColor(.secondary)
             
-            if !viewModel.posts.isEmpty {
-                Text("IDs: \(viewModel.posts.prefix(5).map { String($0.id) }.joined(separator: ", "))")
+            if !viewModel.items.isEmpty {
+                Text("IDs: \(viewModel.items.prefix(5).map { String($0.id) }.joined(separator: ", "))")
                     .font(.figrCaption2)
                     .foregroundColor(.blue)
             }
@@ -133,17 +140,69 @@ struct FeedView: View {
                     .font(.figrCaption2)
                     .foregroundColor(.red)
             }
+            
+            // ✅ Información adicional de paginación
+            Text("Page: \(viewModel.currentPage) | Total: \(viewModel.totalElements) | HasMore: \(viewModel.hasMoreData ? "✅" : "❌")")
+                .font(.figrCaption2)
+                .foregroundColor(.orange)
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
         .background(Color.gray.opacity(0.1))
         .cornerRadius(8)
     }
+    
+    private func debugPostsState() {
+        print("📊 DEBUG - Feed State:")
+        print("  - Items count: \(viewModel.items.count)")
+        print("  - Current page: \(viewModel.currentPage)")
+        print("  - Total elements: \(viewModel.totalElements)")
+        print("  - Has more data: \(viewModel.hasMoreData)")
+        print("  - Is loading: \(viewModel.isLoading)")
+        print("  - Is loading more: \(viewModel.isLoadingMore)")
+        print("  - Error: \(viewModel.errorMessage ?? "none")")
+    }
+#endif
+}
+
+// MARK: - Extended FeedViewModel for convenience methods
+extension FeedViewModel {
+    
+    // ✅ Métodos de conveniencia para mantener compatibilidad con FeedView anterior
+    var posts: [Post] {
+        return items
+    }
+    
+    func loadPosts() async {
+        await refresh()
+    }
+    
+    func refreshPosts() async {
+        await refresh()
+    }
+    
+    func loadMorePosts() async {
+        await loadMore()
+    }
+    
+#if DEBUG
+    func debugPostsState() {
+        print("📊 DEBUG - FeedViewModel State:")
+        print("  - Items count: \(items.count)")
+        print("  - Current page: \(currentPage)")
+        print("  - Total elements: \(totalElements)")
+        print("  - Has more data: \(hasMoreData)")
+        print("  - Is loading: \(isLoading)")
+        print("  - Is loading more: \(isLoadingMore)")
+        print("  - Error: \(errorMessage ?? "none")")
+    }
 #endif
 }
 
 // MARK: - Preview
-#Preview {
-    FeedView()
-        .dependencyInjection()
-}
+/*
+ #Preview {
+ FeedView()
+ .dependencyInjection()
+ }
+ */

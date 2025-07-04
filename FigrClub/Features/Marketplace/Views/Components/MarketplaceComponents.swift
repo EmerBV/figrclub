@@ -27,7 +27,7 @@ struct MarketplaceItemCard: View {
                     KFImage(URL(string: firstImage))
                         .placeholder {
                             Rectangle()
-                                .fill(.figrBorder)
+                                .fill(Color.figrBorder)
                                 .aspectRatio(1, contentMode: .fit)
                                 .overlay(
                                     Image(systemName: "photo")
@@ -40,7 +40,7 @@ struct MarketplaceItemCard: View {
                         .clipped()
                 } else {
                     Rectangle()
-                        .fill(.figrBorder)
+                        .fill(Color.figrBorder)
                         .aspectRatio(1, contentMode: .fit)
                         .overlay(
                             Image(systemName: "photo")
@@ -87,11 +87,11 @@ struct MarketplaceItemCard: View {
             }
             .padding(.horizontal, Spacing.xSmall)
         }
-        .background(.figrSurface)
+        .background(Color.figrSurface)
         .cornerRadius(CornerRadius.medium)
         .defaultShadow()
         .onTapGesture {
-            Analytics.shared.logItemView(itemId: String(item.id), category: item.category.name)
+            Analytics.shared.logItemView(itemId: String(item.id), categoryId: item.category.name)
         }
     }
     
@@ -103,13 +103,13 @@ struct MarketplaceItemCard: View {
             do {
                 if isFavorited {
                     let _: EmptyResponse = try await APIService.shared
-                        .request(endpoint: .addToFavorites(item.id), body: nil)
+                        .request(endpoint: .favoriteMarketplaceItem(item.id), body: nil)
                         .async()
                     
                     Analytics.shared.logItemFavorite(itemId: String(item.id))
                 } else {
                     let _: EmptyResponse = try await APIService.shared
-                        .request(endpoint: .removeFromFavorites(item.id), body: nil)
+                        .request(endpoint: .unfavoriteMarketplaceItem(item.id), body: nil)
                         .async()
                 }
             } catch {
@@ -136,7 +136,7 @@ struct CategoryChip: View {
                 .foregroundColor(isSelected ? .white : .figrTextPrimary)
                 .padding(.horizontal, Spacing.medium)
                 .padding(.vertical, Spacing.small)
-                .background(isSelected ? .figrPrimary : .figrSurface)
+                .background(isSelected ? Color.figrPrimary : Color.figrSurface)
                 .cornerRadius(CornerRadius.medium)
                 .overlay(
                     RoundedRectangle(cornerRadius: CornerRadius.medium)
