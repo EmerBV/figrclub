@@ -16,9 +16,9 @@ protocol AuthServiceProtocol: Sendable {
 }
 
 final class AuthService: AuthServiceProtocol {
-    private let networkDispatcher: NetworkDispatcherProtocol
+    private let networkDispatcher: APIServiceProtocol
     
-    init(networkDispatcher: NetworkDispatcherProtocol) {
+    init(networkDispatcher: APIServiceProtocol) {
         self.networkDispatcher = networkDispatcher
     }
     

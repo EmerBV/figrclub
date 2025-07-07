@@ -10,14 +10,26 @@ import Swinject
 
 final class NetworkAssembly: Assembly {
     func assemble(container: Container) {
+        
+        // Token Manager
         container.register(TokenManager.self) { _ in
             return TokenManager()
         }.inObjectScope(.container)
         
-        // Network Dispatcher
-        container.register(NetworkDispatcherProtocol.self) { resolver in
+        // APIService (servicio principal)
+        container.register(APIService.self) { resolver in
             let tokenManager = resolver.resolve(TokenManager.self)!
-            return NetworkDispatcher(tokenManager: tokenManager)
+            return APIService(tokenManager: tokenManager)
+        }.inObjectScope(.container)
+        
+        // APIServiceProtocol
+        container.register(APIServiceProtocol.self) { resolver in
+            return resolver.resolve(APIService.self)!
+        }.inObjectScope(.container)
+        
+        // NetworkDispatcherProtocol (para compatibilidad)
+        container.register(NetworkDispatcherProtocol.self) { resolver in
+            return resolver.resolve(APIService.self)!
         }.inObjectScope(.container)
         
         // Secure Storage
@@ -33,7 +45,6 @@ final class NetworkAssembly: Assembly {
             configuration.waitsForConnectivity = true
             configuration.allowsCellularAccess = true
             
-            // Add request/response interceptors if needed
             return URLSession(configuration: configuration)
         }.inObjectScope(.container)
     }

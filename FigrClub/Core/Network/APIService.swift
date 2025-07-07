@@ -6,149 +6,159 @@
 //
 
 import Foundation
-import Combine
 
 protocol APIServiceProtocol: Sendable {
-    func request<T: Codable>(_ endpoint: APIEndpoint, body: Data?) async throws -> T
-    func request<T: Codable>(_ endpoint: APIEndpoint, parameters: [String: Any]?) async throws -> T
+    func request<T: Codable>(_ endpoint: Endpoint) async throws -> T
+    func requestData(_ endpoint: Endpoint) async throws -> Data
+    
+    // Método dispatch para compatibilidad hacia atrás
+    func dispatch<T: Codable>(_ endpoint: Endpoint) async throws -> T
 }
 
-final class APIService: APIServiceProtocol, Sendable {
+// MARK: - Unified Network Service Implementation
+final class APIService: APIServiceProtocol, NetworkDispatcherProtocol, @unchecked Sendable {
     private let session: URLSession
-    private let decoder: JSONDecoder
-    private let encoder: JSONEncoder
+    private let jsonDecoder: JSONDecoder
+    private let tokenManager: TokenManager
     
-    init() {
+    init(tokenManager: TokenManager) {
+        self.tokenManager = tokenManager
+        
+        // Configure URLSession
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = AppConfig.API.timeout
-        config.timeoutIntervalForResource = AppConfig.API.timeout
+        config.timeoutIntervalForResource = AppConfig.API.timeout * 2
+        config.waitsForConnectivity = true
+        config.allowsCellularAccess = true
         self.session = URLSession(configuration: config)
         
-        self.decoder = JSONDecoder()
-        self.encoder = JSONEncoder()
+        // Configure JSON Decoder
+        self.jsonDecoder = JSONDecoder()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        jsonDecoder.dateDecodingStrategy = .formatted(formatter)
+    }
+    
+    // MARK: - Public Methods
+    
+    func request<T: Codable>(_ endpoint: Endpoint) async throws -> T {
+        let data = try await requestData(endpoint)
         
-        // Configure date decoding strategy
-        let dateFormatter = ISO8601DateFormatter()
-        decoder.dateDecodingStrategy = .custom { decoder in
-            let container = try decoder.singleValueContainer()
-            let dateString = try container.decode(String.self)
-            
-            if let date = dateFormatter.date(from: dateString) {
-                return date
-            }
-            
-            // Fallback to timestamp
-            if let timestamp = Double(dateString) {
-                return Date(timeIntervalSince1970: timestamp)
-            }
-            
-            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid date format")
+        do {
+            let result = try jsonDecoder.decode(T.self, from: data)
+            return result
+        } catch {
+            Logger.error("Decoding error for \(T.self): \(error)")
+            throw NetworkError.decodingError(error as? DecodingError ?? DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "Unknown decoding error")))
         }
     }
     
-    func request<T: Codable>(_ endpoint: APIEndpoint, body: Data? = nil) async throws -> T {
-        guard let url = endpoint.url() else {
-            throw APIError.invalidURL
-        }
+    // Método dispatch para compatibilidad hacia atrás
+    func dispatch<T: Codable>(_ endpoint: Endpoint) async throws -> T {
+        return try await request(endpoint)
+    }
+    
+    func requestData(_ endpoint: Endpoint) async throws -> Data {
+        let request = try await buildRequest(from: endpoint)
         
-        var request = URLRequest(url: url)
-        request.httpMethod = endpoint.method.rawValue
-        request.addCommonHeaders()
+        // Log request
+        NetworkLogger.logRequest(request)
         
-        if let body = body {
-            request.httpBody = body
-        }
-        
-        // Add auth token if required
-        if endpoint.requiresAuthentication {
-            if let token = await getAuthToken() {
-                request.addAuthHeader(token)
-            } else {
-                throw APIError.authenticationFailed
-            }
-        }
-        
-        Logger.debug("API Request: \(endpoint.method.rawValue) \(url.absoluteString)")
+        // Track performance
+        let startTime = CFAbsoluteTimeGetCurrent()
         
         do {
             let (data, response) = try await session.data(for: request)
             
             guard let httpResponse = response as? HTTPURLResponse else {
-                throw APIError.invalidResponse
+                NetworkLogger.logError(NetworkError.invalidResponse, for: request)
+                throw NetworkError.invalidResponse
             }
             
-            Logger.debug("API Response: \(httpResponse.statusCode)")
+            // Calculate and log performance
+            let duration = CFAbsoluteTimeGetCurrent() - startTime
+            NetworkLogger.logPerformance(
+                url: request.url?.absoluteString ?? "Unknown",
+                duration: duration,
+                dataSize: data.count
+            )
             
-            // Handle different status codes
-            switch httpResponse.statusCode {
-            case 200...299:
-                do {
-                    let result = try decoder.decode(T.self, from: data)
-                    return result
-                } catch {
-                    Logger.error("Decoding error: \(error)")
-                    throw APIError.decodingError(error)
-                }
-            case 401:
-                throw APIError.authenticationFailed
-            case 404:
-                throw APIError.userNotFound
-            case 400...499:
-                // Try to decode error response
-                if let errorData = try? decoder.decode(ErrorResponse.self, from: data) {
-                    throw APIError.networkError(NSError(domain: "APIError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorData.message]))
-                }
-                throw APIError.serverError(httpResponse.statusCode)
-            case 500...599:
-                throw APIError.serverError(httpResponse.statusCode)
-            default:
-                throw APIError.unknown
-            }
+            // Log response
+            NetworkLogger.logResponse(httpResponse, data: data)
+            
+            return try validateResponse(data: data, response: httpResponse)
+            
         } catch {
-            if error is APIError {
-                throw error
+            // Log error with request context
+            NetworkLogger.logError(error, for: request)
+            
+            if let networkError = error as? NetworkError {
+                throw networkError
+            } else {
+                throw NetworkError.unknown(error)
             }
-            Logger.error("Network error: \(error)")
-            throw APIError.networkError(error)
         }
     }
     
-    func request<T: Codable>(_ endpoint: APIEndpoint, parameters: [String: Any]?) async throws -> T {
-        var body: Data?
+    // MARK: - Private Methods
+    
+    private func buildRequest(from endpoint: Endpoint) async throws -> URLRequest {
+        guard let url = URL(string: endpoint.baseURL + endpoint.path) else {
+            throw NetworkError.invalidURL
+        }
         
-        if let parameters = parameters {
-            do {
-                body = try JSONSerialization.data(withJSONObject: parameters)
-            } catch {
-                throw APIError.networkError(error)
+        var request = URLRequest(url: url)
+        request.httpMethod = endpoint.method.rawValue
+        request.timeoutInterval = AppConfig.API.timeout
+        
+        // Default headers
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("FigrClub iOS", forHTTPHeaderField: "User-Agent")
+        
+        // Add auth token if needed
+        if endpoint.requiresAuth {
+            if let token = await tokenManager.getToken() {
+                request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            } else {
+                throw NetworkError.unauthorized
             }
         }
         
-        return try await request(endpoint, body: body)
+        // Add custom headers
+        for (key, value) in endpoint.headers {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        
+        // Add body
+        if let body = endpoint.body {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        }
+        
+        return request
     }
     
-    private func getAuthToken() async -> String? {
-        // Get token from TokenManager
-        return await TokenManager.shared.getToken()
+    private func validateResponse(data: Data, response: HTTPURLResponse) throws -> Data {
+        switch response.statusCode {
+        case 200...299:
+            return data
+        case 401:
+            throw NetworkError.unauthorized
+        case 403:
+            throw NetworkError.forbidden
+        case 404:
+            throw NetworkError.notFound
+        case 400...499:
+            let apiError = try? jsonDecoder.decode(APIError.self, from: data)
+            throw NetworkError.badRequest(apiError)
+        case 500...599:
+            let apiError = try? jsonDecoder.decode(APIError.self, from: data)
+            throw NetworkError.serverError(apiError)
+        default:
+            throw NetworkError.unknown(NSError(domain: "HTTPError", code: response.statusCode, userInfo: nil))
+        }
     }
 }
 
-// MARK: - Error Response Model
-struct ErrorResponse: Codable {
-    let message: String
-    let code: String?
-}
-
-// MARK: - URLRequest Extensions
-extension URLRequest {
-    mutating func addCommonHeaders() {
-        setValue("application/json", forHTTPHeaderField: "Content-Type")
-        setValue("application/json", forHTTPHeaderField: "Accept")
-        setValue("FigrClub/\(AppConfig.AppInfo.version)", forHTTPHeaderField: "User-Agent")
-        setValue(Locale.current.language.languageCode?.identifier, forHTTPHeaderField: "Accept-Language")
-    }
-    
-    mutating func addAuthHeader(_ token: String) {
-        setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-    }
-}

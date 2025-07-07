@@ -11,8 +11,6 @@ import FirebaseMessaging
 
 @main
 struct FigrClubApp: App {
-    // FIXED: No resolvemos AuthManager inmediatamente en @StateObject
-    // En su lugar, lo creamos en el body usando una factory method
     
     init() {
         FirebaseApp.configure()
@@ -22,19 +20,26 @@ struct FigrClubApp: App {
         
         print("🟢 [FigrClubApp.swift] init() - App initialized successfully")
         Logger.info("App initialized successfully")
+        
+        #if DEBUG
+        // En debug, mostrar información del contenedor
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            DependencyDebug.verifyContainerHealth()
+        }
+        #endif
     }
     
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(createAuthManager())
+                .environmentObject(createAuthStateManager())
         }
     }
     
     // MARK: - Helper Methods
     
-    /// Factory method para crear AuthManager de forma segura
-    private func createAuthManager() -> AuthManager {
-        return DependencyInjector.shared.resolve(AuthManager.self)
+    /// Factory method para crear AuthStateManager de forma segura
+    private func createAuthStateManager() -> AuthStateManager {
+        return DependencyInjector.shared.resolve(AuthStateManager.self)
     }
 }

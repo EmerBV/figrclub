@@ -9,7 +9,7 @@ import SwiftUI
 
 struct MainTabView: View {
     let user: User
-    @EnvironmentObject private var authManager: AuthManager
+    @EnvironmentObject private var authStateManager: AuthStateManager
     
     var body: some View {
         TabView {
@@ -24,7 +24,7 @@ struct MainTabView: View {
                     
                     Button("Cerrar Sesión") {
                         Task {
-                            await authManager.logout()
+                            await authStateManager.logout()
                         }
                     }
                     .buttonStyle(FigrButtonStyle())
@@ -77,11 +77,9 @@ struct MainTabView: View {
                         Text(user.username)
                             .font(.title2.weight(.semibold))
                         
-                        if let fullName = user.fullName {
-                            Text(fullName)
-                                .font(.callout)
-                                .foregroundColor(.secondary)
-                        }
+                        Text(user.fullName) // Actualizado: ya no es opcional en el nuevo model
+                            .font(.callout)
+                            .foregroundColor(.secondary)
                         
                         Text(user.email)
                             .font(.callout)
@@ -102,10 +100,26 @@ struct MainTabView: View {
 
 // MARK: - Preview
 #if DEBUG
-struct ContentView_Previews: PreviewProvider {
+struct MainTabView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
-            .environmentObject(DependencyInjector.shared.resolve(AuthManager.self))
+        let sampleUser = User(
+            id: 1,
+            firstName: "John",
+            lastName: "Doe",
+            email: "john@example.com",
+            username: "johndoe",
+            userType: "REGULAR",
+            subscriptionType: "FREE",
+            isVerified: true,
+            profileImageUrl: nil,
+            bio: "Sample user bio",
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+        
+        MainTabView(user: sampleUser)
+            .environmentObject(DependencyInjector.shared.resolve(AuthStateManager.self))
     }
 }
 #endif
+

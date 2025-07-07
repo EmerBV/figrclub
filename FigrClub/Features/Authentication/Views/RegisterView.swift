@@ -16,6 +16,7 @@ struct RegisterView: View {
     }
     
     var body: some View {
+        /*
         VStack(spacing: Spacing.large) {
             VStack(spacing: Spacing.medium) {
                 // Email field
@@ -128,5 +129,6 @@ struct RegisterView: View {
         case .invalid:
             return .invalid
         }
+         */
     }
 }

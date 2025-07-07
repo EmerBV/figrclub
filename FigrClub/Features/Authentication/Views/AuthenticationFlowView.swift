@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct AuthenticationFlowView: View {
-    @EnvironmentObject private var authManager: AuthManager
     @State private var authViewModel: AuthViewModel?
     
     var body: some View {
@@ -47,30 +46,22 @@ struct AuthenticationFlowView: View {
                         if let viewModel = authViewModel {
                             // Toggle between Login/Register
                             HStack(spacing: 0) {
-                                Button("Iniciar Sesión") {
-                                    withAnimation(.easeInOut(duration: 0.3)) {
-                                        viewModel.isShowingLogin = true
-                                    }
+                                AuthTabButton(
+                                    title: "Iniciar Sesión",
+                                    isSelected: viewModel.isShowingLogin
+                                ) {
+                                    viewModel.switchToLogin()
                                 }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(viewModel.isShowingLogin ? Color.blue : Color.clear)
-                                .foregroundColor(viewModel.isShowingLogin ? .white : .blue)
-                                .cornerRadius(8, corners: [.topLeft, .bottomLeft])
                                 
-                                Button("Registrarse") {
-                                    withAnimation(.easeInOut(duration: 0.3)) {
-                                        viewModel.isShowingLogin = false
-                                    }
+                                AuthTabButton(
+                                    title: "Registrarse",
+                                    isSelected: !viewModel.isShowingLogin
+                                ) {
+                                    viewModel.switchToRegister()
                                 }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(!viewModel.isShowingLogin ? Color.blue : Color.clear)
-                                .foregroundColor(!viewModel.isShowingLogin ? .white : .blue)
-                                .cornerRadius(8, corners: [.topRight, .bottomRight])
                             }
                             .overlay(
-                                RoundedRectangle(cornerRadius: 8)
+                                RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
                                     .stroke(Color.blue, lineWidth: 1)
                             )
                             .padding(.horizontal, 20)
@@ -112,34 +103,28 @@ struct AuthenticationFlowView: View {
     }
 }
 
-// MARK: - Login Form
+// MARK: - Supporting Form Views
 struct LoginFormView: View {
     @ObservedObject var viewModel: AuthViewModel
     
     var body: some View {
         VStack(spacing: 20) {
             // Email Field
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Email")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.secondary)
-                
-                TextField("tu@email.com", text: $viewModel.loginEmail)
-                    .textFieldStyle(FigrTextFieldStyle())
-                    .keyboardType(.emailAddress)
-                    .autocapitalization(.none)
-                    .autocorrectionDisabled()
-            }
+            AuthTextField(
+                text: $viewModel.loginEmail,
+                placeholder: "tu@email.com",
+                keyboardType: .emailAddress,
+                validationState: getValidationState(viewModel.loginEmailValidation)
+            )
+            .autocapitalization(.none)
+            .autocorrectionDisabled()
             
             // Password Field
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Contraseña")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.secondary)
-                
-                SecureField("Tu contraseña", text: $viewModel.loginPassword)
-                    .textFieldStyle(FigrTextFieldStyle())
-            }
+            AuthSecureField(
+                text: $viewModel.loginPassword,
+                placeholder: "Tu contraseña",
+                validationState: getValidationState(viewModel.loginPasswordValidation)
+            )
             
             // Login Button
             Button {
@@ -157,12 +142,8 @@ struct LoginFormView: View {
                             .font(.system(size: 16, weight: .semibold))
                     }
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .background(viewModel.canLogin ? Color.blue : Color.gray.opacity(0.3))
-                .foregroundColor(.white)
-                .cornerRadius(12)
             }
+            .buttonStyle(FigrButtonStyle(isEnabled: viewModel.canLogin, isLoading: viewModel.isLoading))
             .disabled(!viewModel.canLogin)
             
             // Forgot Password
@@ -174,69 +155,62 @@ struct LoginFormView: View {
         }
         .padding(.top, 20)
     }
+    
+    private func getValidationState(_ validation: ValidationResult) -> ValidationState {
+        switch validation {
+        case .valid:
+            return .valid
+        case .invalid:
+            return .invalid
+        }
+    }
 }
 
-// MARK: - Register Form
 struct RegisterFormView: View {
     @ObservedObject var viewModel: AuthViewModel
     
     var body: some View {
         VStack(spacing: 20) {
-            // Full Name Field
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Nombre completo")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.secondary)
-                
-                TextField("Tu nombre completo", text: $viewModel.registerFullName)
-                    .textFieldStyle(FigrTextFieldStyle())
-                    .autocapitalization(.words)
-            }
+            // Email Field
+            AuthTextField(
+                text: $viewModel.registerEmail,
+                placeholder: "tu@email.com",
+                keyboardType: .emailAddress,
+                validationState: getValidationState(viewModel.registerEmailValidation)
+            )
+            .autocapitalization(.none)
+            .autocorrectionDisabled()
             
             // Username Field
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Nombre de usuario")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.secondary)
-                
-                TextField("usuario", text: $viewModel.registerUsername)
-                    .textFieldStyle(FigrTextFieldStyle())
-                    .autocapitalization(.none)
-                    .autocorrectionDisabled()
-            }
+            AuthTextField(
+                text: $viewModel.registerUsername,
+                placeholder: "nombreusuario",
+                validationState: getValidationState(viewModel.usernameValidation)
+            )
+            .autocapitalization(.none)
+            .autocorrectionDisabled()
             
-            // Email Field
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Email")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.secondary)
-                
-                TextField("tu@email.com", text: $viewModel.registerEmail)
-                    .textFieldStyle(FigrTextFieldStyle())
-                    .keyboardType(.emailAddress)
-                    .autocapitalization(.none)
-                    .autocorrectionDisabled()
-            }
+            // Full Name Field
+            AuthTextField(
+                text: $viewModel.registerFullName,
+                placeholder: "Tu nombre completo",
+                validationState: getValidationState(viewModel.fullNameValidation)
+            )
+            .autocapitalization(.words)
             
             // Password Field
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Contraseña")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.secondary)
-                
-                SecureField("Tu contraseña", text: $viewModel.registerPassword)
-                    .textFieldStyle(FigrTextFieldStyle())
-            }
+            AuthSecureField(
+                text: $viewModel.registerPassword,
+                placeholder: "Tu contraseña",
+                validationState: getValidationState(viewModel.registerPasswordValidation)
+            )
             
             // Confirm Password Field
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Confirmar contraseña")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.secondary)
-                
-                SecureField("Confirma tu contraseña", text: $viewModel.registerConfirmPassword)
-                    .textFieldStyle(FigrTextFieldStyle())
-            }
+            AuthSecureField(
+                text: $viewModel.registerConfirmPassword,
+                placeholder: "Confirma tu contraseña",
+                validationState: getValidationState(viewModel.confirmPasswordValidation)
+            )
             
             // Terms and Conditions
             HStack(alignment: .top, spacing: 12) {
@@ -270,15 +244,20 @@ struct RegisterFormView: View {
                             .font(.system(size: 16, weight: .semibold))
                     }
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .background(viewModel.canRegister ? Color.blue : Color.gray.opacity(0.3))
-                .foregroundColor(.white)
-                .cornerRadius(12)
             }
+            .buttonStyle(FigrButtonStyle(isEnabled: viewModel.canRegister, isLoading: viewModel.isLoading))
             .disabled(!viewModel.canRegister)
         }
         .padding(.top, 20)
+    }
+    
+    private func getValidationState(_ validation: ValidationResult) -> ValidationState {
+        switch validation {
+        case .valid:
+            return .valid
+        case .invalid:
+            return .invalid
+        }
     }
 }
 
@@ -308,7 +287,7 @@ struct RoundedCorner: Shape {
 struct AuthenticationFlowView_Previews: PreviewProvider {
     static var previews: some View {
         AuthenticationFlowView()
-            .environmentObject(DependencyInjector.shared.resolve(AuthManager.self))
+            .environmentObject(DependencyInjector.shared.resolve(AuthStateManager.self))
     }
 }
 #endif

@@ -10,10 +10,11 @@ import Swinject
 
 final class ServiceAssembly: Assembly {
     func assemble(container: Container) {
+        
         // Auth Service
         container.register(AuthServiceProtocol.self) { resolver in
-            let networkDispatcher = resolver.resolve(NetworkDispatcherProtocol.self)!
-            return AuthService(networkDispatcher: networkDispatcher)
+            let apiService = resolver.resolve(APIServiceProtocol.self)!
+            return AuthService(networkDispatcher: apiService)
         }.inObjectScope(.container)
         
         // Validation Service

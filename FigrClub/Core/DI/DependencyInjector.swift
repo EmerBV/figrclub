@@ -39,6 +39,13 @@ final class DependencyInjector {
         )
         
         Logger.info("Dependency injection configured successfully")
+        
+#if DEBUG
+        // Verificar dependencias en modo debug
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            DependencyDebug.verifyAllDependencies()
+        }
+#endif
     }
     
     /// Resolve a dependency of a specific type
@@ -87,10 +94,10 @@ extension DependencyInjector {
     }
     
     @MainActor
-    func getAuthManager() -> AuthManager {
-        // Método helper para obtener AuthManager desde MainActor
-        return resolve(AuthManager.self)
+    func getAuthStateManager() -> AuthStateManager {
+        return resolve(AuthStateManager.self)
     }
+    
 }
 
 // MARK: - Environment Setup
