@@ -9,7 +9,7 @@ import Foundation
 import KeychainAccess
 
 @MainActor
-final class TokenManager: ObservableObject {
+final class TokenManager: ObservableObject, @unchecked Sendable {
     static let shared = TokenManager()
     
     private let keychain: Keychain

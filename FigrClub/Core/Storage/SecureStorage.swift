@@ -8,13 +8,13 @@
 import Foundation
 import KeychainAccess
 
-protocol SecureStorageProtocol {
+protocol SecureStorageProtocol: Sendable {
     func save<T: Codable>(_ object: T, key: String) throws
     func load<T: Codable>(_ type: T.Type, key: String) throws -> T?
     func delete(key: String) throws
 }
 
-final class SecureStorage: SecureStorageProtocol {
+final class SecureStorage: SecureStorageProtocol, Sendable {
     private let keychain: Keychain
     
     init() {

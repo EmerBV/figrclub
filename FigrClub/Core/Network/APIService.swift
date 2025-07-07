@@ -8,12 +8,12 @@
 import Foundation
 import Combine
 
-protocol APIServiceProtocol {
+protocol APIServiceProtocol: Sendable {
     func request<T: Codable>(_ endpoint: APIEndpoint, body: Data?) async throws -> T
     func request<T: Codable>(_ endpoint: APIEndpoint, parameters: [String: Any]?) async throws -> T
 }
 
-final class APIService: APIServiceProtocol {
+final class APIService: APIServiceProtocol, Sendable {
     private let session: URLSession
     private let decoder: JSONDecoder
     private let encoder: JSONEncoder

@@ -15,7 +15,7 @@ protocol AuthRepositoryProtocol: Sendable {
     func getCurrentUser() async throws -> User
 }
 
-final class AuthRepository: AuthRepositoryProtocol {
+final class AuthRepository: AuthRepositoryProtocol, Sendable {
     private let authService: AuthServiceProtocol
     private let tokenManager: TokenManager
     private let secureStorage: SecureStorageProtocol

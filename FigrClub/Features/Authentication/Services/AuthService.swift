@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol AuthServiceProtocol {
+protocol AuthServiceProtocol: Sendable {
     func login(_ request: LoginRequest) async throws -> AuthResponse
     func register(_ request: RegisterRequest) async throws -> AuthResponse
     func logout() async throws
@@ -15,7 +15,7 @@ protocol AuthServiceProtocol {
     func getCurrentUser() async throws -> User
 }
 
-final class AuthService: AuthServiceProtocol {
+final class AuthService: AuthServiceProtocol, Sendable {
     private let apiService: APIServiceProtocol
     
     init(apiService: APIServiceProtocol) {
