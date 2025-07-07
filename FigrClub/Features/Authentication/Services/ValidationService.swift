@@ -95,26 +95,3 @@ final class ValidationService: ValidationServiceProtocol {
         return .valid
     }
 }
-
-enum ValidationResult {
-    case valid
-    case invalid(String)
-    
-    var isValid: Bool {
-        switch self {
-        case .valid:
-            return true
-        case .invalid:
-            return false
-        }
-    }
-    
-    var errorMessage: String? {
-        switch self {
-        case .valid:
-            return nil
-        case .invalid(let message):
-            return message
-        }
-    }
-}

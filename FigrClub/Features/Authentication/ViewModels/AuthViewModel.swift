@@ -136,6 +136,25 @@ final class AuthViewModel: ObservableObject {
         hideError()
     }
     
+    // MARK: - Public Error Handling
+    func hideError() {
+        errorMessage = nil
+        showError = false
+    }
+    
+    func showErrorMessage(_ message: String) {
+        errorMessage = message
+        showError = true
+        
+        // Auto-hide after 5 seconds
+        Task {
+            try? await Task.sleep(nanoseconds: 5_000_000_000)
+            await MainActor.run {
+                hideError()
+            }
+        }
+    }
+    
     // MARK: - Private Methods
     
     private func setupValidation() {
@@ -184,22 +203,6 @@ final class AuthViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    private func showErrorMessage(_ message: String) {
-        errorMessage = message
-        showError = true
-        
-        // Auto-hide after 5 seconds
-        Task {
-            try? await Task.sleep(nanoseconds: 5_000_000_000)
-            hideError()
-        }
-    }
-    
-    private func hideError() {
-        errorMessage = nil
-        showError = false
-    }
-    
     private func clearLoginForm() {
         loginEmail = ""
         loginPassword = ""
@@ -214,3 +217,12 @@ final class AuthViewModel: ObservableObject {
         acceptTerms = false
     }
 }
+
+// MARK: - Preview Support
+#if DEBUG
+extension AuthViewModel {
+    static func preview() -> AuthViewModel {
+        return DependencyInjector.shared.resolve(AuthViewModel.self)
+    }
+}
+#endif
