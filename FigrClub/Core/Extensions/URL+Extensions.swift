@@ -30,18 +30,3 @@ extension URL {
         return isReachable
     }
 }
-
-extension URLRequest {
-    /// Adds common headers
-    mutating func addCommonHeaders() {
-        setValue("application/json", forHTTPHeaderField: "Content-Type")
-        setValue("application/json", forHTTPHeaderField: "Accept")
-        setValue("FigrClub/\(AppConfig.AppInfo.version)", forHTTPHeaderField: "User-Agent")
-        setValue(Locale.current.languageCode, forHTTPHeaderField: "Accept-Language")
-    }
-    
-    /// Adds authentication header
-    mutating func addAuthHeader(_ token: String) {
-        setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-    }
-}

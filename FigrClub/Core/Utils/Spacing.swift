@@ -1,13 +1,12 @@
 //
-//  Spacing+Extensions.swift
+//  Spacing.swift
 //  FigrClub
 //
-//  Created by Emerson Balahan Varona on 3/7/25.
+//  Created by Emerson Balahan Varona on 7/7/25.
 //
 
-import SwiftUI
+import Foundation
 
-// MARK: - Spacing
 enum Spacing {
     static let xxSmall: CGFloat = 2
     static let xSmall: CGFloat = 4

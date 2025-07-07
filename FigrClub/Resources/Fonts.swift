@@ -1,13 +1,12 @@
 //
-//  Font+Extensions.swift
+//  Fonts.swift
 //  FigrClub
 //
-//  Created by Emerson Balahan Varona on 27/6/25.
+//  Created by Emerson Balahan Varona on 7/7/25.
 //
 
 import SwiftUI
 
-// MARK: - Font Extensions
 extension Font {
     // Títulos
     static let figrLargeTitle = Font.system(size: 34, weight: .bold, design: .rounded)

@@ -9,96 +9,57 @@ import Foundation
 import OSLog
 import FirebaseCrashlytics
 
-// MARK: - Logger
-final class Logger {
-    static let shared = Logger()
-    
-    private let osLog: OSLog
-    private let subsystem = Bundle.main.bundleIdentifier ?? "com.figrclub"
-    
-    private init() {
-        self.osLog = OSLog(subsystem: subsystem, category: "general")
-    }
-    
-    // MARK: - Log Levels
-    enum LogLevel: String, CaseIterable {
-        case debug = "DEBUG"
-        case info = "INFO"
-        case warning = "WARNING"
-        case error = "ERROR"
-        case fatal = "FATAL"
-        
-        var osLogType: OSLogType {
-            switch self {
-            case .debug: return .debug
-            case .info: return .info
-            case .warning: return .default
-            case .error: return .error
-            case .fatal: return .fault
-            }
-        }
-        
-        var emoji: String {
-            switch self {
-            case .debug: return "🔍"
-            case .info: return "ℹ️"
-            case .warning: return "⚠️"
-            case .error: return "❌"
-            case .fatal: return "💥"
-            }
-        }
-    }
-    
-    // MARK: - Public Methods
-    func debug(_ message: String, category: String = "general") {
-        log(level: .debug, message: message, category: category)
-    }
-    
-    func info(_ message: String, category: String = "general") {
-        log(level: .info, message: message, category: category)
-    }
-    
-    func warning(_ message: String, category: String = "general") {
-        log(level: .warning, message: message, category: category)
-    }
-    
-    func error(_ message: String, error: Error? = nil, category: String = "general") {
-        var logMessage = message
-        if let error = error {
-            logMessage += " - Error: \(error.localizedDescription)"
-        }
-        log(level: .error, message: logMessage, category: category)
-        
-        // Enviar a Crashlytics en producción
-#if !DEBUG
-        if let error = error {
-            Crashlytics.crashlytics().record(error: error)
-        }
-#endif
-    }
-    
-    func fatal(_ message: String, category: String = "general") {
-        log(level: .fatal, message: message, category: category)
-        
-        // En producción, registrar como error crítico en Crashlytics
-#if !DEBUG
-        let userInfo = [NSLocalizedDescriptionKey: message]
-        let error = NSError(domain: subsystem, code: -1, userInfo: userInfo)
-        Crashlytics.crashlytics().record(error: error)
-#endif
-    }
-    
-    // MARK: - Private Methods
-    private func log(level: LogLevel, message: String, category: String) {
-        let categoryLog = OSLog(subsystem: subsystem, category: category)
-        let formattedMessage = "[\(level.rawValue)] \(message)"
-        
-        os_log("%{public}@", log: categoryLog, type: level.osLogType, formattedMessage)
-        
-        // En debug, también imprimir en consola
+enum LogLevel: String {
+    case debug = "DEBUG"
+    case info = "INFO"
+    case warning = "WARNING"
+    case error = "ERROR"
+}
+
+class Logger {
+    private static let subsystem = Bundle.main.bundleIdentifier ?? "com.emerbv.FigrClub"
+    private static let logger = os.Logger(subsystem: subsystem, category: "AppLog")
+    private static let isDebugMode: Bool = {
 #if DEBUG
-        let timestamp = ISO8601DateFormatter().string(from: Date())
-        print("[\(timestamp)] [\(level.rawValue)] [\(category)] \(message)")
+        return true
+#else
+        return false
 #endif
+    }()
+    
+    static func log(_ level: LogLevel, message: String, file: String = #file, function: String = #function, line: Int = #line) {
+        guard isDebugMode else { return }
+        
+        let fileName = (file as NSString).lastPathComponent
+        let logMessage = "[\(fileName):\(line)] \(function) - \(message)"
+        
+        switch level {
+        case .debug:
+            logger.debug("🔵 \(logMessage)")
+        case .info:
+            logger.info("🟢 \(logMessage)")
+        case .warning:
+            logger.warning("🟠 \(logMessage)")
+        case .error:
+            logger.error("🔴 \(logMessage)")
+        }
+        
+        print("[\(level.rawValue)] \(logMessage)")
+    }
+    
+    static func debug(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
+        log(.debug, message: message, file: file, function: function, line: line)
+    }
+    
+    static func info(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
+        log(.info, message: message, file: file, function: function, line: line)
+    }
+    
+    static func warning(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
+        log(.warning, message: message, file: file, function: function, line: line)
+    }
+    
+    static func error(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
+        log(.error, message: message, file: file, function: function, line: line)
     }
 }

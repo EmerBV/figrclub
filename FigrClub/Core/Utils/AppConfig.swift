@@ -19,4 +19,15 @@ enum AppConfig {
         static let cornerRadius: CGFloat = 12
         static let animationDuration: Double = 0.3
     }
+    
+    enum AppInfo {
+        static let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+        static let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+    }
+    
+    enum Auth {
+        static let tokenKey = "auth_token"
+        static let userKey = "current_user"
+        static let refreshTokenKey = "refresh_token"
+    }
 }

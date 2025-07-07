@@ -8,4 +8,11 @@
 import Foundation
 import Swinject
 
-
+final class NetworkAssembly: Assembly {
+    func assemble(container: Container) {
+        // API Service
+        container.register(APIServiceProtocol.self) { _ in
+            APIService()
+        }.inObjectScope(.container)
+    }
+}

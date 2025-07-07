@@ -8,4 +8,17 @@
 import Foundation
 import Swinject
 
-
+final class ServiceAssembly: Assembly {
+    func assemble(container: Container) {
+        // Auth Service
+        container.register(AuthServiceProtocol.self) { r in
+            let apiService = r.resolve(APIServiceProtocol.self)!
+            return AuthService(apiService: apiService)
+        }.inObjectScope(.container)
+        
+        // Validation Service
+        container.register(ValidationServiceProtocol.self) { _ in
+            ValidationService()
+        }.inObjectScope(.container)
+    }
+}

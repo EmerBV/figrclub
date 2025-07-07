@@ -7,7 +7,6 @@
 
 import Foundation
 
-// MARK: - HTTP Method
 enum HTTPMethod: String {
     case GET = "GET"
     case POST = "POST"
@@ -16,12 +15,50 @@ enum HTTPMethod: String {
     case PATCH = "PATCH"
 }
 
-// MARK: - HTTPMethod Extension
-extension HTTPMethod {
-    static let get = HTTPMethod.GET
-    static let post = HTTPMethod.POST
-    static let put = HTTPMethod.PUT
-    static let delete = HTTPMethod.DELETE
-    static let patch = HTTPMethod.PATCH
+enum APIEndpoint {
+    // Auth endpoints
+    case login
+    case register
+    case logout
+    case refreshToken
+    case profile
+    
+    var path: String {
+        switch self {
+        case .login:
+            return "/auth/login"
+        case .register:
+            return "/auth/register"
+        case .logout:
+            return "/auth/logout"
+        case .refreshToken:
+            return "/auth/refresh"
+        case .profile:
+            return "/auth/profile"
+        }
+    }
+    
+    var method: HTTPMethod {
+        switch self {
+        case .login, .register, .logout, .refreshToken:
+            return .POST
+        case .profile:
+            return .GET
+        }
+    }
+    
+    var requiresAuthentication: Bool {
+        switch self {
+        case .login, .register:
+            return false
+        case .logout, .refreshToken, .profile:
+            return true
+        }
+    }
+    
+    func url(baseURL: String = AppConfig.API.baseURL) -> URL? {
+        return URL(string: baseURL + path)
+    }
 }
+
 

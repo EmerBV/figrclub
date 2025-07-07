@@ -49,34 +49,6 @@ extension String {
         return trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
-    /// Validates password strength
-    var passwordStrength: PasswordStrength {
-        var score = 0
-        
-        // Length
-        if count >= 8 { score += 1 }
-        if count >= 12 { score += 1 }
-        
-        // Character types
-        if contains(where: { $0.isLowercase }) { score += 1 }
-        if contains(where: { $0.isUppercase }) { score += 1 }
-        if contains(where: { $0.isNumber }) { score += 1 }
-        if contains(where: { "!@#$%^&*()_+-=[]{}|;:,.<>?".contains($0) }) { score += 1 }
-        
-        // Common patterns (reduce score)
-        let commonPatterns = ["password", "123456", "qwerty", "abc123"]
-        if commonPatterns.contains(where: { lowercased().contains($0) }) {
-            score -= 2
-        }
-        
-        switch score {
-        case 0...2: return .weak
-        case 3...4: return .fair
-        case 5...6: return .good
-        default: return .strong
-        }
-    }
-    
     func formatPostDate() -> String {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]

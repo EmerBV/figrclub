@@ -43,11 +43,6 @@ extension View {
         }
     }
     
-    /// Adds a corner radius to specific corners
-    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
-        clipShape(RoundedCorner(radius: radius, corners: corners))
-    }
-    
     /// Adds a shadow with default values
     func defaultShadow() -> some View {
         self.shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
@@ -112,9 +107,9 @@ struct DebugInfoView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("🏗️ Debug Info")
                 .font(.figrCaption.bold())
-            Text("Environment: \(AppConfig.Environment.current)")
+            //Text("Environment: \(AppConfig.Environment.current)")
             Text("Version: \(AppConfig.AppInfo.version)")
-            Text("Build: \(AppConfig.AppInfo.buildNumber)")
+            //Text("Build: \(AppConfig.AppInfo.buildNumber)")
             Text("API: \(AppConfig.API.baseURL)")
         }
         .font(.figrCaption2)
