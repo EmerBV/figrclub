@@ -45,7 +45,7 @@
 		1DA965652E12B31F00C11774 /* Exceptions for "FigrClub" folder in "FigrClub" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Info.plist,
+				"Supporting Files/Info.plist",
 			);
 			target = 1DA963C62E01751900C11774 /* FigrClub */;
 		};

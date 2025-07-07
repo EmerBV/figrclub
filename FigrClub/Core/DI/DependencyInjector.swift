@@ -21,6 +21,7 @@ final class DependencyInjector {
         // Register all assemblies
         assembler = Assembler(
             [
+                /*
                 // MARK: - Core
                 NetworkAssembly(),
                 StorageAssembly(),
@@ -34,6 +35,7 @@ final class DependencyInjector {
                 
                 // MARK: - Generic
                 ViewModelAssembly()
+                 */
             ],
             container: container
         )
@@ -72,30 +74,3 @@ final class DependencyInjector {
     }
 }
 
-// MARK: - Factory Methods (MainActor-safe creation)
-extension DependencyInjector {
-    
-    @MainActor
-    func makeAuthViewModel() -> AuthViewModel {
-        return resolve(AuthViewModel.self)
-    }
-    
-}
-
-// MARK: - Environment Setup
-extension DependencyInjector {
-    
-    /// Configure container for testing environment
-    func configureForTesting() {
-        // Remove all existing registrations
-        container.removeAll()
-        
-        // Register mock services for testing
-        Logger.shared.info("Container configured for testing", category: "di")
-    }
-    
-    /// Configure container for preview environment
-    func configureForPreviews() {
-        Logger.shared.info("Container configured for previews", category: "di")
-    }
-}
