@@ -25,6 +25,6 @@ final class ViewModelFactory {
 // MARK: - SwiftUI Environment Integration
 extension View {
     func withDependencyInjection() -> some View {
-        self.environmentObject(DependencyInjector.shared.resolve(AuthManager.self))
+        self.environmentObject(DependencyInjector.shared.resolve(AuthViewModel.self))
     }
 }

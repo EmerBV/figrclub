@@ -28,10 +28,12 @@ final class NetworkAssembly: Assembly {
         }.inObjectScope(.container)
         
         // Token Manager
+        /*
         container.register(TokenManager.self) { r in
             let secureStorage = r.resolve(SecureStorageProtocol.self)!
             return TokenManager(secureStorage: secureStorage)
         }.inObjectScope(.container)
+         */
         
     }
 }

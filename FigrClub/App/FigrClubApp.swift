@@ -12,10 +12,7 @@ import FirebaseMessaging
 @main
 struct FigrClubApp: App {
     // MARK: - State Objects
-    @StateObject private var authManager = DependencyContainer.shared.resolve(AuthManager.self)
-    @StateObject private var remoteConfigManager = RemoteConfigManager.shared
-    @StateObject private var memoryManager = MemoryManager.shared
-    @StateObject private var announcementManager = AccessibilityAnnouncementManager.shared
+    @StateObject private var authManager = DependencyInjector.shared.resolve(AuthViewModel.self)
     
     // MARK: - App Delegate
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
@@ -31,21 +28,14 @@ struct FigrClubApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(authManager)
-                .environmentObject(remoteConfigManager)
-                .environmentObject(announcementManager)
+               
                 .onAppear {
                     setupAppAppearance()
                 }
                 .onChange(of: scenePhase) { phase in
                     handleScenePhaseChange(phase)
                 }
-                .overlay(
-                    Group {
-                        if remoteConfigManager.isMaintenanceMode {
-                            MaintenanceView()
-                        }
-                    }
-                )
+                
 #if DEBUG
                 .overlay(
                     Group {
@@ -154,11 +144,13 @@ struct FigrClubApp: App {
         }
         
         // Refresh authentication if needed
+        /*
         Task { @MainActor in
             if let authManager = try? DependencyContainer.shared.resolve(AuthManager.self) {
                 _ = await authManager.refreshTokenIfNeeded()
             }
         }
+         */
     }
     
     private func handleAppBecameInactive() {

@@ -27,9 +27,11 @@ final class StorageAssembly: Assembly {
         }.inObjectScope(.container)
         
         // Auth Manager
+        /*
         container.register(AuthManager.self) { r in
             let tokenManager = r.resolve(TokenManager.self)!
             return AuthManager(tokenManager: tokenManager)
         }.inObjectScope(.container)
+         */
     }
 }
