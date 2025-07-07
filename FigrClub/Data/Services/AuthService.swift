@@ -8,11 +8,29 @@
 import Foundation
 
 protocol AuthServiceProtocol {
-    func login(request: LoginRequest) async throws -> AuthResponse
+    func login(email: String, password: String) async throws -> AuthResponse
+    func register(email: String, password: String, username: String) async throws -> AuthResponse
+    func logout() async throws
 }
 
 final class AuthService: AuthServiceProtocol {
-    func login(request: LoginRequest) async throws -> AuthResponse {
-        <#code#>
+    private let apiService: APIServiceProtocol
+    
+    init(apiService: APIServiceProtocol) {
+        self.apiService = apiService
+    }
+    
+    func login(email: String, password: String) async throws -> AuthResponse {
+        // Implementación temporal
+        throw APIError.notImplemented
+    }
+    
+    func register(email: String, password: String, username: String) async throws -> AuthResponse {
+        // Implementación temporal
+        throw APIError.notImplemented
+    }
+    
+    func logout() async throws {
+        // Implementación temporal
     }
 }

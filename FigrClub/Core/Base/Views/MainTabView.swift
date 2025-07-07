@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @StateObject private var authManager = DependencyContainer.shared.resolve(AuthManager.self)
+    @StateObject private var authManager = DependencyInjector.shared.resolve(AuthManager.self)
     @State private var selectedTab: Tab = .feed
     @State private var showingNewPost = false
     @State private var badgeCount = 0
@@ -62,12 +62,6 @@ struct MainTabView: View {
                 .tag(Tab.feed)
             
             // Marketplace Tab
-            MarketplaceView()
-                .tabItem {
-                    Image(systemName: selectedTab == .marketplace ? Tab.marketplace.selectedIconName : Tab.marketplace.iconName)
-                    Text(Tab.marketplace.title)
-                }
-                .tag(Tab.marketplace)
             
             // Create Tab (Special handling)
             Color.clear
@@ -78,28 +72,16 @@ struct MainTabView: View {
                 .tag(Tab.create)
             
             // Notifications Tab
-            NotificationsView()
-                .tabItem {
-                    Image(systemName: selectedTab == .notifications ? Tab.notifications.selectedIconName : Tab.notifications.iconName)
-                    Text(Tab.notifications.title)
-                }
-                .badge(badgeValue)
-                .tag(Tab.notifications)
             
             // Profile Tab
-            ProfileView()
-                .tabItem {
-                    Image(systemName: selectedTab == .profile ? Tab.profile.selectedIconName : Tab.profile.iconName)
-                    Text(Tab.profile.title)
-                }
-                .tag(Tab.profile)
+        
         }
         .accentColor(.figrPrimary)
         .onChange(of: selectedTab) { newTab in
             handleTabSelection(newTab)
         }
         .sheet(isPresented: $showingNewPost) {
-            CreatePostView()
+            
         }
         .onAppear {
             setupTabBarAppearance()

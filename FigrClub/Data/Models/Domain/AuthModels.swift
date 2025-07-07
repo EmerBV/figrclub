@@ -7,41 +7,27 @@
 
 import Foundation
 
-struct AuthToken: Codable, Equatable {
-    let id: Int
+struct AuthResponse: Codable {
+    let user: User
     let token: String
 }
 
-struct AuthResponse: Codable {
-    let authToken: AuthToken
-    let userId: Int
-    let email: String?
+struct User: Codable {
+    let id: String
+    let email: String
+    let username: String
 }
 
-struct TokenInfo {
-    let accessToken: String
-    let refreshToken: String?
-    let userId: Int
-    let expiryDate: Date?
-    let isValid: Bool
-    let isExpired: Bool
-    
-    var timeUntilExpiry: TimeInterval? {
-        guard let expiryDate = expiryDate else { return nil }
-        return expiryDate.timeIntervalSinceNow
-    }
-    
-    var formattedExpiryDate: String? {
-        guard let expiryDate = expiryDate else { return nil }
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: expiryDate)
-    }
+enum APIError: Error {
+    case notImplemented
+    case networkError
+    case authenticationFailed
 }
 
-struct RefreshTokenRequest: Codable {
-    let refreshToken: String
+// APIEndpoint temporal - reemplazar con tu implementación
+enum APIEndpoint {
+    case login
+    case register
 }
 
 
