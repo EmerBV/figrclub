@@ -61,14 +61,14 @@ final class AuthViewModel: ObservableObject {
         confirmPasswordValidation.isValid
     }
     
-    // MARK: - Swift 6 Compatible Initializer
-    /// Initializer compatible con Swift 6 usando Sendable pattern
+    // MARK: - Initializer
+    /// Initializer para AuthViewModel
     nonisolated init(authManager: AuthManager, validationService: ValidationServiceProtocol) {
-        // Asignar dependencias de forma directa (compatibilidad Swift 6)
+        // Asignar dependencias
         self.authManager = authManager
         self.validationService = validationService
         
-        // Configurar inmediatamente las validaciones en el próximo tick del main actor
+        // Configurar validaciones en el main actor
         Task { @MainActor in
             self.setupValidation()
         }
