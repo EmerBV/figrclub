@@ -11,10 +11,11 @@ import Swinject
 final class RepositoryAssembly: Assembly {
     func assemble(container: Container) {
         // Auth Repository
-        container.register(AuthRepositoryProtocol.self) { r in
-            let authService = r.resolve(AuthServiceProtocol.self)!
-            let tokenManager = r.resolve(TokenManager.self)!
-            let secureStorage = r.resolve(SecureStorageProtocol.self)!
+        container.register(AuthRepositoryProtocol.self) { resolver in
+            let authService = resolver.resolve(AuthServiceProtocol.self)!
+            let tokenManager = resolver.resolve(TokenManager.self)!
+            let secureStorage = resolver.resolve(SecureStorageProtocol.self)!
+            
             return AuthRepository(
                 authService: authService,
                 tokenManager: tokenManager,

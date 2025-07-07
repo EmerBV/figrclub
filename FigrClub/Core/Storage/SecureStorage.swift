@@ -9,12 +9,13 @@ import Foundation
 import KeychainAccess
 
 protocol SecureStorageProtocol: Sendable {
-    func save<T: Codable>(_ object: T, key: String) throws
-    func load<T: Codable>(_ type: T.Type, key: String) throws -> T?
-    func delete(key: String) throws
+    func save<T: Codable>(_ object: T, forKey key: String) throws
+    func get<T: Codable>(_ type: T.Type, forKey key: String) throws -> T?
+    func remove(forKey key: String) throws
+    func contains(key: String) -> Bool
 }
 
-final class SecureStorage: SecureStorageProtocol, Sendable {
+final class SecureStorage: SecureStorageProtocol, @unchecked Sendable {
     private let keychain: Keychain
     
     init() {
@@ -22,26 +23,34 @@ final class SecureStorage: SecureStorageProtocol, Sendable {
             .accessibility(.whenUnlockedThisDeviceOnly)
     }
     
-    func save<T: Codable>(_ object: T, key: String) throws {
-        let encoder = JSONEncoder()
-        let data = try encoder.encode(object)
+    func save<T: Codable>(_ object: T, forKey key: String) throws {
+        let data = try JSONEncoder().encode(object)
         try keychain.set(data, key: key)
-        Logger.debug("Object saved to secure storage with key: \(key)")
+        Logger.debug("SecureStorage: Saved object for key: \(key)")
     }
     
-    func load<T: Codable>(_ type: T.Type, key: String) throws -> T? {
+    func get<T: Codable>(_ type: T.Type, forKey key: String) throws -> T? {
         guard let data = try keychain.getData(key) else {
+            Logger.debug("SecureStorage: No data found for key: \(key)")
             return nil
         }
         
-        let decoder = JSONDecoder()
-        let object = try decoder.decode(type, from: data)
-        Logger.debug("Object loaded from secure storage with key: \(key)")
+        let object = try JSONDecoder().decode(type, from: data)
+        Logger.debug("SecureStorage: Retrieved object for key: \(key)")
         return object
     }
     
-    func delete(key: String) throws {
+    func remove(forKey key: String) throws {
         try keychain.remove(key)
-        Logger.debug("Object deleted from secure storage with key: \(key)")
+        Logger.debug("SecureStorage: Removed object for key: \(key)")
+    }
+    
+    func contains(key: String) -> Bool {
+        do {
+            return try keychain.contains(key)
+        } catch {
+            Logger.error("SecureStorage: Error checking key existence: \(error)")
+            return false
+        }
     }
 }

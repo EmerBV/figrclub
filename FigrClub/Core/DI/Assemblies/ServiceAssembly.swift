@@ -11,14 +11,14 @@ import Swinject
 final class ServiceAssembly: Assembly {
     func assemble(container: Container) {
         // Auth Service
-        container.register(AuthServiceProtocol.self) { r in
-            let apiService = r.resolve(APIServiceProtocol.self)!
-            return AuthService(apiService: apiService)
+        container.register(AuthServiceProtocol.self) { resolver in
+            let networkDispatcher = resolver.resolve(NetworkDispatcherProtocol.self)!
+            return AuthService(networkDispatcher: networkDispatcher)
         }.inObjectScope(.container)
         
         // Validation Service
         container.register(ValidationServiceProtocol.self) { _ in
-            ValidationService()
+            return ValidationService()
         }.inObjectScope(.container)
     }
 }

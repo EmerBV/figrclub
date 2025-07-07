@@ -10,7 +10,12 @@ import Swinject
 
 final class ViewModelAssembly: Assembly {
     func assemble(container: Container) {
-        // Generic ViewModels that don't belong to specific features
-        // can be registered here
+        // Register other ViewModels here as they are created
+        // Example:
+        // container.register(FeedViewModel.self) { resolver in
+        //     // Dependencies
+        //     return FeedViewModel(...)
+        // }.inObjectScope(.transient)
     }
 }
+

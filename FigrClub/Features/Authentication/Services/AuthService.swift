@@ -9,99 +9,86 @@ import Foundation
 
 protocol AuthServiceProtocol: Sendable {
     func login(_ request: LoginRequest) async throws -> AuthResponse
-    func register(_ request: RegisterRequest) async throws -> AuthResponse
+    func register(_ request: RegisterRequest) async throws -> RegisterResponse
     func logout() async throws
+    func getCurrentUser() async throws -> UserResponse
     func refreshToken() async throws -> AuthResponse
-    func getCurrentUser() async throws -> User
 }
 
-final class AuthService: AuthServiceProtocol, Sendable {
-    private let apiService: APIServiceProtocol
+final class AuthService: AuthServiceProtocol {
+    private let networkDispatcher: NetworkDispatcherProtocol
     
-    init(apiService: APIServiceProtocol) {
-        self.apiService = apiService
+    init(networkDispatcher: NetworkDispatcherProtocol) {
+        self.networkDispatcher = networkDispatcher
     }
     
     func login(_ request: LoginRequest) async throws -> AuthResponse {
-        Logger.info("Attempting login for email: \(request.email)")
-        
-        let parameters: [String: Any] = [
-            "email": request.email,
-            "password": request.password
-        ]
+        let endpoint = AuthEndpoints.login(request: request)
+        Logger.debug("AuthService: Calling login endpoint")
         
         do {
-            let response: AuthResponse = try await apiService.request(.login, parameters: parameters)
-            Logger.info("Login successful for user: \(response.user.username)")
+            let response: AuthResponse = try await networkDispatcher.dispatch(endpoint)
+            Logger.info("AuthService: Login successful")
             return response
         } catch {
-            Logger.error("Login failed: \(error)")
+            Logger.error("AuthService: Login failed with error: \(error)")
             throw error
         }
     }
     
-    func register(_ request: RegisterRequest) async throws -> AuthResponse {
-        Logger.info("Attempting registration for email: \(request.email)")
-        
-        var parameters: [String: Any] = [
-            "email": request.email,
-            "password": request.password,
-            "username": request.username
-        ]
-        
-        if let fullName = request.fullName {
-            parameters["fullName"] = fullName
-        }
+    func register(_ request: RegisterRequest) async throws -> RegisterResponse {
+        let endpoint = AuthEndpoints.register(request: request)
+        Logger.debug("AuthService: Calling register endpoint")
         
         do {
-            let response: AuthResponse = try await apiService.request(.register, parameters: parameters)
-            Logger.info("Registration successful for user: \(response.user.username)")
+            let response: RegisterResponse = try await networkDispatcher.dispatch(endpoint)
+            Logger.info("AuthService: Registration successful")
             return response
         } catch {
-            Logger.error("Registration failed: \(error)")
+            Logger.error("AuthService: Registration failed with error: \(error)")
             throw error
         }
     }
     
     func logout() async throws {
-        Logger.info("Attempting logout")
+        let endpoint = AuthEndpoints.logout
+        Logger.debug("AuthService: Calling logout endpoint")
         
         do {
-            let _: EmptyResponse = try await apiService.request(.logout, parameters: nil)
-            Logger.info("Logout successful")
+            let _: ApiResponse<EmptyResponse> = try await networkDispatcher.dispatch(endpoint)
+            Logger.info("AuthService: Logout successful")
         } catch {
-            Logger.error("Logout failed: \(error)")
+            Logger.error("AuthService: Logout failed with error: \(error)")
+            throw error
+        }
+    }
+    
+    func getCurrentUser() async throws -> UserResponse {
+        let endpoint = UserEndpoints.getCurrentUser
+        Logger.debug("AuthService: Getting current user")
+        
+        do {
+            let response: UserResponse = try await networkDispatcher.dispatch(endpoint)
+            Logger.info("AuthService: Got current user successfully")
+            return response
+        } catch {
+            Logger.error("AuthService: Failed to get current user: \(error)")
             throw error
         }
     }
     
     func refreshToken() async throws -> AuthResponse {
-        Logger.info("Attempting token refresh")
+        let endpoint = AuthEndpoints.refreshToken
+        Logger.debug("AuthService: Refreshing token")
         
         do {
-            let response: AuthResponse = try await apiService.request(.refreshToken, parameters: nil)
-            Logger.info("Token refresh successful")
+            let response: AuthResponse = try await networkDispatcher.dispatch(endpoint)
+            Logger.info("AuthService: Token refresh successful")
             return response
         } catch {
-            Logger.error("Token refresh failed: \(error)")
-            throw error
-        }
-    }
-    
-    func getCurrentUser() async throws -> User {
-        Logger.info("Fetching current user profile")
-        
-        do {
-            let user: User = try await apiService.request(.profile, parameters: nil)
-            Logger.info("User profile fetched: \(user.username)")
-            return user
-        } catch {
-            Logger.error("Failed to fetch user profile: \(error)")
+            Logger.error("AuthService: Token refresh failed with error: \(error)")
             throw error
         }
     }
 }
-
-// MARK: - Empty Response Model
-struct EmptyResponse: Codable {}
 

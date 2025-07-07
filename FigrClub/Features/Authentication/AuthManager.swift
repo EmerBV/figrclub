@@ -9,32 +9,23 @@ import Foundation
 import Combine
 
 @MainActor
-final class AuthManager: ObservableObject {
+final class AuthStateManager: ObservableObject {
     @Published var authState: AuthState = .loading
     @Published var currentUser: User?
     @Published var isAuthenticated = false
     
-    private nonisolated let authRepository: AuthRepositoryProtocol
-    private nonisolated let tokenManager: TokenManager
+    private let authRepository: AuthRepositoryProtocol
+    private let tokenManager: TokenManager
     private var cancellables = Set<AnyCancellable>()
     
-    // MARK: - Swift 6 Compatible Initializer
-    /// Initializer compatible con Swift 6 MainActor requirements
     nonisolated init(authRepository: AuthRepositoryProtocol, tokenManager: TokenManager) {
         self.authRepository = authRepository
         self.tokenManager = tokenManager
         
-        // Configurar en el próximo tick del MainActor
         Task { @MainActor in
             self.setupSubscriptions()
-            await self.checkAuthenticationStatus()
+            await self.checkInitialAuthState()
         }
-    }
-    
-    // MARK: - Factory Method (Swift 6 Compatible)
-    /// Factory method para crear AuthManager de forma MainActor-safe
-    nonisolated static func create(authRepository: AuthRepositoryProtocol, tokenManager: TokenManager) -> AuthManager {
-        return AuthManager(authRepository: authRepository, tokenManager: tokenManager)
     }
     
     // MARK: - Public Methods
@@ -44,14 +35,11 @@ final class AuthManager: ObservableObject {
         
         do {
             let user = try await authRepository.login(email: email, password: password)
-            currentUser = user
-            authState = .authenticated(user)
-            isAuthenticated = true
+            await updateAuthenticatedState(with: user)
             Logger.info("Login successful for user: \(user.username)")
             return .success(user)
         } catch {
-            authState = .error(error)
-            isAuthenticated = false
+            await updateErrorState(error)
             Logger.error("Login failed: \(error)")
             return .failure(error)
         }
@@ -67,14 +55,11 @@ final class AuthManager: ObservableObject {
                 username: username,
                 fullName: fullName
             )
-            currentUser = user
-            authState = .authenticated(user)
-            isAuthenticated = true
+            await updateAuthenticatedState(with: user)
             Logger.info("Registration successful for user: \(user.username)")
             return .success(user)
         } catch {
-            authState = .error(error)
-            isAuthenticated = false
+            await updateErrorState(error)
             Logger.error("Registration failed: \(error)")
             return .failure(error)
         }
@@ -85,44 +70,34 @@ final class AuthManager: ObservableObject {
         
         do {
             try await authRepository.logout()
-            currentUser = nil
-            authState = .unauthenticated
-            isAuthenticated = false
+            await updateUnauthenticatedState()
             Logger.info("Logout successful")
         } catch {
             Logger.error("Logout failed: \(error)")
             // Even if logout fails on server, clear local state
-            currentUser = nil
-            authState = .unauthenticated
-            isAuthenticated = false
+            await updateUnauthenticatedState()
         }
     }
     
-    func refreshToken() async -> Result<User, Error> {
+    func refreshToken() async -> Bool {
         do {
             let user = try await authRepository.refreshToken()
-            currentUser = user
-            authState = .authenticated(user)
-            isAuthenticated = true
+            await updateAuthenticatedState(with: user)
             Logger.info("Token refresh successful")
-            return .success(user)
+            return true
         } catch {
-            // Token refresh failed, user needs to login again
-            currentUser = nil
-            authState = .unauthenticated
-            isAuthenticated = false
+            await updateUnauthenticatedState()
             Logger.error("Token refresh failed: \(error)")
-            return .failure(error)
+            return false
         }
     }
     
-    func checkAuthenticationStatus() async {
-        Logger.info("Checking authentication status")
+    func checkInitialAuthState() async {
+        Logger.info("Checking initial authentication state")
         
         // Check if we have a token
         guard await tokenManager.getToken() != nil else {
-            authState = .unauthenticated
-            isAuthenticated = false
+            await updateUnauthenticatedState()
             Logger.info("No token found, user is unauthenticated")
             return
         }
@@ -130,25 +105,19 @@ final class AuthManager: ObservableObject {
         // Try to get current user
         do {
             let user = try await authRepository.getCurrentUser()
-            currentUser = user
-            authState = .authenticated(user)
-            isAuthenticated = true
+            await updateAuthenticatedState(with: user)
             Logger.info("Authentication check successful for user: \(user.username)")
         } catch {
             // Token might be invalid, try to refresh
             Logger.warning("Failed to get current user, attempting token refresh")
-            let refreshResult = await refreshToken()
-            
-            if case .failure = refreshResult {
-                currentUser = nil
-                authState = .unauthenticated
-                isAuthenticated = false
-                Logger.info("Token refresh failed, user needs to login again")
+            let refreshSuccess = await refreshToken()
+            if !refreshSuccess {
+                await updateUnauthenticatedState()
             }
         }
     }
     
-    func updateUser(_ user: User) {
+    func updateUser(_ user: User) async {
         currentUser = user
         authState = .authenticated(user)
         Logger.info("User updated: \(user.username)")
@@ -163,20 +132,37 @@ final class AuthManager: ObservableObject {
             .sink { [weak self] isAuthenticated in
                 if !isAuthenticated && self?.isAuthenticated == true {
                     // Token was cleared, update auth state
-                    self?.currentUser = nil
-                    self?.authState = .unauthenticated
-                    self?.isAuthenticated = false
+                    Task { @MainActor in
+                        await self?.updateUnauthenticatedState()
+                    }
                 }
             }
             .store(in: &cancellables)
+    }
+    
+    private func updateAuthenticatedState(with user: User) async {
+        currentUser = user
+        authState = .authenticated(user)
+        isAuthenticated = true
+    }
+    
+    private func updateUnauthenticatedState() async {
+        currentUser = nil
+        authState = .unauthenticated
+        isAuthenticated = false
+    }
+    
+    private func updateErrorState(_ error: Error) async {
+        authState = .error(error.localizedDescription)
+        isAuthenticated = false
     }
 }
 
 // MARK: - Debug Support
 #if DEBUG
-extension AuthManager {
+extension AuthStateManager {
     func debugCurrentState() {
-        print("🔍 [AuthManager Debug]")
+        print("🔍 [AuthStateManager Debug]")
         print("  - AuthState: \(authState)")
         print("  - IsAuthenticated: \(isAuthenticated)")
         print("  - CurrentUser: \(currentUser?.username ?? "nil")")

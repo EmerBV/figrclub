@@ -29,21 +29,27 @@ final class AuthViewModel: ObservableObject {
     @Published var registerConfirmPassword = ""
     @Published var acceptTerms = false
     
-    // Validation
-    @Published var emailValidation: ValidationResult = .valid
-    @Published var passwordValidation: ValidationResult = .valid
+    // Validation states
+    @Published var loginEmailValidation: ValidationResult = .valid
+    @Published var loginPasswordValidation: ValidationResult = .valid
+    @Published var registerEmailValidation: ValidationResult = .valid
+    @Published var registerPasswordValidation: ValidationResult = .valid
     @Published var usernameValidation: ValidationResult = .valid
     @Published var fullNameValidation: ValidationResult = .valid
     @Published var confirmPasswordValidation: ValidationResult = .valid
     
     // MARK: - Dependencies
-    private nonisolated let authManager: AuthManager
+    private nonisolated let authStateManager: AuthStateManager
     private nonisolated let validationService: ValidationServiceProtocol
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Computed Properties
     var canLogin: Bool {
-        !loginEmail.isEmpty && !loginPassword.isEmpty && !isLoading
+        !loginEmail.isEmpty &&
+        !loginPassword.isEmpty &&
+        !isLoading &&
+        loginEmailValidation.isValid &&
+        loginPasswordValidation.isValid
     }
     
     var canRegister: Bool {
@@ -54,23 +60,21 @@ final class AuthViewModel: ObservableObject {
         registerPassword == registerConfirmPassword &&
         acceptTerms &&
         !isLoading &&
-        emailValidation.isValid &&
-        passwordValidation.isValid &&
+        registerEmailValidation.isValid &&
+        registerPasswordValidation.isValid &&
         usernameValidation.isValid &&
         fullNameValidation.isValid &&
         confirmPasswordValidation.isValid
     }
     
     // MARK: - Initializer
-    /// Initializer para AuthViewModel
-    nonisolated init(authManager: AuthManager, validationService: ValidationServiceProtocol) {
-        // Asignar dependencias
-        self.authManager = authManager
+    nonisolated init(authStateManager: AuthStateManager, validationService: ValidationServiceProtocol) {
+        self.authStateManager = authStateManager
         self.validationService = validationService
         
-        // Configurar validaciones en el main actor
         Task { @MainActor in
             self.setupValidation()
+            self.setupAuthStateSubscription()
         }
     }
     
@@ -82,11 +86,10 @@ final class AuthViewModel: ObservableObject {
         isLoading = true
         hideError()
         
-        let result = await authManager.login(email: loginEmail, password: loginPassword)
+        let result = await authStateManager.login(email: loginEmail, password: loginPassword)
         
         switch result {
         case .success:
-            // Success is handled by AuthManager state changes
             clearLoginForm()
         case .failure(let error):
             showErrorMessage(error.localizedDescription)
@@ -101,7 +104,7 @@ final class AuthViewModel: ObservableObject {
         isLoading = true
         hideError()
         
-        let result = await authManager.register(
+        let result = await authStateManager.register(
             email: registerEmail,
             password: registerPassword,
             username: registerUsername,
@@ -110,7 +113,6 @@ final class AuthViewModel: ObservableObject {
         
         switch result {
         case .success:
-            // Success is handled by AuthManager state changes
             clearRegisterForm()
         case .failure(let error):
             showErrorMessage(error.localizedDescription)
@@ -124,6 +126,7 @@ final class AuthViewModel: ObservableObject {
             isShowingLogin = true
         }
         hideError()
+        clearRegisterForm()
     }
     
     func switchToRegister() {
@@ -131,9 +134,9 @@ final class AuthViewModel: ObservableObject {
             isShowingLogin = false
         }
         hideError()
+        clearLoginForm()
     }
     
-    // MARK: - Public Error Handling
     func hideError() {
         errorMessage = nil
         showError = false
@@ -143,7 +146,7 @@ final class AuthViewModel: ObservableObject {
         errorMessage = message
         showError = true
         
-        // Auto-hide after 5 seconds using MainActor-safe approach
+        // Auto-hide after 5 seconds
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(5))
             hideError()
@@ -153,53 +156,98 @@ final class AuthViewModel: ObservableObject {
     // MARK: - Private Methods
     
     private func setupValidation() {
-        // Email validation for both forms
-        Publishers.CombineLatest($loginEmail, $registerEmail)
-            .receive(on: DispatchQueue.main)
-            .map { [weak self] loginEmail, registerEmail in
-                let email = self?.isShowingLogin == true ? loginEmail : registerEmail
+        // Login email validation
+        $loginEmail
+            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
+            .removeDuplicates()
+            .map { [weak self] email in
+                guard !email.isEmpty else { return ValidationResult.valid }
                 return self?.validationService.validateEmail(email) ?? .valid
             }
-            .assign(to: \.emailValidation, on: self)
+            .assign(to: \.loginEmailValidation, on: self)
             .store(in: &cancellables)
         
-        // Password validation
-        $registerPassword
-            .receive(on: DispatchQueue.main)
+        // Login password validation
+        $loginPassword
+            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
+            .removeDuplicates()
             .map { [weak self] password in
-                self?.validationService.validatePassword(password) ?? .valid
+                guard !password.isEmpty else { return ValidationResult.valid }
+                return self?.validationService.validatePassword(password) ?? .valid
             }
-            .assign(to: \.passwordValidation, on: self)
+            .assign(to: \.loginPasswordValidation, on: self)
+            .store(in: &cancellables)
+        
+        // Register email validation
+        $registerEmail
+            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
+            .removeDuplicates()
+            .map { [weak self] email in
+                guard !email.isEmpty else { return ValidationResult.valid }
+                return self?.validationService.validateEmail(email) ?? .valid
+            }
+            .assign(to: \.registerEmailValidation, on: self)
+            .store(in: &cancellables)
+        
+        // Register password validation
+        $registerPassword
+            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
+            .removeDuplicates()
+            .map { [weak self] password in
+                guard !password.isEmpty else { return ValidationResult.valid }
+                return self?.validationService.validatePassword(password) ?? .valid
+            }
+            .assign(to: \.registerPasswordValidation, on: self)
             .store(in: &cancellables)
         
         // Username validation
         $registerUsername
-            .receive(on: DispatchQueue.main)
+            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
+            .removeDuplicates()
             .map { [weak self] username in
-                self?.validationService.validateUsername(username) ?? .valid
+                guard !username.isEmpty else { return ValidationResult.valid }
+                return self?.validationService.validateUsername(username) ?? .valid
             }
             .assign(to: \.usernameValidation, on: self)
             .store(in: &cancellables)
         
         // Full name validation
         $registerFullName
-            .receive(on: DispatchQueue.main)
+            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
+            .removeDuplicates()
             .map { [weak self] fullName in
-                self?.validationService.validateFullName(fullName) ?? .valid
+                guard !fullName.isEmpty else { return ValidationResult.valid }
+                return self?.validationService.validateFullName(fullName) ?? .valid
             }
             .assign(to: \.fullNameValidation, on: self)
             .store(in: &cancellables)
         
         // Confirm password validation
         Publishers.CombineLatest($registerPassword, $registerConfirmPassword)
-            .receive(on: DispatchQueue.main)
+            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
             .map { password, confirmPassword in
-                if confirmPassword.isEmpty {
-                    return ValidationResult.valid
-                }
+                guard !confirmPassword.isEmpty else { return ValidationResult.valid }
                 return password == confirmPassword ? .valid : .invalid("Las contraseñas no coinciden")
             }
             .assign(to: \.confirmPasswordValidation, on: self)
+            .store(in: &cancellables)
+    }
+    
+    private func setupAuthStateSubscription() {
+        authStateManager.$authState
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] authState in
+                switch authState {
+                case .loading:
+                    self?.isLoading = true
+                case .authenticated, .unauthenticated:
+                    self?.isLoading = false
+                    self?.hideError()
+                case .error(let message):
+                    self?.isLoading = false
+                    self?.showErrorMessage(message)
+                }
+            }
             .store(in: &cancellables)
     }
     

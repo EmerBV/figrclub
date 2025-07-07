@@ -31,38 +31,39 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
         let response = try await authService.login(request)
         
         // Save tokens
-        await tokenManager.saveToken(response.token)
-        if let refreshToken = response.refreshToken {
-            await tokenManager.saveRefreshToken(refreshToken)
-        }
+        await tokenManager.saveToken(response.data.authToken.token)
         
-        // Save user data
-        try saveUser(response.user)
+        // Get and save user data
+        let userResponse = try await authService.getCurrentUser()
+        try saveUser(userResponse.data)
         
-        return response.user
+        return userResponse.data
     }
     
     func register(email: String, password: String, username: String, fullName: String?) async throws -> User {
-        let request = RegisterRequest(email: email, password: password, username: username, fullName: fullName)
-        let response = try await authService.register(request)
+        // Split fullName into firstName and lastName
+        let nameParts = fullName?.components(separatedBy: " ") ?? ["", ""]
+        let firstName = nameParts.first ?? ""
+        let lastName = nameParts.count > 1 ? nameParts.dropFirst().joined(separator: " ") : ""
         
-        // Save tokens
-        await tokenManager.saveToken(response.token)
-        if let refreshToken = response.refreshToken {
-            await tokenManager.saveRefreshToken(refreshToken)
-        }
+        let request = RegisterRequest(
+            firstName: firstName,
+            lastName: lastName,
+            email: email,
+            password: password,
+            username: username
+        )
         
-        // Save user data
-        try saveUser(response.user)
+        let registerResponse = try await authService.register(request)
         
-        return response.user
+        // After successful registration, login to get tokens and full user data
+        return try await login(email: email, password: password)
     }
     
     func logout() async throws {
-        // Call logout endpoint
         try await authService.logout()
         
-        // Clear tokens and user data
+        // Clear local data
         await tokenManager.clearTokens()
         try clearUser()
     }
@@ -70,33 +71,40 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
     func refreshToken() async throws -> User {
         let response = try await authService.refreshToken()
         
-        // Update tokens
-        await tokenManager.saveToken(response.token)
-        if let refreshToken = response.refreshToken {
-            await tokenManager.saveRefreshToken(refreshToken)
-        }
+        // Save new token
+        await tokenManager.saveToken(response.data.authToken.token)
         
-        // Update user data
-        try saveUser(response.user)
+        // Get updated user data
+        let userResponse = try await authService.getCurrentUser()
+        try saveUser(userResponse.data)
         
-        return response.user
+        return userResponse.data
     }
     
     func getCurrentUser() async throws -> User {
-        return try await authService.getCurrentUser()
+        // Try to get from cache first
+        if let cachedUser = getCachedUser() {
+            return cachedUser
+        }
+        
+        // Fetch from server
+        let response = try await authService.getCurrentUser()
+        try saveUser(response.data)
+        
+        return response.data
     }
     
     // MARK: - Private Methods
     
     private func saveUser(_ user: User) throws {
-        try secureStorage.save(user, key: AppConfig.Auth.userKey)
+        try secureStorage.save(user, forKey: AppConfig.Auth.userKey)
     }
     
-    private func loadUser() throws -> User? {
-        return try secureStorage.load(User.self, key: AppConfig.Auth.userKey)
+    private func getCachedUser() -> User? {
+        return try? secureStorage.get(User.self, forKey: AppConfig.Auth.userKey)
     }
     
     private func clearUser() throws {
-        try secureStorage.delete(key: AppConfig.Auth.userKey)
+        try secureStorage.remove(forKey: AppConfig.Auth.userKey)
     }
 }

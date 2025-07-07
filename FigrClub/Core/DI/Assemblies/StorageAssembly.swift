@@ -10,14 +10,14 @@ import Swinject
 
 final class StorageAssembly: Assembly {
     func assemble(container: Container) {
-        // Token Manager
-        container.register(TokenManager.self) { _ in
-            TokenManager.shared
+        // User Defaults Manager (if needed)
+        container.register(UserDefaultsManagerProtocol.self) { _ in
+            return UserDefaultsManager()
         }.inObjectScope(.container)
         
-        // Secure Storage
-        container.register(SecureStorageProtocol.self) { _ in
-            SecureStorage()
-        }.inObjectScope(.container)
+        // Core Data Stack (for future use)
+        // container.register(CoreDataStack.self) { _ in
+        //     return CoreDataStack.shared
+        // }.inObjectScope(.container)
     }
 }
