@@ -26,24 +26,17 @@ final class DependencyDebug {
     private static func verifyCoreDependencies() {
         print("📦 [DependencyDebug] Verificando dependencias core...")
         
-        do {
-            let _ = DependencyInjector.shared.resolve(NetworkDispatcherProtocol.self)
-            print("✅ NetworkDispatcherProtocol - OK")
-        } catch {
-            print("❌ NetworkDispatcherProtocol - FALTANTE")
-        }
-        
-        do {
-            let _ = DependencyInjector.shared.resolve(APIServiceProtocol.self)
+        // Verificar APIServiceProtocol
+        if DependencyInjector.shared.resolveOptional(APIServiceProtocol.self) != nil {
             print("✅ APIServiceProtocol - OK")
-        } catch {
+        } else {
             print("❌ APIServiceProtocol - FALTANTE")
         }
         
-        do {
-            let _ = DependencyInjector.shared.resolve(TokenManager.self)
+        // Verificar TokenManager
+        if DependencyInjector.shared.resolveOptional(TokenManager.self) != nil {
             print("✅ TokenManager - OK")
-        } catch {
+        } else {
             print("❌ TokenManager - FALTANTE")
         }
     }
@@ -51,55 +44,46 @@ final class DependencyDebug {
     private static func verifyAuthDependencies() {
         print("🔐 [DependencyDebug] Verificando dependencias de autenticación...")
         
-        do {
-            let _ = DependencyInjector.shared.resolve(ValidationServiceProtocol.self)
+        // Verificar ValidationServiceProtocol
+        if let _ = try? DependencyInjector.shared.resolve(ValidationServiceProtocol.self) {
             print("✅ ValidationServiceProtocol - OK")
-        } catch {
+        } else {
             print("❌ ValidationServiceProtocol - FALTANTE")
         }
         
-        do {
-            let _ = DependencyInjector.shared.resolve(AuthServiceProtocol.self)
+        // Verificar AuthServiceProtocol
+        if let _ = try? DependencyInjector.shared.resolve(AuthServiceProtocol.self) {
             print("✅ AuthServiceProtocol - OK")
-        } catch {
+        } else {
             print("❌ AuthServiceProtocol - FALTANTE")
         }
         
-        do {
-            let _ = DependencyInjector.shared.resolve(AuthRepositoryProtocol.self)
+        // Verificar AuthRepositoryProtocol
+        if let _ = try? DependencyInjector.shared.resolve(AuthRepositoryProtocol.self) {
             print("✅ AuthRepositoryProtocol - OK")
-        } catch {
+        } else {
             print("❌ AuthRepositoryProtocol - FALTANTE")
         }
         
-        do {
-            let _ = DependencyInjector.shared.resolve(AuthManager.self)
+        // Verificar AuthManager
+        if let _ = try? DependencyInjector.shared.resolve(AuthManager.self) {
             print("✅ AuthManager - OK")
-        } catch {
-            print("❌ AuthManager - FALTANTE: \(error)")
+        } else {
+            print("❌ AuthManager - FALTANTE")
         }
     }
     
     private static func verifyViewModelDependencies() {
         print("🎭 [DependencyDebug] Verificando ViewModels...")
         
-        do {
-            let _ = DependencyInjector.shared.resolve(AuthViewModel.self)
+        // Verificar AuthViewModel
+        if let _ = try? DependencyInjector.shared.resolve(AuthViewModel.self) {
             print("✅ AuthViewModel - OK")
-        } catch {
-            print("❌ AuthViewModel - FALTANTE: \(error)")
+        } else {
+            print("❌ AuthViewModel - FALTANTE")
         }
     }
 }
 
-/// Extension para debug de AuthManager
-extension AuthManager {
-    func debugCurrentState() {
-        print("🔍 [AuthManager Debug]")
-        print("  - AuthState: \(authState)")
-        print("  - IsAuthenticated: \(isAuthenticated)")
-        print("  - CurrentUser: \(currentUser?.username ?? "nil")")
-    }
-}
 #endif
 

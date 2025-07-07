@@ -37,8 +37,8 @@ final class AuthViewModel: ObservableObject {
     @Published var confirmPasswordValidation: ValidationResult = .valid
     
     // MARK: - Dependencies
-    private let authManager: AuthManager
-    private let validationService: ValidationServiceProtocol
+    private nonisolated let authManager: AuthManager
+    private nonisolated let validationService: ValidationServiceProtocol
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Computed Properties
@@ -61,20 +61,17 @@ final class AuthViewModel: ObservableObject {
         confirmPasswordValidation.isValid
     }
     
-    // FIXED: Removemos @MainActor del init
+    // MARK: - Swift 6 Compatible Initializer
+    /// Initializer compatible con Swift 6 usando Sendable pattern
     nonisolated init(authManager: AuthManager, validationService: ValidationServiceProtocol) {
+        // Asignar dependencias de forma directa (compatibilidad Swift 6)
         self.authManager = authManager
         self.validationService = validationService
         
-        // Movemos la configuración a un método async
+        // Configurar inmediatamente las validaciones en el próximo tick del main actor
         Task { @MainActor in
-            await self.setupAfterInit()
+            self.setupValidation()
         }
-    }
-    
-    // Configuración post-inicialización
-    private func setupAfterInit() async {
-        setupValidation()
     }
     
     // MARK: - Public Methods
@@ -146,12 +143,10 @@ final class AuthViewModel: ObservableObject {
         errorMessage = message
         showError = true
         
-        // Auto-hide after 5 seconds
-        Task {
-            try? await Task.sleep(nanoseconds: 5_000_000_000)
-            await MainActor.run {
-                hideError()
-            }
+        // Auto-hide after 5 seconds using MainActor-safe approach
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(5))
+            hideError()
         }
     }
     
@@ -160,6 +155,7 @@ final class AuthViewModel: ObservableObject {
     private func setupValidation() {
         // Email validation for both forms
         Publishers.CombineLatest($loginEmail, $registerEmail)
+            .receive(on: DispatchQueue.main)
             .map { [weak self] loginEmail, registerEmail in
                 let email = self?.isShowingLogin == true ? loginEmail : registerEmail
                 return self?.validationService.validateEmail(email) ?? .valid
@@ -169,6 +165,7 @@ final class AuthViewModel: ObservableObject {
         
         // Password validation
         $registerPassword
+            .receive(on: DispatchQueue.main)
             .map { [weak self] password in
                 self?.validationService.validatePassword(password) ?? .valid
             }
@@ -177,6 +174,7 @@ final class AuthViewModel: ObservableObject {
         
         // Username validation
         $registerUsername
+            .receive(on: DispatchQueue.main)
             .map { [weak self] username in
                 self?.validationService.validateUsername(username) ?? .valid
             }
@@ -185,6 +183,7 @@ final class AuthViewModel: ObservableObject {
         
         // Full name validation
         $registerFullName
+            .receive(on: DispatchQueue.main)
             .map { [weak self] fullName in
                 self?.validationService.validateFullName(fullName) ?? .valid
             }
@@ -193,6 +192,7 @@ final class AuthViewModel: ObservableObject {
         
         // Confirm password validation
         Publishers.CombineLatest($registerPassword, $registerConfirmPassword)
+            .receive(on: DispatchQueue.main)
             .map { password, confirmPassword in
                 if confirmPassword.isEmpty {
                     return ValidationResult.valid

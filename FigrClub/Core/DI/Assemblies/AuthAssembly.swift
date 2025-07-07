@@ -11,22 +11,21 @@ import Swinject
 final class AuthAssembly: Assembly {
     func assemble(container: Container) {
         
-        // OPCIÓN 1: Factory con async initialization
-        // Auth Manager - usando factory que maneja MainActor
-        container.register(AuthManager.self) { r in
-            let authRepository = r.resolve(AuthRepositoryProtocol.self)!
-            let tokenManager = r.resolve(TokenManager.self)!
+        // Auth Manager - Swift 6 compatible registration usando inicializador nonisolated
+        container.register(AuthManager.self) { resolver in
+            let authRepository = resolver.resolve(AuthRepositoryProtocol.self)!
+            let tokenManager = resolver.resolve(TokenManager.self)!
             
-            // Crear AuthManager de forma sincrónica - necesitamos remover @MainActor del init
+            // Crear AuthManager directamente con inicializador nonisolated
             return AuthManager(authRepository: authRepository, tokenManager: tokenManager)
         }.inObjectScope(.container)
         
-        // Auth ViewModel - similar approach
-        container.register(AuthViewModel.self) { r in
-            let authManager = r.resolve(AuthManager.self)!
-            let validationService = r.resolve(ValidationServiceProtocol.self)!
+        // Auth ViewModel - Swift 6 compatible registration usando inicializador nonisolated
+        container.register(AuthViewModel.self) { resolver in
+            let authManager = resolver.resolve(AuthManager.self)!
+            let validationService = resolver.resolve(ValidationServiceProtocol.self)!
             
-            // Crear AuthViewModel de forma sincrónica - necesitamos remover @MainActor del init
+            // Crear AuthViewModel directamente con inicializador nonisolated
             return AuthViewModel(authManager: authManager, validationService: validationService)
         }.inObjectScope(.transient)
     }

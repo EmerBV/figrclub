@@ -14,25 +14,27 @@ final class AuthManager: ObservableObject {
     @Published var currentUser: User?
     @Published var isAuthenticated = false
     
-    private let authRepository: AuthRepositoryProtocol
-    private let tokenManager: TokenManager
+    private nonisolated let authRepository: AuthRepositoryProtocol
+    private nonisolated let tokenManager: TokenManager
     private var cancellables = Set<AnyCancellable>()
     
-    // FIXED: Removemos @MainActor del init para que funcione con Swinject
+    // MARK: - Swift 6 Compatible Initializer
+    /// Initializer compatible con Swift 6 MainActor requirements
     nonisolated init(authRepository: AuthRepositoryProtocol, tokenManager: TokenManager) {
         self.authRepository = authRepository
         self.tokenManager = tokenManager
         
-        // Movemos la configuración async a un método separado
+        // Configurar en el próximo tick del MainActor
         Task { @MainActor in
-            await self.setupAfterInit()
+            self.setupSubscriptions()
+            await self.checkAuthenticationStatus()
         }
     }
     
-    // Método para configuración post-inicialización
-    private func setupAfterInit() async {
-        setupSubscriptions()
-        await checkAuthenticationStatus()
+    // MARK: - Factory Method (Swift 6 Compatible)
+    /// Factory method para crear AuthManager de forma MainActor-safe
+    nonisolated static func create(authRepository: AuthRepositoryProtocol, tokenManager: TokenManager) -> AuthManager {
+        return AuthManager(authRepository: authRepository, tokenManager: tokenManager)
     }
     
     // MARK: - Public Methods
@@ -169,3 +171,15 @@ final class AuthManager: ObservableObject {
             .store(in: &cancellables)
     }
 }
+
+// MARK: - Debug Support
+#if DEBUG
+extension AuthManager {
+    func debugCurrentState() {
+        print("🔍 [AuthManager Debug]")
+        print("  - AuthState: \(authState)")
+        print("  - IsAuthenticated: \(isAuthenticated)")
+        print("  - CurrentUser: \(currentUser?.username ?? "nil")")
+    }
+}
+#endif

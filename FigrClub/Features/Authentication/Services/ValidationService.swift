@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol ValidationServiceProtocol {
+protocol ValidationServiceProtocol: Sendable {
     func validateEmail(_ email: String) -> ValidationResult
     func validatePassword(_ password: String) -> ValidationResult
     func validateUsername(_ username: String) -> ValidationResult
@@ -44,11 +44,14 @@ final class ValidationService: ValidationServiceProtocol {
         let letterRegex = ".*[A-Za-z]+.*"
         let numberRegex = ".*[0-9]+.*"
         
-        guard NSPredicate(format:"SELF MATCHES %@", letterRegex).evaluate(with: password) else {
+        let letterPredicate = NSPredicate(format:"SELF MATCHES %@", letterRegex)
+        let numberPredicate = NSPredicate(format:"SELF MATCHES %@", numberRegex)
+        
+        guard letterPredicate.evaluate(with: password) else {
             return .invalid("La contraseña debe contener al menos una letra")
         }
         
-        guard NSPredicate(format:"SELF MATCHES %@", numberRegex).evaluate(with: password) else {
+        guard numberPredicate.evaluate(with: password) else {
             return .invalid("La contraseña debe contener al menos un número")
         }
         
@@ -68,12 +71,12 @@ final class ValidationService: ValidationServiceProtocol {
             return .invalid("El nombre de usuario no puede tener más de 20 caracteres")
         }
         
-        // Allow letters, numbers, and underscores only
-        let usernameRegex = "^[a-zA-Z0-9_]+$"
+        // Check for valid characters (letters, numbers, underscore, dot)
+        let usernameRegex = "^[a-zA-Z0-9._]+$"
         let usernamePredicate = NSPredicate(format:"SELF MATCHES %@", usernameRegex)
         
         guard usernamePredicate.evaluate(with: username) else {
-            return .invalid("El nombre de usuario solo puede contener letras, números y guiones bajos")
+            return .invalid("El nombre de usuario solo puede contener letras, números, puntos y guiones bajos")
         }
         
         return .valid
@@ -90,6 +93,14 @@ final class ValidationService: ValidationServiceProtocol {
         
         guard fullName.count <= 50 else {
             return .invalid("El nombre completo no puede tener más de 50 caracteres")
+        }
+        
+        // Check for valid characters (letters, spaces, accents)
+        let nameRegex = "^[a-zA-ZÀ-ÿ\\s]+$"
+        let namePredicate = NSPredicate(format:"SELF MATCHES %@", nameRegex)
+        
+        guard namePredicate.evaluate(with: fullName) else {
+            return .invalid("El nombre completo solo puede contener letras y espacios")
         }
         
         return .valid
