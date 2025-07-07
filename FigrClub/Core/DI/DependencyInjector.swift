@@ -116,20 +116,12 @@ extension DependencyInjector {
     
     /// Resuelve una dependencia de forma segura, retornando nil si no se puede resolver
     func resolveOptional<T>(_ type: T.Type) -> T? {
-        do {
-            return try container.resolve(T.self)
-        } catch {
-            return nil
-        }
+        return container.resolve(T.self)
     }
     
     /// Resuelve una dependencia de forma segura con argumentos
     func resolveOptional<T, Arg1>(_ type: T.Type, argument arg1: Arg1) -> T? {
-        do {
-            return try container.resolve(T.self, argument: arg1)
-        } catch {
-            return nil
-        }
+        return container.resolve(T.self, argument: arg1)
     }
     
     /// Verifica si una dependencia puede ser resuelta
@@ -139,7 +131,7 @@ extension DependencyInjector {
     
     /// Resuelve una dependencia usando throws en lugar de fatalError
     func resolveThrows<T>(_ type: T.Type) throws -> T {
-        guard let resolvedType = try? container.resolve(T.self) else {
+        guard let resolvedType = container.resolve(T.self) else {
             throw DependencyInjectionError.cannotResolve(String(describing: T.self))
         }
         return resolvedType

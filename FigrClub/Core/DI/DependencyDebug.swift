@@ -45,28 +45,28 @@ final class DependencyDebug {
         print("🔐 [DependencyDebug] Verificando dependencias de autenticación...")
         
         // Verificar ValidationServiceProtocol
-        if let _ = try? DependencyInjector.shared.resolve(ValidationServiceProtocol.self) {
+        if DependencyInjector.shared.resolveOptional(ValidationServiceProtocol.self) != nil {
             print("✅ ValidationServiceProtocol - OK")
         } else {
             print("❌ ValidationServiceProtocol - FALTANTE")
         }
         
         // Verificar AuthServiceProtocol
-        if let _ = try? DependencyInjector.shared.resolve(AuthServiceProtocol.self) {
+        if DependencyInjector.shared.resolveOptional(AuthServiceProtocol.self) != nil {
             print("✅ AuthServiceProtocol - OK")
         } else {
             print("❌ AuthServiceProtocol - FALTANTE")
         }
         
         // Verificar AuthRepositoryProtocol
-        if let _ = try? DependencyInjector.shared.resolve(AuthRepositoryProtocol.self) {
+        if DependencyInjector.shared.resolveOptional(AuthRepositoryProtocol.self) != nil {
             print("✅ AuthRepositoryProtocol - OK")
         } else {
             print("❌ AuthRepositoryProtocol - FALTANTE")
         }
         
         // Verificar AuthManager
-        if let _ = try? DependencyInjector.shared.resolve(AuthManager.self) {
+        if DependencyInjector.shared.resolveOptional(AuthManager.self) != nil {
             print("✅ AuthManager - OK")
         } else {
             print("❌ AuthManager - FALTANTE")
@@ -77,7 +77,7 @@ final class DependencyDebug {
         print("🎭 [DependencyDebug] Verificando ViewModels...")
         
         // Verificar AuthViewModel
-        if let _ = try? DependencyInjector.shared.resolve(AuthViewModel.self) {
+        if DependencyInjector.shared.resolveOptional(AuthViewModel.self) != nil {
             print("✅ AuthViewModel - OK")
         } else {
             print("❌ AuthViewModel - FALTANTE")
