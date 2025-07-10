@@ -36,11 +36,11 @@ final class AuthStateManager: ObservableObject {
         do {
             let user = try await authRepository.login(email: email, password: password)
             await updateAuthenticatedState(with: user)
-            Logger.info("Login successful for user: \(user.username)")
+            Logger.info("✅ AuthStateManager: Login successful for user: \(user.username)")
             return .success(user)
         } catch {
             await updateErrorState(error)
-            Logger.error("Login failed: \(error)")
+            Logger.error("❌ AuthStateManager: Login failed: \(error)")
             return .failure(error)
         }
     }
@@ -56,11 +56,11 @@ final class AuthStateManager: ObservableObject {
                 fullName: fullName
             )
             await updateAuthenticatedState(with: user)
-            Logger.info("Registration successful for user: \(user.username)")
+            Logger.info("✅ AuthStateManager: Registration successful for user: \(user.username)")
             return .success(user)
         } catch {
             await updateErrorState(error)
-            Logger.error("Registration failed: \(error)")
+            Logger.error("❌ AuthStateManager: Registration failed: \(error)")
             return .failure(error)
         }
     }
@@ -71,9 +71,9 @@ final class AuthStateManager: ObservableObject {
         do {
             try await authRepository.logout()
             await updateUnauthenticatedState()
-            Logger.info("Logout successful")
+            Logger.info("✅ AuthStateManager: Logout successful")
         } catch {
-            Logger.error("Logout failed: \(error)")
+            Logger.error("❌ AuthStateManager: Logout failed: \(error)")
             // Even if logout fails on server, clear local state
             await updateUnauthenticatedState()
         }
@@ -83,33 +83,82 @@ final class AuthStateManager: ObservableObject {
         do {
             let user = try await authRepository.refreshToken()
             await updateAuthenticatedState(with: user)
-            Logger.info("Token refresh successful")
+            Logger.info("✅ AuthStateManager: Token refresh successful")
             return true
         } catch {
             await updateUnauthenticatedState()
-            Logger.error("Token refresh failed: \(error)")
+            Logger.error("❌ AuthStateManager: Token refresh failed: \(error)")
             return false
         }
     }
     
-    func checkInitialAuthState() async {
-        Logger.info("Checking initial authentication state")
+    /// Método mejorado para obtener el usuario actual
+    func getCurrentUser() async -> Result<User, Error> {
+        // ✅ Verificar que tenemos userId antes de hacer la llamada
+        guard let userId = await tokenManager.getCurrentUserId() else {
+            let error = AuthError.noUserIdFound
+            Logger.error("❌ AuthStateManager: No userId found in stored tokens")
+            await updateErrorState(error)
+            return .failure(error)
+        }
         
-        // Check if we have a token
+        // ✅ Verificar que tenemos un token válido
         guard await tokenManager.getToken() != nil else {
+            let error = AuthError.invalidToken
+            Logger.error("❌ AuthStateManager: No valid token found")
+            await updateErrorState(error)
+            return .failure(error)
+        }
+        
+        do {
+            // ✅ AuthRepository ya maneja el userId internamente
+            let user = try await authRepository.getCurrentUser()
+            await updateAuthenticatedState(with: user)
+            Logger.info("✅ AuthStateManager: Successfully retrieved current user: \(user.username) (ID: \(user.id))")
+            return .success(user)
+        } catch {
+            Logger.error("❌ AuthStateManager: Failed to get current user: \(error)")
+            
+            // Si el error es de autorización, intentar refresh token
+            if isAuthorizationError(error) {
+                Logger.debug("🔄 AuthStateManager: Attempting token refresh due to authorization error")
+                let refreshSuccess = await refreshToken()
+                if refreshSuccess {
+                    // Retry getting current user after refresh
+                    return await getCurrentUser()
+                }
+            }
+            
+            await updateErrorState(error)
+            return .failure(error)
+        }
+    }
+    
+    /// Método para verificar el estado inicial de autenticación
+    func checkInitialAuthState() async {
+        Logger.info("🔍 AuthStateManager: Checking initial authentication state")
+        
+        // ✅ Verificar que tenemos tanto token como userId
+        let hasValidToken = await tokenManager.getToken() != nil
+        let hasUserId = await tokenManager.getCurrentUserId() != nil
+        
+        guard hasValidToken && hasUserId else {
             await updateUnauthenticatedState()
-            Logger.info("No token found, user is unauthenticated")
+            Logger.info("📱 AuthStateManager: No valid authentication found (Token: \(hasValidToken), UserId: \(hasUserId))")
             return
         }
         
-        // Try to get current user
-        do {
-            let user = try await authRepository.getCurrentUser()
+        // Intentar obtener el usuario actual
+        let result = await getCurrentUser()
+        switch result {
+        case .success(let user):
             await updateAuthenticatedState(with: user)
-            Logger.info("Authentication check successful for user: \(user.username)")
-        } catch {
-            // Token might be invalid, try to refresh
-            Logger.warning("Failed to get current user, attempting token refresh")
+            Logger.info("✅ AuthStateManager: Initial auth check successful for user: \(user.username)")
+        case .failure(let error):
+            Logger.error("❌ AuthStateManager: Initial auth check failed: \(error)")
+            
+            // Si falla, intentar refresh token una vez
+            Logger.debug("🔄 AuthStateManager: Attempting token refresh on initial check")
             let refreshSuccess = await refreshToken()
             if !refreshSuccess {
                 await updateUnauthenticatedState()
@@ -117,10 +166,17 @@ final class AuthStateManager: ObservableObject {
         }
     }
     
+    /// Método para actualizar la información del usuario
     func updateUser(_ user: User) async {
         currentUser = user
         authState = .authenticated(user)
-        Logger.info("User updated: \(user.username)")
+        Logger.info("🔄 AuthStateManager: User updated: \(user.username)")
+    }
+    
+    /// Método para forzar un refresh del usuario actual
+    func forceRefreshCurrentUser() async -> Result<User, Error> {
+        Logger.debug("🔄 AuthStateManager: Force refreshing current user")
+        return await getCurrentUser()
     }
     
     // MARK: - Private Methods
@@ -132,6 +188,20 @@ final class AuthStateManager: ObservableObject {
             .sink { [weak self] isAuthenticated in
                 if !isAuthenticated && self?.isAuthenticated == true {
                     // Token was cleared, update auth state
+                    Logger.warning("⚠️ AuthStateManager: Token cleared externally, updating auth state")
+                    Task { @MainActor in
+                        await self?.updateUnauthenticatedState()
+                    }
+                }
+            }
+            .store(in: &cancellables)
+        
+        // Listen to userId changes
+        tokenManager.$currentUserId
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] userId in
+                if userId == nil && self?.isAuthenticated == true {
+                    Logger.warning("⚠️ AuthStateManager: UserId cleared, updating auth state")
                     Task { @MainActor in
                         await self?.updateUnauthenticatedState()
                     }
@@ -144,17 +214,54 @@ final class AuthStateManager: ObservableObject {
         currentUser = user
         authState = .authenticated(user)
         isAuthenticated = true
+        Logger.debug("✅ AuthStateManager: Updated to authenticated state for user: \(user.username)")
     }
     
     private func updateUnauthenticatedState() async {
         currentUser = nil
         authState = .unauthenticated
         isAuthenticated = false
+        
+        // Clear tokens when updating to unauthenticated state
+        await tokenManager.clearTokens()
+        Logger.debug("📱 AuthStateManager: Updated to unauthenticated state")
     }
     
     private func updateErrorState(_ error: Error) async {
         authState = .error(error.localizedDescription)
         isAuthenticated = false
+        Logger.error("❌ AuthStateManager: Updated to error state: \(error.localizedDescription)")
+    }
+    
+    /// Helper method to determine if an error is authorization-related
+    private func isAuthorizationError(_ error: Error) -> Bool {
+        // Add logic to check if error is authorization-related
+        let errorMessage = error.localizedDescription.lowercased()
+        return errorMessage.contains("unauthorized") ||
+        errorMessage.contains("401") ||
+        errorMessage.contains("invalid token") ||
+        errorMessage.contains("expired")
+    }
+}
+
+// MARK: - Auth Error Types
+enum AuthError: Error, LocalizedError {
+    case noUserIdFound
+    case invalidToken
+    case networkError
+    case unknown
+    
+    var errorDescription: String? {
+        switch self {
+        case .noUserIdFound:
+            return "No user ID found in stored authentication data"
+        case .invalidToken:
+            return "Authentication token is invalid"
+        case .networkError:
+            return "Network error occurred during authentication"
+        case .unknown:
+            return "An unknown authentication error occurred"
+        }
     }
 }
 
@@ -162,10 +269,26 @@ final class AuthStateManager: ObservableObject {
 #if DEBUG
 extension AuthStateManager {
     func debugCurrentState() {
-        print("🔍 [AuthStateManager Debug]")
-        print("  - AuthState: \(authState)")
-        print("  - IsAuthenticated: \(isAuthenticated)")
-        print("  - CurrentUser: \(currentUser?.username ?? "nil")")
+        Task {
+            let token = await tokenManager.getToken()
+            let userId = await tokenManager.getCurrentUserId()
+            
+            await MainActor.run {
+                print("🔍 [AuthStateManager Debug]")
+                print("  - AuthState: \(authState)")
+                print("  - IsAuthenticated: \(isAuthenticated)")
+                print("  - CurrentUser: \(currentUser?.username ?? "nil")")
+                print("  - HasToken: \(token != nil)")
+                print("  - UserId: \(userId?.description ?? "nil")")
+                print("  - TokenManager.IsAuthenticated: \(tokenManager.isAuthenticated)")
+            }
+        }
+    }
+    
+    func simulateTokenExpiration() async {
+        Logger.debug("🧪 AuthStateManager: Simulating token expiration")
+        await tokenManager.clearTokens()
+        await updateUnauthenticatedState()
     }
 }
 #endif

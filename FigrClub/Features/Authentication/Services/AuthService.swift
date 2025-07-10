@@ -12,7 +12,7 @@ protocol AuthServiceProtocol: Sendable {
     func login(_ request: LoginRequest) async throws -> AuthResponse
     func register(_ request: RegisterRequest) async throws -> RegisterResponse
     func logout() async throws
-    func getCurrentUser() async throws -> UserResponse
+    func getCurrentUser(userId: Int) async throws -> UserResponse  // ✅ Ahora requiere userId
     func refreshToken() async throws -> AuthResponse
 }
 
@@ -71,16 +71,16 @@ final class AuthService: AuthServiceProtocol {
         }
     }
     
-    func getCurrentUser() async throws -> UserResponse {
-        let endpoint = UserEndpoints.getCurrentUser
-        Logger.debug("👤 AuthService: Getting current user")
+    func getCurrentUser(userId: Int) async throws -> UserResponse {
+        let endpoint = UserEndpoints.getCurrentUser(userId: userId)  // ✅ Pasar userId
+        Logger.debug("👤 AuthService: Getting current user with ID: \(userId)")
         
         do {
             let response: UserResponse = try await networkDispatcher.dispatch(endpoint)
-            Logger.info("✅ AuthService: Got current user successfully")
+            Logger.info("✅ AuthService: Got current user successfully for userId: \(userId)")
             return response
         } catch {
-            Logger.error("❌ AuthService: Failed to get current user - Error: \(error)")
+            Logger.error("❌ AuthService: Failed to get current user with ID \(userId) - Error: \(error)")
             throw error
         }
     }
@@ -98,5 +98,6 @@ final class AuthService: AuthServiceProtocol {
             throw error
         }
     }
+    
 }
 

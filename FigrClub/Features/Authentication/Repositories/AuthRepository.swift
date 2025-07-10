@@ -30,13 +30,19 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
         let request = LoginRequest(email: email, password: password)
         let response = try await authService.login(request)
         
-        // Save tokens
-        await tokenManager.saveToken(response.data.authToken.token)
+        // ✅ Guardar tanto token como userId de la respuesta de login
+        await tokenManager.saveAuthData(
+            token: response.data.authToken.token,
+            userId: response.data.userId  // 🔑 Este viene de la respuesta de login
+        )
         
-        // Get and save user data
-        let userResponse = try await authService.getCurrentUser()
+        Logger.info("✅ AuthRepository: Login tokens saved - UserId: \(response.data.userId)")
+        
+        // ✅ Obtener los datos completos del usuario usando el userId
+        let userResponse = try await authService.getCurrentUser(userId: response.data.userId)
         try saveUser(userResponse.data)
         
+        Logger.info("✅ AuthRepository: Login successful for user: \(userResponse.data.username)")
         return userResponse.data
     }
     
@@ -55,6 +61,7 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
         )
         
         let registerResponse = try await authService.register(request)
+        Logger.info("✅ AuthRepository: Registration successful for user: \(registerResponse.data.email)")
         
         // After successful registration, login to get tokens and full user data
         return try await login(email: email, password: password)
@@ -66,31 +73,46 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
         // Clear local data
         await tokenManager.clearTokens()
         try clearUser()
+        
+        Logger.info("✅ AuthRepository: Logout successful - Local data cleared")
     }
     
     func refreshToken() async throws -> User {
         let response = try await authService.refreshToken()
         
-        // Save new token
+        // Save new token (userId should remain the same)
         await tokenManager.saveToken(response.data.authToken.token)
         
-        // Get updated user data
-        let userResponse = try await authService.getCurrentUser()
+        // Get updated user data using stored userId
+        guard let userId = await tokenManager.getCurrentUserId() else {
+            throw AuthError.noUserIdFound
+        }
+        
+        let userResponse = try await authService.getCurrentUser(userId: userId)
         try saveUser(userResponse.data)
         
+        Logger.info("✅ AuthRepository: Token refresh successful")
         return userResponse.data
     }
     
     func getCurrentUser() async throws -> User {
         // Try to get from cache first
         if let cachedUser = getCachedUser() {
+            Logger.debug("🔄 AuthRepository: Using cached user data")
             return cachedUser
         }
         
-        // Fetch from server
-        let response = try await authService.getCurrentUser()
+        // ✅ Obtener userId del TokenManager
+        guard let userId = await tokenManager.getCurrentUserId() else {
+            Logger.error("❌ AuthRepository: No userId found for getCurrentUser")
+            throw AuthError.noUserIdFound
+        }
+        
+        // Fetch from server using userId
+        let response = try await authService.getCurrentUser(userId: userId)
         try saveUser(response.data)
         
+        Logger.info("✅ AuthRepository: Current user fetched from server")
         return response.data
     }
     
@@ -98,6 +120,7 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
     
     private func saveUser(_ user: User) throws {
         try secureStorage.save(user, forKey: AppConfig.Auth.userKey)
+        Logger.debug("💾 AuthRepository: User data saved to secure storage")
     }
     
     private func getCachedUser() -> User? {
@@ -106,5 +129,6 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
     
     private func clearUser() throws {
         try secureStorage.remove(forKey: AppConfig.Auth.userKey)
+        Logger.debug("🗑️ AuthRepository: User data cleared from secure storage")
     }
 }
