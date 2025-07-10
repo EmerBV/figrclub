@@ -7,6 +7,7 @@
 
 import Foundation
 
+/*
 // MARK: - HTTP Method
 enum HTTPMethod: String {
     case GET = "GET"
@@ -43,6 +44,7 @@ extension Endpoint {
         return true
     }
 }
+ */
 
 // MARK: - Auth Endpoints
 enum AuthEndpoints: Endpoint {
