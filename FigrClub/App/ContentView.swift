@@ -8,31 +8,30 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var appCoordinator: AppCoordinator
     @EnvironmentObject private var authStateManager: AuthStateManager
+    
+    init() {
+        // Crear el coordinator en el hilo principal
+        self._appCoordinator = StateObject(wrappedValue: CoordinatorFactory.makeAppCoordinator())
+    }
     
     var body: some View {
         Group {
-            switch authStateManager.authState {
-            case .loading:
+            switch appCoordinator.currentScreen {
+            case .splash:
                 SplashView()
                 
-            case .authenticated(let user):
-                MainTabView(user: user)
-                    .environmentObject(authStateManager)
-                
-            case .unauthenticated:
+            case .authentication:
                 AuthenticationFlowView()
                     .environmentObject(authStateManager)
                 
-            case .error(let message):
-                ErrorView(message: message) {
-                    Task {
-                        await authStateManager.checkInitialAuthState()
-                    }
-                }
+            case .main:
+                MainTabView()
             }
         }
-        .animation(.easeInOut(duration: AppConfig.UI.animationDuration), value: authStateManager.authState)
+        .environmentObject(appCoordinator)
+        .animation(.easeInOut(duration: AppConfig.UI.animationDuration), value: appCoordinator.currentScreen)
         .task {
             await authStateManager.checkInitialAuthState()
         }
@@ -95,14 +94,16 @@ struct ErrorView: View {
     }
 }
 
-// MARK: - Preview
-#if DEBUG
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-            .environmentObject(DependencyInjector.shared.resolve(AuthStateManager.self))
-    }
-}
-#endif
+/*
+ // MARK: - Preview
+ #if DEBUG
+ struct ContentView_Previews: PreviewProvider {
+ static var previews: some View {
+ ContentView()
+ .environmentObject(DependencyInjector.shared.resolve(AuthStateManager.self))
+ }
+ }
+ #endif
+ */
 
 
