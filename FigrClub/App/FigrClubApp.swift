@@ -54,14 +54,14 @@ struct FigrClubApp: App {
     
     // MARK: - Initialization
     init() {
-        // Configure dependency injection
-        DependencyInjector.shared.configure()
+        // Initialize dependency injection (auto-configures in init)
+        _ = DependencyInjector.shared
         
-        // Initialize auth state manager
+        // Initialize auth state manager FIRST (required stored property)
         let authManager = DependencyInjector.shared.resolve(AuthStateManager.self)
         self._authStateManager = StateObject(wrappedValue: authManager)
         
-        // Setup logging
+        // Setup logging after all stored properties are initialized
         setupLogging()
         
 #if DEBUG
@@ -80,7 +80,6 @@ struct FigrClubApp: App {
                 }
         }
     }
-    
 }
 
 // MARK: - Private Setup Methods
