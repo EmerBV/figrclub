@@ -92,7 +92,7 @@ private extension FigrClubApp {
         Logger.info("📱 Environment: Development")
         Logger.info("🌍 Bundle ID: \(Bundle.main.bundleIdentifier ?? "Unknown")")
         Logger.info("📦 App Version: \(AppConfig.AppInfo.version)")
-        Logger.info("🔢 Build Number: \(AppConfig.AppInfo.build)")
+        Logger.info("🔢 Build Number: \(AppConfig.AppInfo.buildNumber)")
 #else
         Logger.info("📱 Environment: Production")
 #endif
