@@ -36,7 +36,7 @@ final class AuthStateManager: ObservableObject {
         do {
             let user = try await authRepository.login(email: email, password: password)
             await updateAuthenticatedState(with: user)
-            Logger.info("✅ AuthStateManager: Login successful for user: \(user.username)")
+            Logger.info("✅ AuthStateManager: Login successful for user: \(user.displayName)")
             return .success(user)
         } catch {
             await updateErrorState(error)
@@ -56,7 +56,7 @@ final class AuthStateManager: ObservableObject {
                 fullName: fullName
             )
             await updateAuthenticatedState(with: user)
-            Logger.info("✅ AuthStateManager: Registration successful for user: \(user.username)")
+            Logger.info("✅ AuthStateManager: Registration successful for user: \(user.displayName)")
             return .success(user)
         } catch {
             await updateErrorState(error)
@@ -114,7 +114,7 @@ final class AuthStateManager: ObservableObject {
             // ✅ AuthRepository ya maneja el userId internamente
             let user = try await authRepository.getCurrentUser()
             await updateAuthenticatedState(with: user)
-            Logger.info("✅ AuthStateManager: Successfully retrieved current user: \(user.username) (ID: \(user.id))")
+            Logger.info("✅ AuthStateManager: Successfully retrieved current user: \(user.displayName) (ID: \(user.id))")
             return .success(user)
         } catch {
             Logger.error("❌ AuthStateManager: Failed to get current user: \(error)")
@@ -153,7 +153,7 @@ final class AuthStateManager: ObservableObject {
         switch result {
         case .success(let user):
             await updateAuthenticatedState(with: user)
-            Logger.info("✅ AuthStateManager: Initial auth check successful for user: \(user.username)")
+            Logger.info("✅ AuthStateManager: Initial auth check successful for user: \(user.displayName)")
         case .failure(let error):
             Logger.error("❌ AuthStateManager: Initial auth check failed: \(error)")
             
@@ -170,7 +170,7 @@ final class AuthStateManager: ObservableObject {
     func updateUser(_ user: User) async {
         currentUser = user
         authState = .authenticated(user)
-        Logger.info("🔄 AuthStateManager: User updated: \(user.username)")
+        Logger.info("🔄 AuthStateManager: User updated: \(user.displayName)")
     }
     
     /// Método para forzar un refresh del usuario actual
@@ -214,7 +214,7 @@ final class AuthStateManager: ObservableObject {
         currentUser = user
         authState = .authenticated(user)
         isAuthenticated = true
-        Logger.debug("✅ AuthStateManager: Updated to authenticated state for user: \(user.username)")
+        Logger.debug("✅ AuthStateManager: Updated to authenticated state for user: \(user.displayName)")
     }
     
     private func updateUnauthenticatedState() async {
@@ -277,18 +277,11 @@ extension AuthStateManager {
                 print("🔍 [AuthStateManager Debug]")
                 print("  - AuthState: \(authState)")
                 print("  - IsAuthenticated: \(isAuthenticated)")
-                print("  - CurrentUser: \(currentUser?.username ?? "nil")")
-                print("  - HasToken: \(token != nil)")
+                print("  - CurrentUser: \(currentUser?.displayName ?? "nil")")
+                print("  - Token: \(token != nil ? "Present" : "nil")")
                 print("  - UserId: \(userId?.description ?? "nil")")
-                print("  - TokenManager.IsAuthenticated: \(tokenManager.isAuthenticated)")
             }
         }
-    }
-    
-    func simulateTokenExpiration() async {
-        Logger.debug("🧪 AuthStateManager: Simulating token expiration")
-        await tokenManager.clearTokens()
-        await updateUnauthenticatedState()
     }
 }
 #endif

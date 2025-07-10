@@ -40,10 +40,11 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
         
         // ✅ Obtener los datos completos del usuario usando el userId
         let userResponse = try await authService.getCurrentUser(userId: response.data.userId)
-        try saveUser(userResponse.data)
+        // ✅ CORREGIDO: Ahora acceder al usuario desde la estructura anidada
+        try saveUser(userResponse.data.user)
         
-        Logger.info("✅ AuthRepository: Login successful for user: \(userResponse.data.username)")
-        return userResponse.data
+        Logger.info("✅ AuthRepository: Login successful for user: \(userResponse.data.user.displayName)")
+        return userResponse.data.user
     }
     
     func register(email: String, password: String, username: String, fullName: String?) async throws -> User {
@@ -89,10 +90,11 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
         }
         
         let userResponse = try await authService.getCurrentUser(userId: userId)
-        try saveUser(userResponse.data)
+        // ✅ CORREGIDO: Ahora acceder al usuario desde la estructura anidada
+        try saveUser(userResponse.data.user)
         
         Logger.info("✅ AuthRepository: Token refresh successful")
-        return userResponse.data
+        return userResponse.data.user
     }
     
     func getCurrentUser() async throws -> User {
@@ -110,10 +112,11 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
         
         // Fetch from server using userId
         let response = try await authService.getCurrentUser(userId: userId)
-        try saveUser(response.data)
+        // ✅ CORREGIDO: Ahora acceder al usuario desde la estructura anidada
+        try saveUser(response.data.user)
         
         Logger.info("✅ AuthRepository: Current user fetched from server")
-        return response.data
+        return response.data.user
     }
     
     // MARK: - Private Methods

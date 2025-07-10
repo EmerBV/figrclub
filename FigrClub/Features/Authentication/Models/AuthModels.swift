@@ -64,6 +64,9 @@ struct AuthResponse: Codable {
     let message: String
     let data: AuthData
     let timestamp: Date
+    let currency: String?
+    let locale: String?
+    let status: Int?
 }
 
 struct AuthData: Codable {
@@ -86,39 +89,96 @@ struct RegisterData: Codable {
     let emailSent: Bool
 }
 
+// MARK: - User Response Models - ✅ ACTUALIZADO para reflejar la estructura real de la API
 struct UserResponse: Codable {
     let message: String
-    let data: User
+    let data: UserResponseData
     let timestamp: Date
+    let currency: String?
+    let locale: String?
+    let status: Int?
 }
 
-// MARK: - Updated User Model
+struct UserResponseData: Codable {
+    let roleInfo: RoleInfo
+    let user: User
+}
+
+struct RoleInfo: Codable {
+    let isAdmin: Bool
+    let roleModifiable: Bool
+    let roleModificationReason: String
+    let roleName: String
+}
+
+// MARK: - Updated User Model - ✅ ACTUALIZADO para coincidir exactamente con la API
 struct User: Codable, Identifiable, Equatable {
-    let id: Int // Cambiado de String a Int según API
+    let id: Int
     let firstName: String
     let lastName: String
     let email: String
-    let username: String
-    let userType: String
-    let subscriptionType: String
+    let displayName: String
+    let fullName: String
+    let birthDate: String?
+    let city: String?
+    let country: String?
+    let phone: String?
+    let preferredLanguage: String?
+    let active: Bool
+    let enabled: Bool
+    let accountNonExpired: Bool
+    let accountNonLocked: Bool
+    let credentialsNonExpired: Bool
+    let emailVerified: Bool
+    let emailVerifiedAt: String?
     let isVerified: Bool
-    let profileImageUrl: String?
-    let bio: String?
-    let createdAt: Date
-    let updatedAt: Date?
+    let isPrivate: Bool
+    let isPro: Bool
+    let canAccessProFeatures: Bool
+    let proSeller: Bool
+    let isActiveSellerProfile: Bool
+    let isSellingActive: Bool
+    let individualUser: Bool
+    let admin: Bool
+    let role: String
+    let roleDescription: String?
+    let roleId: Int
+    let hasProfileImage: Bool
+    let hasCoverImage: Bool
+    let activeImageCount: Int
+    let followersCount: Int
+    let followingCount: Int
+    let postsCount: Int
+    let purchasesCount: Int
+    let createdAt: String
+    let createdBy: String?
+    let lastActivityAt: String?
+    let imageCapabilities: ImageCapabilities?
+    let maxProfileImageSizeMB: String?
+    let maxCoverImageSizeMB: String?
     
-    // Computed properties
-    var fullName: String {
-        return "\(firstName) \(lastName)"
+    // MARK: - Computed Properties
+    var username: String {
+        return displayName // Usar displayName como username ya que la API no incluye username
     }
     
-    var followersCount: Int { 0 } // TODO: Implementar cuando esté en API
-    var followingCount: Int { 0 } // TODO: Implementar cuando esté en API
-    var postsCount: Int { 0 } // TODO: Implementar cuando esté en API
+    var computedFullName: String {
+        return "\(firstName) \(lastName)"
+    }
     
     static func == (lhs: User, rhs: User) -> Bool {
         return lhs.id == rhs.id
     }
+}
+
+// MARK: - Image Capabilities
+struct ImageCapabilities: Codable {
+    let canUploadProfileImage: Bool
+    let canUploadCoverImage: Bool
+    let maxProfileImageSize: Int
+    let maxProfileImageSizeMB: String
+    let maxCoverImageSize: Int
+    let maxCoverImageSizeMB: String
 }
 
 // MARK: - API Generic Response

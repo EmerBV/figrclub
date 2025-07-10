@@ -98,6 +98,7 @@ struct MainTabView: View {
     }
 }
 
+/*
 // MARK: - Preview
 #if DEBUG
 struct MainTabView_Previews: PreviewProvider {
@@ -122,4 +123,5 @@ struct MainTabView_Previews: PreviewProvider {
     }
 }
 #endif
+ */
 
