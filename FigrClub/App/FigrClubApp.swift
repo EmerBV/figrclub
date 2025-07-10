@@ -49,55 +49,61 @@ import FirebaseMessaging
 @main
 struct FigrClubApp: App {
     
+    // MARK: - Properties
+    @StateObject private var authStateManager: AuthStateManager
+    
+    // MARK: - Initialization
     init() {
-        FirebaseApp.configure()
+        // Configure dependency injection
+        DependencyInjector.shared.configure()
         
-        // Asegurar que el DI esté completamente configurado antes de usarlo
-        _ = DependencyInjector.shared
+        // Initialize auth state manager
+        let authManager = DependencyInjector.shared.resolve(AuthStateManager.self)
+        self._authStateManager = StateObject(wrappedValue: authManager)
         
-        print("🟢 [FigrClubApp.swift] initialized successfully")
-        Logger.info("🚀 FigrClub initialized networking architecture")
+        // Setup logging
+        setupLogging()
         
 #if DEBUG
-        // Performance and health checks in debug mode
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.performStartupDiagnostics()
-        }
+        // Perform architecture health check in debug mode
+        performArchitectureHealthCheck()
 #endif
     }
     
+    // MARK: - App Body
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(createAuthStateManager())
+                .environmentObject(authStateManager)
                 .onAppear {
-#if DEBUG
-                    Logger.info("📱 ContentView appeared - App ready for user interaction")
-#endif
+                    Logger.info("🚀 FigrClub app launched successfully")
                 }
         }
     }
     
-    // MARK: - Factory Methods
+}
+
+// MARK: - Private Setup Methods
+private extension FigrClubApp {
     
-    private func createAuthStateManager() -> AuthStateManager {
-        return DependencyInjector.shared.resolve(AuthStateManager.self)
+    func setupLogging() {
+        Logger.info("🔧 FigrClub: Initializing logging system...")
+        
+#if DEBUG
+        Logger.info("📱 Environment: Development")
+        Logger.info("🌍 Bundle ID: \(Bundle.main.bundleIdentifier ?? "Unknown")")
+        Logger.info("📦 App Version: \(AppConfig.AppInfo.version)")
+        Logger.info("🔢 Build Number: \(AppConfig.AppInfo.build)")
+#else
+        Logger.info("📱 Environment: Production")
+#endif
+        
+        Logger.info("✅ Logging system initialized")
     }
     
 #if DEBUG
-    // MARK: - Debug & Diagnostics
-    
-    private func performStartupDiagnostics() {
-        Logger.info("🔍 Performing startup diagnostics...")
-        
-        // Architecture health check
-        performArchitectureHealthCheck()
-        
-        Logger.info("✅ Startup diagnostics completed - App is ready")
-    }
-    
-    private func performArchitectureHealthCheck() {
-        Logger.info("🏥 Performing architecture health check...")
+    func performArchitectureHealthCheck() {
+        Logger.info("🏥 FigrClub: Starting architecture health check...")
         
         let criticalServices: [(String, Bool)] = [
             ("NetworkDispatcher", DependencyInjector.shared.resolveOptional(NetworkDispatcherProtocol.self) != nil),
@@ -106,7 +112,8 @@ struct FigrClubApp: App {
             ("AuthService", DependencyInjector.shared.resolveOptional(AuthServiceProtocol.self) != nil),
             ("ValidationService", DependencyInjector.shared.resolveOptional(ValidationServiceProtocol.self) != nil),
             ("SecureStorage", DependencyInjector.shared.resolveOptional(SecureStorageProtocol.self) != nil),
-            ("APIService", DependencyInjector.shared.resolveOptional(APIServiceProtocol.self) != nil)
+            ("NetworkLogger", DependencyInjector.shared.resolveOptional(NetworkLoggerProtocol.self) != nil),
+            ("APIConfiguration", DependencyInjector.shared.resolveOptional(APIConfigurationProtocol.self) != nil)
         ]
         
         let healthScore = criticalServices.filter { $0.1 }.count
@@ -120,9 +127,28 @@ struct FigrClubApp: App {
         
         if healthScore == totalServices {
             Logger.info("🎉 Architecture is fully operational!")
+            logArchitectureDetails()
         } else {
             Logger.warning("⚠️ Some services are unavailable - check dependency configuration")
+            logMissingServices(criticalServices.filter { !$0.1 }.map { $0.0 })
         }
+    }
+    
+    func logArchitectureDetails() {
+        Logger.info("📋 Architecture Details:")
+        Logger.info("  🌐 Network Layer: NetworkDispatcher + URLSessionProvider")
+        Logger.info("  🔐 Auth Layer: AuthService + TokenManager + SecureStorage")
+        Logger.info("  📝 Validation Layer: ValidationService")
+        Logger.info("  🏗️ DI Container: Swinject")
+        Logger.info("  📊 Logging: Unified Logger with os.Logger")
+    }
+    
+    func logMissingServices(_ missingServices: [String]) {
+        Logger.error("❌ Missing Services:")
+        for service in missingServices {
+            Logger.error("  - \(service)")
+        }
+        Logger.error("🔧 Check assembly configurations in DI container")
     }
 #endif
 }

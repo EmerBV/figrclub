@@ -98,19 +98,11 @@ final class NetworkAssembly: Assembly {
             return URLSessionProvider(configuration: configuration, logger: logger)
         }.inObjectScope(.container)
         
-        // Network Dispatcher (Primary Interface)
+        // Network Dispatcher (Primary and Only Network Interface)
         container.register(NetworkDispatcherProtocol.self) { resolver in
             let sessionProvider = resolver.resolve(URLSessionProviderProtocol.self)!
             let tokenManager = resolver.resolve(TokenManager.self)!
             return NetworkDispatcher(sessionProvider: sessionProvider, tokenManager: tokenManager)
-        }.inObjectScope(.container)
-        
-        // MARK: - Compatibility Layer
-        
-        // APIServiceProtocol (for backward compatibility)
-        container.register(APIServiceProtocol.self) { resolver in
-            let networkDispatcher = resolver.resolve(NetworkDispatcherProtocol.self)!
-            return APIServiceAdapter(networkDispatcher: networkDispatcher)
         }.inObjectScope(.container)
         
         // MARK: - Network Configuration

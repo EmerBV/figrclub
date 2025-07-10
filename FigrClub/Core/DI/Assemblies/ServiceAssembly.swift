@@ -11,15 +11,41 @@ import Swinject
 final class ServiceAssembly: Assembly {
     func assemble(container: Container) {
         
+        // MARK: - Authentication Services
+        
         // Auth Service
         container.register(AuthServiceProtocol.self) { resolver in
-            let apiService = resolver.resolve(APIServiceProtocol.self)!
-            return AuthService(networkDispatcher: apiService)
+            let networkDispatcher = resolver.resolve(NetworkDispatcherProtocol.self)!
+            return AuthService(networkDispatcher: networkDispatcher)
         }.inObjectScope(.container)
+        
+        // MARK: - Validation Services
         
         // Validation Service
         container.register(ValidationServiceProtocol.self) { _ in
             return ValidationService()
         }.inObjectScope(.container)
+        
+        // MARK: - User Services
+        
+        // User Service (cuando se implemente)
+        // container.register(UserServiceProtocol.self) { resolver in
+        //     let networkDispatcher = resolver.resolve(NetworkDispatcherProtocol.self)!
+        //     return UserService(networkDispatcher: networkDispatcher)
+        // }.inObjectScope(.container)
+        
+        // MARK: - Content Services
+        
+        // Post Service (cuando se implemente)
+        // container.register(PostServiceProtocol.self) { resolver in
+        //     let networkDispatcher = resolver.resolve(NetworkDispatcherProtocol.self)!
+        //     return PostService(networkDispatcher: networkDispatcher)
+        // }.inObjectScope(.container)
+        
+        // Media Service (cuando se implemente)
+        // container.register(MediaServiceProtocol.self) { resolver in
+        //     let networkDispatcher = resolver.resolve(NetworkDispatcherProtocol.self)!
+        //     return MediaService(networkDispatcher: networkDispatcher)
+        // }.inObjectScope(.container)
     }
 }

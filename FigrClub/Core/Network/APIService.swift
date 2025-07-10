@@ -7,6 +7,7 @@
 
 import Foundation
 
+/*
 protocol APIServiceProtocol: Sendable {
     func request<T: Codable>(_ endpoint: Endpoint) async throws -> T
     func requestData(_ endpoint: Endpoint) async throws -> Data
@@ -161,4 +162,5 @@ final class APIService: APIServiceProtocol, NetworkDispatcherProtocol, @unchecke
         }
     }
 }
+ */
 
