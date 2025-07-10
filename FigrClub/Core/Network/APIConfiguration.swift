@@ -68,7 +68,7 @@ protocol NetworkLoggerProtocol: Sendable {
 // MARK: - URL Session Provider Protocol
 protocol URLSessionProviderProtocol: Sendable {
     func dataTask(for request: URLRequest) async throws -> (Data, URLResponse)
-    func createURLRequest(for endpoint: Endpoint) throws -> URLRequest
+    func createURLRequest(for endpoint: APIEndpoint) throws -> URLRequest
 }
 
 // MARK: - URL Session Provider Implementation
@@ -127,7 +127,7 @@ final class URLSessionProvider: URLSessionProviderProtocol, @unchecked Sendable 
         }
     }
     
-    func createURLRequest(for endpoint: Endpoint) throws -> URLRequest {
+    func createURLRequest(for endpoint: APIEndpoint) throws -> URLRequest {
         guard let url = URL(string: configuration.baseURL + endpoint.path) else {
             throw NetworkError.invalidURL
         }
@@ -176,27 +176,6 @@ final class URLSessionProvider: URLSessionProviderProtocol, @unchecked Sendable 
         • Cache Policy: \(config.requestCachePolicy.rawValue)
         """
     }
-}
-
-// MARK: - Enhanced Endpoint Protocol
-protocol Endpoint {
-    var path: String { get }
-    var method: HTTPMethod { get }
-    var headers: [String: String] { get }
-    var body: [String: Any]? { get }
-    var queryParameters: [String: Any]? { get }
-    var requiresAuth: Bool { get }
-    var isRefreshTokenEndpoint: Bool { get }
-    var retryPolicy: RetryPolicy { get }
-}
-
-extension Endpoint {
-    var headers: [String: String] { [:] }
-    var body: [String: Any]? { nil }
-    var queryParameters: [String: Any]? { nil }
-    var requiresAuth: Bool { true }
-    var isRefreshTokenEndpoint: Bool { false }
-    var retryPolicy: RetryPolicy { .default }
 }
 
 // MARK: - HTTP Method
@@ -285,7 +264,7 @@ extension APIConfiguration {
 extension URLSessionProvider {
     
     /// Create URLRequest with automatic retry policy validation
-    func createURLRequestWithRetryValidation(for endpoint: Endpoint) throws -> URLRequest {
+    func createURLRequestWithRetryValidation(for endpoint: APIEndpoint) throws -> URLRequest {
         let request = try createURLRequest(for: endpoint)
         
         // Validate retry policy settings
@@ -301,7 +280,7 @@ extension URLSessionProvider {
 extension NetworkError {
     
     /// Determine if error is retryable based on endpoint's retry policy
-    func isRetryableForEndpoint(_ endpoint: Endpoint) -> Bool {
+    func isRetryableForEndpoint(_ endpoint: APIEndpoint) -> Bool {
         switch self {
         case .badRequest, .unauthorized, .forbidden, .notFound:
             return false
@@ -373,7 +352,7 @@ extension URLSessionProvider {
     }
 }
 
-extension Endpoint {
+extension APIEndpoint {
     
     /// Get endpoint debug information
     var debugDescription: String {
