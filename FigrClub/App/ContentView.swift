@@ -39,7 +39,6 @@ struct ContentView: View {
 }
 
 // MARK: - Supporting Views
-
 struct LoadingView: View {
     var body: some View {
         ZStack {
@@ -59,6 +58,7 @@ struct LoadingView: View {
     }
 }
 
+/*
 struct ErrorView: View {
     let message: String
     let onRetry: () -> Void
@@ -93,6 +93,7 @@ struct ErrorView: View {
         }
     }
 }
+ */
 
 /*
  // MARK: - Preview

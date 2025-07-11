@@ -9,6 +9,7 @@ import SwiftUI
 
 struct AuthenticationFlowView: View {
     @State private var authViewModel: AuthViewModel?
+    @StateObject private var errorHandler = ErrorHandler()
     
     var body: some View {
         NavigationStack {
@@ -51,6 +52,7 @@ struct AuthenticationFlowView: View {
                                     isSelected: viewModel.isShowingLogin
                                 ) {
                                     viewModel.switchToLogin()
+                                    errorHandler.dismiss() // ← Limpiar errores al cambiar tab
                                 }
                                 
                                 AuthTabButton(
@@ -58,6 +60,7 @@ struct AuthenticationFlowView: View {
                                     isSelected: !viewModel.isShowingLogin
                                 ) {
                                     viewModel.switchToRegister()
+                                    errorHandler.dismiss() // ← Limpiar errores al cambiar tab
                                 }
                             }
                             .overlay(
@@ -68,15 +71,13 @@ struct AuthenticationFlowView: View {
                             
                             // Form Content
                             if viewModel.isShowingLogin {
-                                LoginFormView(viewModel: viewModel)
+                                LoginFormView(viewModel: viewModel, errorHandler: errorHandler)
                             } else {
-                                RegisterFormView(viewModel: viewModel)
+                                RegisterFormView(viewModel: viewModel, errorHandler: errorHandler)
                             }
                         } else {
                             // Loading state while creating ViewModel
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .blue))
-                                .scaleEffect(1.2)
+                            AuthLoadingView()
                         }
                     }
                     .padding(.horizontal, 24)
@@ -90,22 +91,43 @@ struct AuthenticationFlowView: View {
                 authViewModel = DependencyInjector.shared.resolve(AuthViewModel.self)
             }
         }
-        .alert("Error", isPresented: Binding<Bool>(
-            get: { authViewModel?.showError == true },
-            set: { _ in authViewModel?.hideError() }
-        )) {
-            Button("OK") {
-                authViewModel?.hideError()
+        .errorAlert(errorHandler: errorHandler) { // ← Error handler con retry específico para auth
+            // Retry action específica para auth - usando métodos limpios
+            if let viewModel = authViewModel {
+                if viewModel.isShowingLogin {
+                    if let error = await viewModel.loginWithErrorHandling() {
+                        errorHandler.handle(error)
+                    }
+                } else {
+                    if let error = await viewModel.registerWithErrorHandling() {
+                        errorHandler.handle(error)
+                    }
+                }
             }
-        } message: {
-            Text(authViewModel?.errorMessage ?? "Ha ocurrido un error")
         }
+    }
+}
+
+struct AuthLoadingView: View {
+    var body: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .progressViewStyle(CircularProgressViewStyle(tint: .blue))
+                .scaleEffect(1.2)
+            
+            Text("Preparando autenticación...")
+                .font(.callout)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 40)
     }
 }
 
 // MARK: - Supporting Form Views
 struct LoginFormView: View {
     @ObservedObject var viewModel: AuthViewModel
+    @ObservedObject var errorHandler: ErrorHandler
     
     var body: some View {
         VStack(spacing: 20) {
@@ -118,6 +140,7 @@ struct LoginFormView: View {
             )
             .autocapitalization(.none)
             .autocorrectionDisabled()
+            .disabled(viewModel.isLoading)
             
             // Password Field
             AuthSecureField(
@@ -125,11 +148,12 @@ struct LoginFormView: View {
                 placeholder: "Tu contraseña",
                 validationState: getValidationState(viewModel.loginPasswordValidation)
             )
+            .disabled(viewModel.isLoading)
             
             // Login Button
             Button {
                 Task {
-                    await viewModel.login()
+                    await performLogin()
                 }
             } label: {
                 HStack {
@@ -143,17 +167,33 @@ struct LoginFormView: View {
                     }
                 }
             }
-            .buttonStyle(FigrButtonStyle(isEnabled: viewModel.canLogin, isLoading: viewModel.isLoading))
-            .disabled(!viewModel.canLogin)
+            .buttonStyle(FigrButtonStyle(
+                isEnabled: viewModel.canLogin && !viewModel.isLoading,
+                isLoading: viewModel.isLoading
+            ))
+            .disabled(!viewModel.canLogin || viewModel.isLoading)
             
             // Forgot Password
             Button("¿Olvidaste tu contraseña?") {
                 // TODO: Implementar recuperación de contraseña
+                Logger.info("🔗 Forgot password tapped")
             }
             .font(.system(size: 14, weight: .medium))
             .foregroundColor(.blue)
+            .disabled(viewModel.isLoading)
         }
         .padding(.top, 20)
+    }
+    
+    private func performLogin() async {
+        // Limpiar errores previos
+        errorHandler.dismiss()
+        
+        // Usar el método público del ViewModel que retorna error
+        if let error = await viewModel.loginWithErrorHandling() {
+            errorHandler.handle(error)
+        }
+        // Si no hay error, el login fue exitoso y AuthStateManager maneja la navegación
     }
     
     private func getValidationState(_ validation: ValidationResult) -> ValidationState {
@@ -168,6 +208,7 @@ struct LoginFormView: View {
 
 struct RegisterFormView: View {
     @ObservedObject var viewModel: AuthViewModel
+    @ObservedObject var errorHandler: ErrorHandler
     
     var body: some View {
         VStack(spacing: 20) {
@@ -180,6 +221,7 @@ struct RegisterFormView: View {
             )
             .autocapitalization(.none)
             .autocorrectionDisabled()
+            .disabled(viewModel.isLoading)
             
             // Username Field
             AuthTextField(
@@ -189,6 +231,7 @@ struct RegisterFormView: View {
             )
             .autocapitalization(.none)
             .autocorrectionDisabled()
+            .disabled(viewModel.isLoading)
             
             // Full Name Field
             AuthTextField(
@@ -197,6 +240,7 @@ struct RegisterFormView: View {
                 validationState: getValidationState(viewModel.fullNameValidation)
             )
             .autocapitalization(.words)
+            .disabled(viewModel.isLoading)
             
             // Password Field
             AuthSecureField(
@@ -204,6 +248,7 @@ struct RegisterFormView: View {
                 placeholder: "Tu contraseña",
                 validationState: getValidationState(viewModel.registerPasswordValidation)
             )
+            .disabled(viewModel.isLoading)
             
             // Confirm Password Field
             AuthSecureField(
@@ -211,6 +256,7 @@ struct RegisterFormView: View {
                 placeholder: "Confirma tu contraseña",
                 validationState: getValidationState(viewModel.confirmPasswordValidation)
             )
+            .disabled(viewModel.isLoading)
             
             // Terms and Conditions
             HStack(alignment: .top, spacing: 12) {
@@ -221,6 +267,7 @@ struct RegisterFormView: View {
                         .font(.system(size: 20))
                         .foregroundColor(viewModel.acceptTerms ? .blue : .gray)
                 }
+                .disabled(viewModel.isLoading)
                 
                 Text("Acepto los términos y condiciones y la política de privacidad")
                     .font(.system(size: 14))
@@ -245,10 +292,24 @@ struct RegisterFormView: View {
                     }
                 }
             }
-            .buttonStyle(FigrButtonStyle(isEnabled: viewModel.canRegister, isLoading: viewModel.isLoading))
-            .disabled(!viewModel.canRegister)
+            .buttonStyle(FigrButtonStyle(
+                isEnabled: viewModel.canRegister && !viewModel.isLoading,
+                isLoading: viewModel.isLoading
+            ))
+            .disabled(!viewModel.canRegister || viewModel.isLoading)
         }
         .padding(.top, 20)
+    }
+    
+    private func performRegister() async {
+        // Limpiar errores previos
+        errorHandler.dismiss()
+        
+        // Usar el método público del ViewModel que retorna error
+        if let error = await viewModel.registerWithErrorHandling() {
+            errorHandler.handle(error)
+        }
+        // Si no hay error, el registro fue exitoso y AuthStateManager maneja la navegación
     }
     
     private func getValidationState(_ validation: ValidationResult) -> ValidationState {

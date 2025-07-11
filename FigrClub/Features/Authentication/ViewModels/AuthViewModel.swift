@@ -266,6 +266,143 @@ final class AuthViewModel: ObservableObject {
     }
 }
 
+extension AuthViewModel {
+    
+    // MARK: - Public Methods with Error Return
+    
+    /// Perform login and return error if any
+    func loginWithErrorHandling() async -> NetworkError? {
+        guard canLogin else {
+            return NetworkError.badRequest(APIError(
+                message: "Por favor completa todos los campos correctamente",
+                code: "VALIDATION_ERROR",
+                details: nil
+            ))
+        }
+        
+        isLoading = true
+        hideError()
+        
+        let result = await authStateManager.login(email: loginEmail, password: loginPassword)
+        
+        switch result {
+        case .success(let user):
+            clearLoginForm()
+            Logger.info("✅ Login successful for user: \(user.displayName)")
+            return nil // No error
+            
+        case .failure(let error):
+            Logger.error("❌ Login failed: \(error)")
+            return NetworkError.from(error)
+        }
+        
+        // Note: isLoading is managed by authStateManager through authState changes
+    }
+    
+    /// Perform registration and return error if any
+    func registerWithErrorHandling() async -> NetworkError? {
+        guard canRegister else {
+            return NetworkError.badRequest(APIError(
+                message: "Por favor completa todos los campos correctamente y acepta los términos",
+                code: "VALIDATION_ERROR",
+                details: nil
+            ))
+        }
+        
+        isLoading = true
+        hideError()
+        
+        let result = await authStateManager.register(
+            email: registerEmail,
+            password: registerPassword,
+            username: registerUsername,
+            fullName: registerFullName.isEmpty ? nil : registerFullName
+        )
+        
+        switch result {
+        case .success(let user):
+            clearRegisterForm()
+            Logger.info("✅ Registration successful for user: \(user.displayName)")
+            return nil // No error
+            
+        case .failure(let error):
+            Logger.error("❌ Registration failed: \(error)")
+            return NetworkError.from(error)
+        }
+        
+        // Note: isLoading is managed by authStateManager through authState changes
+    }
+    
+    // MARK: - Public Clear Methods
+    
+    /// Public method to clear login form
+    func clearLoginFormPublic() {
+        clearLoginForm()
+    }
+    
+    /// Public method to clear register form
+    func clearRegisterFormPublic() {
+        clearRegisterForm()
+    }
+    
+    /// Clear all forms and reset state
+    func clearAllForms() {
+        clearLoginForm()
+        clearRegisterForm()
+        hideError()
+    }
+}
+
+// MARK: - Validation Helper Extension
+extension AuthViewModel {
+    
+    /// Get validation errors for current login form
+    var loginValidationErrors: [String] {
+        var errors: [String] = []
+        
+        if case .invalid(let errorMessage) = loginEmailValidation {
+            errors.append(errorMessage)
+        }
+        
+        if case .invalid(let errorMessage) = loginPasswordValidation {
+            errors.append(errorMessage)
+        }
+        
+        return errors
+    }
+    
+    /// Get validation errors for current register form
+    var registerValidationErrors: [String] {
+        var errors: [String] = []
+        
+        if case .invalid(let errorMessage) = registerEmailValidation {
+            errors.append(errorMessage)
+        }
+        
+        if case .invalid(let errorMessage) = registerPasswordValidation {
+            errors.append(errorMessage)
+        }
+        
+        if case .invalid(let errorMessage) = usernameValidation {
+            errors.append(errorMessage)
+        }
+        
+        if case .invalid(let errorMessage) = fullNameValidation {
+            errors.append(errorMessage)
+        }
+        
+        if case .invalid(let errorMessage) = confirmPasswordValidation {
+            errors.append(errorMessage)
+        }
+        
+        if !acceptTerms {
+            errors.append("Debes aceptar los términos y condiciones")
+        }
+        
+        return errors
+    }
+}
+
 // MARK: - Preview Support
 #if DEBUG
 extension AuthViewModel {
