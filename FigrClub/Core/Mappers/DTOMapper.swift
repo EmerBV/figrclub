@@ -25,7 +25,7 @@ struct ApiResponseMapper<DTOData: BaseDTO, DomainData> {
         return ApiResponse(
             message: dto.message,
             data: dataMapper(dto.data),
-            timestamp: DateFormatter.iso8601.date(from: dto.timestamp) ?? Date(),
+            timestamp: Date(timeIntervalSince1970: dto.timestamp / 1000.0), // ✅ ACTUALIZADO: Convertir timestamp numérico a Date
             currency: dto.currency,
             locale: dto.locale,
             status: dto.status
@@ -39,7 +39,7 @@ struct ApiResponseMapper<DTOData: BaseDTO, DomainData> {
         return ApiResponseDTO(
             message: domainModel.message,
             data: dataMapper(domainModel.data),
-            timestamp: DateFormatter.iso8601.string(from: domainModel.timestamp),
+            timestamp: domainModel.timestamp.timeIntervalSince1970 * 1000, // ✅ ACTUALIZADO: Convertir Date a timestamp numérico
             currency: domainModel.currency,
             locale: domainModel.locale,
             status: domainModel.status

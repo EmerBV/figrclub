@@ -31,43 +31,74 @@ final class NetworkDispatcher: NetworkDispatcherProtocol, @unchecked Sendable {
         self.sessionProvider = sessionProvider
         self.tokenManager = tokenManager
         
-        // Configure JSON Decoder with modern settings
+        // Configure JSON Decoder with enhanced date decoding
         self.jsonDecoder = JSONDecoder()
         
-        // Enhanced date decoding strategy
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
-        
-        jsonDecoder.dateDecodingStrategy = .custom { decoder in
+        // ✅ SOLUCION: Estrategia de decodificación de fechas personalizada
+        self.jsonDecoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
             
-            // Try different date formats
+            // Intentar decodificar como timestamp en milisegundos (número)
+            if let timestamp = try? container.decode(Double.self) {
+                return Date(timeIntervalSince1970: timestamp / 1000.0)
+            }
+            
+            // Intentar decodificar como timestamp en segundos (número)
+            if let timestamp = try? container.decode(Int64.self) {
+                // Si es mayor que 1000000000000 (año 2001+), probablemente son milisegundos
+                if timestamp > 1000000000000 {
+                    return Date(timeIntervalSince1970: Double(timestamp) / 1000.0)
+                } else {
+                    return Date(timeIntervalSince1970: Double(timestamp))
+                }
+            }
+            
+            // Intentar decodificar como string (varios formatos)
             if let dateString = try? container.decode(String.self) {
-                // ISO8601 with fractional seconds
+                // ISO8601 con fracciones de segundo
                 if let date = ISO8601DateFormatter().date(from: dateString) {
                     return date
                 }
                 
-                // Custom format
+                // ISO8601 personalizado con milisegundos
+                let formatter = DateFormatter()
+                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+                formatter.locale = Locale(identifier: "en_US_POSIX")
+                formatter.timeZone = TimeZone(secondsFromGMT: 0)
+                
                 if let date = formatter.date(from: dateString) {
                     return date
                 }
                 
-                // Unix timestamp as string
+                // Formato ISO básico
+                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+                if let date = formatter.date(from: dateString) {
+                    return date
+                }
+                
+                // Formato alternativo sin zona horaria
+                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+                if let date = formatter.date(from: dateString) {
+                    return date
+                }
+                
+                // Si es un string que representa un número (timestamp como string)
                 if let timestamp = Double(dateString) {
-                    return Date(timeIntervalSince1970: timestamp)
+                    if timestamp > 1000000000000 {
+                        return Date(timeIntervalSince1970: timestamp / 1000.0)
+                    } else {
+                        return Date(timeIntervalSince1970: timestamp)
+                    }
                 }
             }
             
-            // Unix timestamp as number
-            if let timestamp = try? container.decode(Double.self) {
-                return Date(timeIntervalSince1970: timestamp)
-            }
-            
-            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode date")
+            throw DecodingError.dataCorruptedError(
+                in: container,
+                debugDescription: "Cannot decode date from provided value"
+            )
         }
+        
+        Logger.debug("✅ NetworkDispatcher: Initialized with enhanced date decoding strategy")
     }
     
     // MARK: - Public Methods
@@ -77,12 +108,28 @@ final class NetworkDispatcher: NetworkDispatcherProtocol, @unchecked Sendable {
         
         do {
             let result = try jsonDecoder.decode(T.self, from: data)
+            Logger.debug("✅ NetworkDispatcher: Successfully decoded \(T.self)")
             return result
         } catch let decodingError as DecodingError {
-            Logger.error("Decoding error for \(T.self): \(decodingError)")
+            Logger.error("❌ NetworkDispatcher: Decoding error for \(T.self): \(decodingError)")
+            
+            // Log detailed decoding error for debugging
+            switch decodingError {
+            case .typeMismatch(let type, let context):
+                Logger.error("Type mismatch: Expected \(type), context: \(context)")
+            case .valueNotFound(let type, let context):
+                Logger.error("Value not found: \(type), context: \(context)")
+            case .keyNotFound(let key, let context):
+                Logger.error("Key not found: \(key), context: \(context)")
+            case .dataCorrupted(let context):
+                Logger.error("Data corrupted: \(context)")
+            @unknown default:
+                Logger.error("Unknown decoding error: \(decodingError)")
+            }
+            
             throw NetworkError.decodingError(decodingError)
         } catch {
-            Logger.error("Unknown decoding error for \(T.self): \(error)")
+            Logger.error("❌ NetworkDispatcher: Unknown decoding error for \(T.self): \(error)")
             throw NetworkError.unknown(error)
         }
     }
@@ -95,7 +142,7 @@ final class NetworkDispatcher: NetworkDispatcherProtocol, @unchecked Sendable {
         }
     }
     
-    // MARK: - Private Methods
+    // MARK: - Private Methods (resto del código igual...)
     
     private func executeAuthenticatedRequest(_ endpoint: APIEndpoint) async throws -> Data {
         // First, try with current token

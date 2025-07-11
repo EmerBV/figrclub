@@ -18,12 +18,12 @@ struct AuthToken: Codable, Equatable {
 }
 
 // MARK: - Request Models
-struct LoginRequest: Codable {
+struct LoginRequest {
     let email: String
     let password: String
 }
 
-struct RegisterRequest: Codable {
+struct RegisterRequest {
     let firstName: String
     let lastName: String
     let email: String
@@ -32,29 +32,14 @@ struct RegisterRequest: Codable {
     let userType: String
     let legalAcceptances: [LegalAcceptance]
     let consents: [Consent]
-    
-    init(firstName: String, lastName: String, email: String, password: String, username: String) {
-        self.firstName = firstName
-        self.lastName = lastName
-        self.email = email
-        self.password = password
-        self.username = username
-        self.userType = "REGULAR"
-        self.legalAcceptances = [
-            LegalAcceptance(documentType: "TERMS_OF_SERVICE", acceptedAt: Date())
-        ]
-        self.consents = [
-            Consent(consentType: "MARKETING_EMAILS", isGranted: false)
-        ]
-    }
 }
 
-struct LegalAcceptance: Codable {
+struct LegalAcceptance {
     let documentType: String
     let acceptedAt: Date
 }
 
-struct Consent: Codable {
+struct Consent {
     let consentType: String
     let isGranted: Bool
 }

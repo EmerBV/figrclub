@@ -53,14 +53,23 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
         let firstName = nameParts.first ?? ""
         let lastName = nameParts.count > 1 ? nameParts.dropFirst().joined(separator: " ") : ""
         
+        // ✅ Create domain model request
         let request = RegisterRequest(
             firstName: firstName,
             lastName: lastName,
             email: email,
             password: password,
-            username: username
+            username: username,
+            userType: "REGULAR",
+            legalAcceptances: [
+                LegalAcceptance(documentType: "TERMS_OF_SERVICE", acceptedAt: Date())
+            ],
+            consents: [
+                Consent(consentType: "MARKETING_EMAILS", isGranted: false)
+            ]
         )
         
+        // Service handles DTO conversion internally
         let registerResponse = try await authService.register(request)
         Logger.info("✅ AuthRepository: Registration successful for user: \(registerResponse.data.email)")
         

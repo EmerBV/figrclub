@@ -14,7 +14,7 @@ protocol BaseDTO: Codable {}
 struct ApiResponseDTO<T: Codable>: BaseDTO {
     let message: String
     let data: T
-    let timestamp: String
+    let timestamp: Double
     let currency: String?
     let locale: String?
     let status: Int?
@@ -120,10 +120,10 @@ struct RoleInfoDTO: BaseDTO {
     let roleName: String
     
     enum CodingKeys: String, CodingKey {
-        case isAdmin = "is_admin"
-        case roleModifiable = "role_modifiable"
-        case roleModificationReason = "role_modification_reason"
-        case roleName = "role_name"
+        case isAdmin = "isAdmin"
+        case roleModifiable = "roleModifiable"
+        case roleModificationReason = "roleModificationReason"
+        case roleName = "roleName"
     }
 }
 
@@ -173,46 +173,49 @@ struct UserDTO: BaseDTO {
     let maxCoverImageSizeMB: String?
     
     enum CodingKeys: String, CodingKey {
-        case id
-        case firstName = "first_name"
-        case lastName = "last_name"
-        case email
-        case displayName = "display_name"
-        case fullName = "full_name"
-        case birthDate = "birth_date"
-        case city, country, phone
-        case preferredLanguage = "preferred_language"
-        case active, enabled
-        case accountNonExpired = "account_non_expired"
-        case accountNonLocked = "account_non_locked"
-        case credentialsNonExpired = "credentials_non_expired"
-        case emailVerified = "email_verified"
-        case emailVerifiedAt = "email_verified_at"
-        case isVerified = "is_verified"
-        case isPrivate = "is_private"
-        case isPro = "is_pro"
-        case canAccessProFeatures = "can_access_pro_features"
-        case proSeller = "pro_seller"
-        case isActiveSellerProfile = "is_active_seller_profile"
-        case isSellingActive = "is_selling_active"
-        case individualUser = "individual_user"
-        case admin
-        case role
-        case roleDescription = "role_description"
-        case roleId = "role_id"
-        case hasProfileImage = "has_profile_image"
-        case hasCoverImage = "has_cover_image"
-        case activeImageCount = "active_image_count"
-        case followersCount = "followers_count"
-        case followingCount = "following_count"
-        case postsCount = "posts_count"
-        case purchasesCount = "purchases_count"
-        case createdAt = "created_at"
-        case createdBy = "created_by"
-        case lastActivityAt = "last_activity_at"
-        case imageCapabilities = "image_capabilities"
-        case maxProfileImageSizeMB = "max_profile_image_size_mb"
-        case maxCoverImageSizeMB = "max_cover_image_size_mb"
+        case id = "id"
+        case firstName = "firstName"
+        case lastName = "lastName"
+        case email = "email"
+        case displayName = "displayName"
+        case fullName = "fullName"
+        case birthDate = "birthDate"
+        case city = "city"
+        case country = "country"
+        case phone = "phone"
+        case preferredLanguage = "preferredLanguage"
+        case active = "active"
+        case enabled = "enabled"
+        case accountNonExpired = "accountNonExpired"
+        case accountNonLocked = "accountNonLocked"
+        case credentialsNonExpired = "credentialsNonExpired"
+        case emailVerified = "emailVerified"
+        case emailVerifiedAt = "emailVerifiedAt"
+        case isVerified = "isVerified"
+        case isPrivate = "isPrivate"
+        case isPro = "isPro"
+        case canAccessProFeatures = "canAccessProFeatures"
+        case proSeller = "proSeller"
+        case isActiveSellerProfile = "isActiveSellerProfile"
+        case isSellingActive = "isSellingActive"
+        case individualUser = "individualUser"
+        case admin = "admin"
+        case role = "role"
+        case roleDescription = "roleDescription"
+        case roleId = "roleId"
+        case hasProfileImage = "hasProfileImage"
+        case hasCoverImage = "hasCoverImage"
+        case activeImageCount = "activeImageCount"
+        case followersCount = "followersCount"
+        case followingCount = "followingCount"
+        case postsCount = "postsCount"
+        case purchasesCount = "purchasesCount"
+        case createdAt = "createdAt"
+        case createdBy = "createdBy"
+        case lastActivityAt = "lastActivityAt"
+        case imageCapabilities = "imageCapabilities"
+        case maxProfileImageSizeMB = "maxProfileImageSizeMB"
+        case maxCoverImageSizeMB = "maxCoverImageSizeMB"
     }
 }
 
@@ -225,12 +228,12 @@ struct ImageCapabilitiesDTO: BaseDTO {
     let maxCoverImageSizeMB: String
     
     enum CodingKeys: String, CodingKey {
-        case canUploadProfileImage = "can_upload_profile_image"
-        case canUploadCoverImage = "can_upload_cover_image"
-        case maxProfileImageSize = "max_profile_image_size"
-        case maxProfileImageSizeMB = "max_profile_image_size_mb"
-        case maxCoverImageSize = "max_cover_image_size"
-        case maxCoverImageSizeMB = "max_cover_image_size_mb"
+        case canUploadProfileImage = "canUploadProfileImage"
+        case canUploadCoverImage = "canUploadCoverImage"
+        case maxProfileImageSize = "maxProfileImageSize"
+        case maxProfileImageSizeMB = "maxProfileImageSizeMB"
+        case maxCoverImageSize = "maxCoverImageSize"
+        case maxCoverImageSizeMB = "maxCoverImageSizeMB"
     }
 }
 
