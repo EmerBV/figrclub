@@ -9,14 +9,14 @@ import Foundation
 
 // MARK: - User Endpoints
 enum UserEndpoints: APIEndpoint {
-    case getCurrentUser(userId: Int)  // ✅ Ahora requiere userId
+    case getCurrentUser(userId: Int)
     case getUser(id: Int)
-    case updateUser(id: Int, data: [String: Any])
+    case updateUser(id: Int, data: UserUpdateRequestDTO)
     
     var path: String {
         switch self {
         case .getCurrentUser(let userId):
-            return "/users/\(userId)"  // ✅ Usar userId en lugar de "/users/me"
+            return "/users/\(userId)"
         case .getUser(let id):
             return "/users/\(id)"
         case .updateUser(let id, _):
@@ -38,7 +38,7 @@ enum UserEndpoints: APIEndpoint {
         case .getCurrentUser, .getUser:
             return nil
         case .updateUser(_, let data):
-            return data
+            return try? data.toDictionary()
         }
     }
 }

@@ -59,29 +59,13 @@ struct Consent: Codable {
     let isGranted: Bool
 }
 
-// MARK: - Response Models
-struct AuthResponse: Codable {
-    let message: String
-    let data: AuthData
-    let timestamp: Date
-    let currency: String?
-    let locale: String?
-    let status: Int?
-}
-
-struct AuthData: Codable {
+struct AuthData {
     let authToken: AuthToken
     let userId: Int
     let email: String
 }
 
-struct RegisterResponse: Codable {
-    let message: String
-    let data: RegisterData
-    let timestamp: Date
-}
-
-struct RegisterData: Codable {
+struct RegisterData {
     let userId: Int
     let email: String
     let fullName: String
@@ -89,22 +73,12 @@ struct RegisterData: Codable {
     let emailSent: Bool
 }
 
-// MARK: - User Response Models - ✅ ACTUALIZADO para reflejar la estructura real de la API
-struct UserResponse: Codable {
-    let message: String
-    let data: UserResponseData
-    let timestamp: Date
-    let currency: String?
-    let locale: String?
-    let status: Int?
-}
-
-struct UserResponseData: Codable {
+struct UserResponseData {
     let roleInfo: RoleInfo
     let user: User
 }
 
-struct RoleInfo: Codable {
+struct RoleInfo {
     let isAdmin: Bool
     let roleModifiable: Bool
     let roleModificationReason: String
@@ -181,19 +155,3 @@ struct ImageCapabilities: Codable {
     let maxCoverImageSizeMB: String
 }
 
-// MARK: - API Generic Response
-struct ApiResponse<T: Codable>: Codable {
-    let message: String
-    let data: T
-    let timestamp: Date?
-}
-
-// MARK: - Empty Response
-struct EmptyResponse: Codable {}
-
-// MARK: - Error Response
-struct APIError: Codable {
-    let message: String
-    let code: String?
-    let details: [String]?
-}

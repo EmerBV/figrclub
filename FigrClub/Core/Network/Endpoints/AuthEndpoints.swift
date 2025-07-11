@@ -9,8 +9,8 @@ import Foundation
 
 // MARK: - Auth Endpoints
 enum AuthEndpoints: APIEndpoint {
-    case login(request: LoginRequest)
-    case register(request: RegisterRequest)
+    case login(request: LoginRequestDTO)
+    case register(request: RegisterRequestDTO)
     case logout
     case refreshToken
     

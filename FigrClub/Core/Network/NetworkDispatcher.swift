@@ -237,16 +237,18 @@ final class NetworkDispatcher: NetworkDispatcherProtocol, @unchecked Sendable {
     }
     
     private func performTokenRefresh() async throws -> String {
-        // This would call your refresh token endpoint
-        // For now, we'll simulate the refresh process
-        
         let refreshEndpoint = AuthEndpoints.refreshToken
-        let response: AuthResponse = try await dispatch(refreshEndpoint)
+        
+        // ✅ Get DTO response (which is Codable)
+        let responseDTO: AuthResponseDTO = try await dispatch(refreshEndpoint)
+        
+        // ✅ Extract token from DTO
+        let newToken = responseDTO.data.authToken.token
         
         // Save new token
-        await tokenManager.saveToken(response.data.authToken.token)
+        await tokenManager.saveToken(newToken)
         
-        return response.data.authToken.token
+        return newToken
     }
     
     // MARK: - Response Validation
@@ -262,13 +264,23 @@ final class NetworkDispatcher: NetworkDispatcherProtocol, @unchecked Sendable {
         case 404:
             throw NetworkError.notFound
         case 400...499:
-            let apiError = try? jsonDecoder.decode(APIError.self, from: data)
-            throw NetworkError.badRequest(apiError)
+            let apiError = try? jsonDecoder.decode(ErrorResponseDTO.self, from: data)
+            throw NetworkError.badRequest(convertDTOToAPIError(apiError))
         case 500...599:
-            let apiError = try? jsonDecoder.decode(APIError.self, from: data)
-            throw NetworkError.serverError(apiError)
+            let apiError = try? jsonDecoder.decode(ErrorResponseDTO.self, from: data)
+            throw NetworkError.serverError(convertDTOToAPIError(apiError))
         default:
             throw NetworkError.unknown(NSError(domain: "HTTPError", code: response.statusCode, userInfo: nil))
         }
+    }
+    
+    private func convertDTOToAPIError(_ errorDTO: ErrorResponseDTO?) -> APIError? {
+        guard let errorDTO = errorDTO else { return nil }
+        
+        return APIError(
+            message: errorDTO.data.message,
+            code: errorDTO.data.code,
+            details: errorDTO.data.details
+        )
     }
 }
