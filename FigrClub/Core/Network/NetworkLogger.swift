@@ -8,6 +8,14 @@
 import Foundation
 import os.log
 
+// MARK: - Network Logger Protocol
+protocol NetworkLoggerProtocol: Sendable {
+    func logRequest(_ request: URLRequest)
+    func logResponse(_ response: HTTPURLResponse, data: Data)
+    func logError(_ error: Error, for request: URLRequest?)
+    func logPerformance(url: String, duration: TimeInterval, dataSize: Int)
+}
+
 // MARK: - Network Logger Implementation
 final class NetworkLogger: NetworkLoggerProtocol, @unchecked Sendable {
     

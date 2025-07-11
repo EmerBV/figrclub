@@ -68,3 +68,43 @@ enum NetworkError: Error, LocalizedError {
         }
     }
 }
+
+// MARK: - Network Error Extensions for Enhanced Endpoint
+extension NetworkError {
+    
+    /// Determine if error is retryable based on endpoint's retry policy
+    func isRetryableForEndpoint(_ endpoint: APIEndpoint) -> Bool {
+        switch self {
+        case .badRequest, .unauthorized, .forbidden, .notFound:
+            return false
+        case .serverError, .timeout, .noInternetConnection, .rateLimited:
+            return endpoint.retryPolicy.maxRetries > 0
+        case .invalidURL, .invalidResponse, .decodingError:
+            return false
+        case .maintenance:
+            return endpoint.retryPolicy.maxRetries > 0
+        case .unknown:
+            return endpoint.retryPolicy.maxRetries > 0
+        }
+    }
+    
+    /// Get the HTTP status code if this is an HTTP error
+    var httpStatusCode: Int? {
+        switch self {
+        case .badRequest:
+            return 400
+        case .unauthorized:
+            return 401
+        case .forbidden:
+            return 403
+        case .notFound:
+            return 404
+        case .serverError:
+            return 500
+        case .rateLimited:
+            return 429
+        default:
+            return nil
+        }
+    }
+}

@@ -7,6 +7,18 @@
 
 import Foundation
 
+// MARK: - Request Models
+struct LoginRequest {
+    let email: String
+    let password: String
+}
+
+struct AuthData {
+    let authToken: AuthToken
+    let userId: Int
+    let email: String
+}
+
 // MARK: - Auth Token
 struct AuthToken: Codable, Equatable {
     let id: Int
@@ -15,12 +27,6 @@ struct AuthToken: Codable, Equatable {
     enum CodingKeys: String, CodingKey {
         case id, token
     }
-}
-
-// MARK: - Request Models
-struct LoginRequest {
-    let email: String
-    let password: String
 }
 
 struct RegisterRequest {
@@ -34,6 +40,14 @@ struct RegisterRequest {
     let consents: [Consent]
 }
 
+struct RegisterData {
+    let userId: Int
+    let email: String
+    let fullName: String
+    let emailVerified: Bool
+    let emailSent: Bool
+}
+
 struct LegalAcceptance {
     let documentType: String
     let acceptedAt: Date
@@ -42,20 +56,6 @@ struct LegalAcceptance {
 struct Consent {
     let consentType: String
     let isGranted: Bool
-}
-
-struct AuthData {
-    let authToken: AuthToken
-    let userId: Int
-    let email: String
-}
-
-struct RegisterData {
-    let userId: Int
-    let email: String
-    let fullName: String
-    let emailVerified: Bool
-    let emailSent: Bool
 }
 
 struct UserResponseData {
