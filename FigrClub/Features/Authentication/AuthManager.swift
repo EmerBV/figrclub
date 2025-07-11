@@ -18,12 +18,14 @@ final class AuthStateManager: ObservableObject {
     private let tokenManager: TokenManager
     private var cancellables = Set<AnyCancellable>()
     
+    private var credentialCheckTimer: Timer?
+    
     nonisolated init(authRepository: AuthRepositoryProtocol, tokenManager: TokenManager) {
         self.authRepository = authRepository
         self.tokenManager = tokenManager
         
         Task { @MainActor in
-            self.setupSubscriptions()
+            self.setupCredentialMonitoring()
             await self.checkInitialAuthState()
         }
     }
@@ -92,26 +94,16 @@ final class AuthStateManager: ObservableObject {
         }
     }
     
-    /// Método mejorado para obtener el usuario actual
     func getCurrentUser() async -> Result<User, Error> {
-        // ✅ Verificar que tenemos userId antes de hacer la llamada
-        guard let userId = await tokenManager.getCurrentUserId() else {
+        // ✅ Verificar credenciales usando el método async
+        guard await tokenManager.hasValidCredentials() else {
             let error = AuthError.noUserIdFound
-            Logger.error("❌ AuthStateManager: No userId found in stored tokens")
-            await updateErrorState(error)
-            return .failure(error)
-        }
-        
-        // ✅ Verificar que tenemos un token válido
-        guard await tokenManager.getToken() != nil else {
-            let error = AuthError.invalidToken
-            Logger.error("❌ AuthStateManager: No valid token found")
+            Logger.error("❌ AuthStateManager: No valid credentials found")
             await updateErrorState(error)
             return .failure(error)
         }
         
         do {
-            // ✅ AuthRepository ya maneja el userId internamente
             let user = try await authRepository.getCurrentUser()
             await updateAuthenticatedState(with: user)
             Logger.info("✅ AuthStateManager: Successfully retrieved current user: \(user.displayName) (ID: \(user.id))")
@@ -138,13 +130,10 @@ final class AuthStateManager: ObservableObject {
     func checkInitialAuthState() async {
         Logger.info("🔍 AuthStateManager: Checking initial authentication state")
         
-        // ✅ Verificar que tenemos tanto token como userId
-        let hasValidToken = await tokenManager.getToken() != nil
-        let hasUserId = await tokenManager.getCurrentUserId() != nil
-        
-        guard hasValidToken && hasUserId else {
+        // ✅ Usar método async para verificar credenciales
+        guard await tokenManager.hasValidCredentials() else {
             await updateUnauthenticatedState()
-            Logger.info("📱 AuthStateManager: No valid authentication found (Token: \(hasValidToken), UserId: \(hasUserId))")
+            Logger.info("📱 AuthStateManager: No valid authentication found")
             return
         }
         
@@ -179,36 +168,30 @@ final class AuthStateManager: ObservableObject {
         return await getCurrentUser()
     }
     
-    // MARK: - Private Methods
-    
-    private func setupSubscriptions() {
-        // Listen to token manager authentication changes
-        tokenManager.$isAuthenticated
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] isAuthenticated in
-                if !isAuthenticated && self?.isAuthenticated == true {
-                    // Token was cleared, update auth state
-                    Logger.warning("⚠️ AuthStateManager: Token cleared externally, updating auth state")
-                    Task { @MainActor in
-                        await self?.updateUnauthenticatedState()
-                    }
-                }
+    private func setupCredentialMonitoring() {
+        // ✅ Monitor credentials periodically instead of reactive subscriptions
+        credentialCheckTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                await self?.checkCredentialsIfAuthenticated()
             }
-            .store(in: &cancellables)
+        }
         
-        // Listen to userId changes
-        tokenManager.$currentUserId
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] userId in
-                if userId == nil && self?.isAuthenticated == true {
-                    Logger.warning("⚠️ AuthStateManager: UserId cleared, updating auth state")
-                    Task { @MainActor in
-                        await self?.updateUnauthenticatedState()
-                    }
-                }
-            }
-            .store(in: &cancellables)
+        Logger.debug("🔄 AuthStateManager: Credential monitoring setup completed")
     }
+    
+    private func checkCredentialsIfAuthenticated() async {
+        // Solo verificar si estamos actualmente autenticados
+        guard isAuthenticated else { return }
+        
+        let hasValidCredentials = await tokenManager.hasValidCredentials()
+        
+        if !hasValidCredentials {
+            Logger.warning("⚠️ AuthStateManager: Credentials invalidated, updating auth state")
+            await updateUnauthenticatedState()
+        }
+    }
+    
+    // MARK: - Private Methods
     
     private func updateAuthenticatedState(with user: User) async {
         currentUser = user
@@ -241,6 +224,11 @@ final class AuthStateManager: ObservableObject {
         errorMessage.contains("401") ||
         errorMessage.contains("invalid token") ||
         errorMessage.contains("expired")
+    }
+    
+    deinit {
+        credentialCheckTimer?.invalidate()
+        credentialCheckTimer = nil
     }
 }
 

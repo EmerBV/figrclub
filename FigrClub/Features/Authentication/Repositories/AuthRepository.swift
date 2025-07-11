@@ -30,7 +30,7 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
         let request = LoginRequest(email: email, password: password)
         let response = try await authService.login(request)
         
-        // ✅ Guardar tanto token como userId de la respuesta de login
+        // Guardar tanto token como userId de la respuesta de login
         await tokenManager.saveAuthData(
             token: response.data.authToken.token,
             userId: response.data.userId  // 🔑 Este viene de la respuesta de login
@@ -38,9 +38,9 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
         
         Logger.info("✅ AuthRepository: Login tokens saved - UserId: \(response.data.userId)")
         
-        // ✅ Obtener los datos completos del usuario usando el userId
+        // Obtener los datos completos del usuario usando el userId
         let userResponse = try await authService.getCurrentUser(userId: response.data.userId)
-        // ✅ CORREGIDO: Ahora acceder al usuario desde la estructura anidada
+        // Acceder al usuario desde la estructura anidada
         try saveUser(userResponse.data.user)
         
         Logger.info("✅ AuthRepository: Login successful for user: \(userResponse.data.user.displayName)")
@@ -53,7 +53,7 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
         let firstName = nameParts.first ?? ""
         let lastName = nameParts.count > 1 ? nameParts.dropFirst().joined(separator: " ") : ""
         
-        // ✅ Create domain model request
+        // Create domain model request
         let request = RegisterRequest(
             firstName: firstName,
             lastName: lastName,
@@ -99,7 +99,7 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
         }
         
         let userResponse = try await authService.getCurrentUser(userId: userId)
-        // ✅ CORREGIDO: Ahora acceder al usuario desde la estructura anidada
+        // Acceder al usuario desde la estructura anidada
         try saveUser(userResponse.data.user)
         
         Logger.info("✅ AuthRepository: Token refresh successful")
@@ -113,7 +113,7 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
             return cachedUser
         }
         
-        // ✅ Obtener userId del TokenManager
+        // Obtener userId del TokenManager
         guard let userId = await tokenManager.getCurrentUserId() else {
             Logger.error("❌ AuthRepository: No userId found for getCurrentUser")
             throw AuthError.noUserIdFound
@@ -121,7 +121,7 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
         
         // Fetch from server using userId
         let response = try await authService.getCurrentUser(userId: userId)
-        // ✅ CORREGIDO: Ahora acceder al usuario desde la estructura anidada
+        // Acceder al usuario desde la estructura anidada
         try saveUser(response.data.user)
         
         Logger.info("✅ AuthRepository: Current user fetched from server")
@@ -129,7 +129,6 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
     }
     
     // MARK: - Private Methods
-    
     private func saveUser(_ user: User) throws {
         try secureStorage.save(user, forKey: AppConfig.Auth.userKey)
         Logger.debug("💾 AuthRepository: User data saved to secure storage")

@@ -7,7 +7,7 @@
 
 import Foundation
 
-// MARK: - Auth Service Protocol (Final)
+// MARK: - Auth Service Protocol
 protocol AuthServiceProtocol: Sendable {
     func login(_ request: LoginRequest) async throws -> AuthResponse
     func register(_ request: RegisterRequest) async throws -> RegisterResponse
@@ -16,7 +16,7 @@ protocol AuthServiceProtocol: Sendable {
     func refreshToken() async throws -> AuthResponse
 }
 
-// MARK: - Auth Service Implementation (Final)
+// MARK: - Auth Service Implementation
 final class AuthService: AuthServiceProtocol {
     
     // MARK: - Properties
@@ -25,11 +25,10 @@ final class AuthService: AuthServiceProtocol {
     // MARK: - Initialization
     init(networkDispatcher: NetworkDispatcherProtocol) {
         self.networkDispatcher = networkDispatcher
-        Logger.debug("🔧 AuthService: Initialized with NetworkDispatcher and Generic DTOs")
+        Logger.debug("🔧 AuthService: Initialized with simplified mappers")
     }
     
     // MARK: - AuthServiceProtocol Implementation
-    
     func login(_ request: LoginRequest) async throws -> AuthResponse {
         // Convert domain model to DTO
         let requestDTO = LoginRequestDTO(
@@ -41,11 +40,9 @@ final class AuthService: AuthServiceProtocol {
         Logger.debug("🔐 AuthService: Calling login endpoint for user: \(request.email)")
         
         do {
-            // ✅ Get generic DTO response from network
             let responseDTO: AuthResponseDTO = try await networkDispatcher.dispatch(endpoint)
             
-            // ✅ Convert DTO to domain model using generic mapper
-            let response = AuthMapper.toDomainModel(from: responseDTO)
+            let response = AuthMappers.toAuthResponse(from: responseDTO)
             
             Logger.info("✅ AuthService: Login successful for user: \(request.email)")
             return response
@@ -82,11 +79,9 @@ final class AuthService: AuthServiceProtocol {
         Logger.debug("📝 AuthService: Calling register endpoint for user: \(request.email)")
         
         do {
-            // ✅ Get generic DTO response from network
             let responseDTO: RegisterResponseDTO = try await networkDispatcher.dispatch(endpoint)
             
-            // ✅ Convert DTO to domain model using generic mapper
-            let response = RegisterMapper.toDomainModel(from: responseDTO)
+            let response = AuthMappers.toRegisterResponse(from: responseDTO)
             
             Logger.info("✅ AuthService: Registration successful for user: \(request.email)")
             return response
@@ -101,7 +96,6 @@ final class AuthService: AuthServiceProtocol {
         Logger.debug("🚪 AuthService: Calling logout endpoint")
         
         do {
-            // ✅ Using generic empty response
             let _: EmptyResponseDTO = try await networkDispatcher.dispatch(endpoint)
             Logger.info("✅ AuthService: Logout successful")
         } catch {
@@ -115,11 +109,9 @@ final class AuthService: AuthServiceProtocol {
         Logger.debug("👤 AuthService: Getting current user with ID: \(userId)")
         
         do {
-            // ✅ Get generic DTO response from network
             let responseDTO: UserResponseDTO = try await networkDispatcher.dispatch(endpoint)
             
-            // ✅ Convert DTO to domain model using generic mapper
-            let response = UserResponseMapper.toDomainModel(from: responseDTO)
+            let response = UserMappers.toUserResponse(from: responseDTO)
             
             Logger.info("✅ AuthService: Got current user successfully for userId: \(userId)")
             return response
@@ -134,11 +126,9 @@ final class AuthService: AuthServiceProtocol {
         Logger.debug("🔄 AuthService: Refreshing token")
         
         do {
-            // ✅ Get generic DTO response from network
             let responseDTO: AuthResponseDTO = try await networkDispatcher.dispatch(endpoint)
             
-            // ✅ Convert DTO to domain model using generic mapper
-            let response = AuthMapper.toDomainModel(from: responseDTO)
+            let response = AuthMappers.toAuthResponse(from: responseDTO)
             
             Logger.info("✅ AuthService: Token refresh successful")
             return response

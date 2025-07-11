@@ -14,7 +14,7 @@ final class NetworkAssembly: Assembly {
         
         // MARK: - Core Configuration
         
-        // API Configuration
+        // API Configuration (Single source of truth)
         container.register(APIConfigurationProtocol.self) { _ in
             return APIConfiguration()
         }.inObjectScope(.container)
@@ -47,7 +47,7 @@ final class NetworkAssembly: Assembly {
         
         // MARK: - Network Layer
         
-        // URL Session Provider
+        // URL Session Provider (uses centralized configuration)
         container.register(URLSessionProviderProtocol.self) { resolver in
             let configuration = resolver.resolve(APIConfigurationProtocol.self)!
             let logger = resolver.resolve(NetworkLoggerProtocol.self)!
@@ -61,24 +61,9 @@ final class NetworkAssembly: Assembly {
             return NetworkDispatcher(sessionProvider: sessionProvider, tokenManager: tokenManager)
         }.inObjectScope(.container)
         
-        // MARK: - Network Configuration
+        // ✅ REMOVED: Duplicate URLSession registration
+        // The URLSession is now created internally by URLSessionProvider using centralized configuration
         
-        // URLSession (configured instance)
-        container.register(URLSession.self) { resolver in
-            let configuration = resolver.resolve(APIConfigurationProtocol.self)!
-            
-            let config = URLSessionConfiguration.default
-            config.timeoutIntervalForRequest = configuration.timeout
-            config.timeoutIntervalForResource = configuration.timeout * 2
-            config.allowsCellularAccess = configuration.allowsCellularAccess
-            config.waitsForConnectivity = configuration.waitsForConnectivity
-            
-            // Security settings
-            config.httpShouldSetCookies = false
-            config.httpCookieAcceptPolicy = .never
-            config.requestCachePolicy = .reloadIgnoringLocalCacheData
-            
-            return URLSession(configuration: config)
-        }.inObjectScope(.container)
+        Logger.info("🔧 NetworkAssembly: All network dependencies registered with centralized configuration")
     }
 }

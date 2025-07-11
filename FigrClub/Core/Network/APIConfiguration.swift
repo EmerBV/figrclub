@@ -14,6 +14,8 @@ protocol APIConfigurationProtocol: Sendable {
     var defaultHeaders: [String: String] { get }
     var allowsCellularAccess: Bool { get }
     var waitsForConnectivity: Bool { get }
+    
+    func createURLSessionConfiguration() -> URLSessionConfiguration
 }
 
 // MARK: - API Configuration Implementation
@@ -42,6 +44,27 @@ final class APIConfiguration: APIConfigurationProtocol {
         Logger.debug("  📱 Cellular Access: \(allowsCellularAccess)")
         Logger.debug("  🔗 Wait for Connectivity: \(waitsForConnectivity)")
         Logger.debug("  📋 Headers: \(defaultHeaders.keys.joined(separator: ", "))")
+    }
+    
+    // ✅ CENTRALIZED: Single source of truth for URLSession configuration
+    func createURLSessionConfiguration() -> URLSessionConfiguration {
+        let config = URLSessionConfiguration.default
+        
+        // Timeout settings
+        config.timeoutIntervalForRequest = timeout
+        config.timeoutIntervalForResource = timeout * 2
+        
+        // Network settings
+        config.allowsCellularAccess = allowsCellularAccess
+        config.waitsForConnectivity = waitsForConnectivity
+        
+        // Security settings
+        config.httpShouldSetCookies = false
+        config.httpCookieAcceptPolicy = .never
+        config.requestCachePolicy = .reloadIgnoringLocalCacheData
+        
+        Logger.debug("🔧 URLSessionConfiguration created with centralized settings")
+        return config
     }
     
     /// Get configuration summary for debugging
@@ -81,24 +104,9 @@ final class URLSessionProvider: URLSessionProviderProtocol, @unchecked Sendable 
         self.configuration = configuration
         self.logger = logger
         
-        // Configure URLSession
-        let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = configuration.timeout
-        config.timeoutIntervalForResource = configuration.timeout * 2
-        config.allowsCellularAccess = configuration.allowsCellularAccess
-        config.waitsForConnectivity = configuration.waitsForConnectivity
+        self.session = URLSession(configuration: configuration.createURLSessionConfiguration())
         
-        // Security configurations
-        config.httpShouldSetCookies = false
-        config.httpCookieAcceptPolicy = .never
-        config.requestCachePolicy = .reloadIgnoringLocalCacheData
-        
-        self.session = URLSession(configuration: config)
-        
-        Logger.debug("🔧 URLSessionProvider initialized with:")
-        Logger.debug("  ⏱️ Request Timeout: \(config.timeoutIntervalForRequest)s")
-        Logger.debug("  📱 Cellular Access: \(config.allowsCellularAccess)")
-        Logger.debug("  🔗 Wait Connectivity: \(config.waitsForConnectivity)")
+        Logger.debug("🔧 URLSessionProvider initialized with centralized configuration")
     }
     
     func dataTask(for request: URLRequest) async throws -> (Data, URLResponse) {
@@ -226,13 +234,6 @@ extension APIConfiguration {
         return config
     }
     
-    /// Create configuration with custom timeout
-    static func withTimeout(_ timeout: TimeInterval) -> APIConfiguration {
-        let config = APIConfiguration()
-        // Note: This would require making timeout mutable or creating a custom init
-        Logger.debug("⏱️ Custom timeout requested: \(timeout)s (using default: \(config.timeout)s)")
-        return config
-    }
 }
 
 // MARK: - Validation

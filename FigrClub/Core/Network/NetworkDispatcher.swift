@@ -31,36 +31,19 @@ final class NetworkDispatcher: NetworkDispatcherProtocol, @unchecked Sendable {
         self.sessionProvider = sessionProvider
         self.tokenManager = tokenManager
         
-        // Configure JSON Decoder with enhanced date decoding
+        // Single date decoding strategy
         self.jsonDecoder = JSONDecoder()
-        
-        // ✅ SOLUCION: Estrategia de decodificación de fechas personalizada
         self.jsonDecoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
             
-            // Intentar decodificar como timestamp en milisegundos (número)
+            // Try timestamp (number) first
             if let timestamp = try? container.decode(Double.self) {
                 return Date(timeIntervalSince1970: timestamp / 1000.0)
             }
             
-            // Intentar decodificar como timestamp en segundos (número)
-            if let timestamp = try? container.decode(Int64.self) {
-                // Si es mayor que 1000000000000 (año 2001+), probablemente son milisegundos
-                if timestamp > 1000000000000 {
-                    return Date(timeIntervalSince1970: Double(timestamp) / 1000.0)
-                } else {
-                    return Date(timeIntervalSince1970: Double(timestamp))
-                }
-            }
-            
-            // Intentar decodificar como string (varios formatos)
+            // Try string formats
             if let dateString = try? container.decode(String.self) {
-                // ISO8601 con fracciones de segundo
-                if let date = ISO8601DateFormatter().date(from: dateString) {
-                    return date
-                }
-                
-                // ISO8601 personalizado con milisegundos
+                // ISO8601 with milliseconds
                 let formatter = DateFormatter()
                 formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
                 formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -70,25 +53,9 @@ final class NetworkDispatcher: NetworkDispatcherProtocol, @unchecked Sendable {
                     return date
                 }
                 
-                // Formato ISO básico
-                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-                if let date = formatter.date(from: dateString) {
+                // ISO8601 basic
+                if let date = ISO8601DateFormatter().date(from: dateString) {
                     return date
-                }
-                
-                // Formato alternativo sin zona horaria
-                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-                if let date = formatter.date(from: dateString) {
-                    return date
-                }
-                
-                // Si es un string que representa un número (timestamp como string)
-                if let timestamp = Double(dateString) {
-                    if timestamp > 1000000000000 {
-                        return Date(timeIntervalSince1970: timestamp / 1000.0)
-                    } else {
-                        return Date(timeIntervalSince1970: timestamp)
-                    }
                 }
             }
             
@@ -98,11 +65,10 @@ final class NetworkDispatcher: NetworkDispatcherProtocol, @unchecked Sendable {
             )
         }
         
-        Logger.debug("✅ NetworkDispatcher: Initialized with enhanced date decoding strategy")
+        Logger.debug("✅ NetworkDispatcher: Initialized with simplified date decoding")
     }
     
     // MARK: - Public Methods
-    
     func dispatch<T: Codable>(_ endpoint: APIEndpoint) async throws -> T {
         let data = try await dispatchData(endpoint)
         
@@ -142,8 +108,7 @@ final class NetworkDispatcher: NetworkDispatcherProtocol, @unchecked Sendable {
         }
     }
     
-    // MARK: - Private Methods (resto del código igual...)
-    
+    // MARK: - Private Methods
     private func executeAuthenticatedRequest(_ endpoint: APIEndpoint) async throws -> Data {
         // First, try with current token
         do {
@@ -228,8 +193,7 @@ final class NetworkDispatcher: NetworkDispatcherProtocol, @unchecked Sendable {
         throw lastError ?? NetworkError.unknown(NSError(domain: "UnknownError", code: -1))
     }
     
-    // MARK: - Token Refresh Logic
-    
+    // MARK: - Token Refresh Logic (unchanged)
     private func refreshTokenIfNeeded() async throws -> String {
         return try await withCheckedThrowingContinuation { continuation in
             refreshQueue.async { [weak self] in
@@ -286,10 +250,10 @@ final class NetworkDispatcher: NetworkDispatcherProtocol, @unchecked Sendable {
     private func performTokenRefresh() async throws -> String {
         let refreshEndpoint = AuthEndpoints.refreshToken
         
-        // ✅ Get DTO response (which is Codable)
+        // Get DTO response (which is Codable)
         let responseDTO: AuthResponseDTO = try await dispatch(refreshEndpoint)
         
-        // ✅ Extract token from DTO
+        // Extract token from DTO
         let newToken = responseDTO.data.authToken.token
         
         // Save new token
@@ -299,7 +263,6 @@ final class NetworkDispatcher: NetworkDispatcherProtocol, @unchecked Sendable {
     }
     
     // MARK: - Response Validation
-    
     private func validateResponse(data: Data, response: HTTPURLResponse) throws -> Data {
         switch response.statusCode {
         case 200...299:

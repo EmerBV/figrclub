@@ -70,7 +70,6 @@ struct RoleInfo {
     let roleName: String
 }
 
-// MARK: - Updated User Model - ✅ ACTUALIZADO para coincidir exactamente con la API
 struct User: Codable, Identifiable, Equatable {
     let id: Int
     let firstName: String

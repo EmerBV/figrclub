@@ -32,12 +32,12 @@ struct AuthDataDTO: BaseDTO {
     let email: String
 }
 
+typealias AuthResponseDTO = ApiResponseDTO<AuthDataDTO>
+
 struct AuthTokenDTO: BaseDTO {
     let id: Int
     let token: String
 }
-
-typealias AuthResponseDTO = ApiResponseDTO<AuthDataDTO>
 
 struct RegisterRequestDTO: BaseDTO {
     let firstName: String
@@ -56,14 +56,6 @@ struct RegisterDataDTO: BaseDTO {
     let fullName: String
     let emailVerified: Bool
     let emailSent: Bool
-    
-    enum CodingKeys: String, CodingKey {
-        case userId = "userId"
-        case email
-        case fullName = "fullName"
-        case emailVerified = "emailVerified"
-        case emailSent = "emailSent"
-    }
 }
 
 typealias RegisterResponseDTO = ApiResponseDTO<RegisterDataDTO>
@@ -85,45 +77,6 @@ struct ConsentDTO: BaseDTO {
     enum CodingKeys: String, CodingKey {
         case consentType = "consent_type"
         case isGranted = "is_granted"
-    }
-}
-
-// MARK: - User DTOs (Refactored)
-struct UserResponseDataDTO: BaseDTO {
-    let roleInfo: RoleInfoDTO
-    let user: UserDTO
-}
-
-typealias UserResponseDTO = ApiResponseDTO<UserResponseDataDTO>
-
-struct UserUpdateRequestDTO: BaseDTO {
-    let firstName: String?
-    let lastName: String?
-    let bio: String?
-    let city: String?
-    let country: String?
-    let phone: String?
-    let isPrivate: Bool?
-    
-    enum CodingKeys: String, CodingKey {
-        case firstName = "firstName"
-        case lastName = "lastName"
-        case bio, city, country, phone
-        case isPrivate = "isPrivate"
-    }
-}
-
-struct RoleInfoDTO: BaseDTO {
-    let isAdmin: Bool
-    let roleModifiable: Bool
-    let roleModificationReason: String
-    let roleName: String
-    
-    enum CodingKeys: String, CodingKey {
-        case isAdmin = "isAdmin"
-        case roleModifiable = "roleModifiable"
-        case roleModificationReason = "roleModificationReason"
-        case roleName = "roleName"
     }
 }
 
@@ -171,52 +124,30 @@ struct UserDTO: BaseDTO {
     let imageCapabilities: ImageCapabilitiesDTO?
     let maxProfileImageSizeMB: String?
     let maxCoverImageSizeMB: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case id = "id"
-        case firstName = "firstName"
-        case lastName = "lastName"
-        case email = "email"
-        case displayName = "displayName"
-        case fullName = "fullName"
-        case birthDate = "birthDate"
-        case city = "city"
-        case country = "country"
-        case phone = "phone"
-        case preferredLanguage = "preferredLanguage"
-        case active = "active"
-        case enabled = "enabled"
-        case accountNonExpired = "accountNonExpired"
-        case accountNonLocked = "accountNonLocked"
-        case credentialsNonExpired = "credentialsNonExpired"
-        case emailVerified = "emailVerified"
-        case emailVerifiedAt = "emailVerifiedAt"
-        case isVerified = "isVerified"
-        case isPrivate = "isPrivate"
-        case isPro = "isPro"
-        case canAccessProFeatures = "canAccessProFeatures"
-        case proSeller = "proSeller"
-        case isActiveSellerProfile = "isActiveSellerProfile"
-        case isSellingActive = "isSellingActive"
-        case individualUser = "individualUser"
-        case admin = "admin"
-        case role = "role"
-        case roleDescription = "roleDescription"
-        case roleId = "roleId"
-        case hasProfileImage = "hasProfileImage"
-        case hasCoverImage = "hasCoverImage"
-        case activeImageCount = "activeImageCount"
-        case followersCount = "followersCount"
-        case followingCount = "followingCount"
-        case postsCount = "postsCount"
-        case purchasesCount = "purchasesCount"
-        case createdAt = "createdAt"
-        case createdBy = "createdBy"
-        case lastActivityAt = "lastActivityAt"
-        case imageCapabilities = "imageCapabilities"
-        case maxProfileImageSizeMB = "maxProfileImageSizeMB"
-        case maxCoverImageSizeMB = "maxCoverImageSizeMB"
-    }
+}
+
+struct RoleInfoDTO: BaseDTO {
+    let isAdmin: Bool
+    let roleModifiable: Bool
+    let roleModificationReason: String
+    let roleName: String
+}
+
+struct UserResponseDataDTO: BaseDTO {
+    let roleInfo: RoleInfoDTO
+    let user: UserDTO
+}
+
+typealias UserResponseDTO = ApiResponseDTO<UserResponseDataDTO>
+
+struct UserUpdateRequestDTO: BaseDTO {
+    let firstName: String?
+    let lastName: String?
+    let bio: String?
+    let city: String?
+    let country: String?
+    let phone: String?
+    let isPrivate: Bool?
 }
 
 struct ImageCapabilitiesDTO: BaseDTO {
@@ -226,15 +157,6 @@ struct ImageCapabilitiesDTO: BaseDTO {
     let maxProfileImageSizeMB: String
     let maxCoverImageSize: Int
     let maxCoverImageSizeMB: String
-    
-    enum CodingKeys: String, CodingKey {
-        case canUploadProfileImage = "canUploadProfileImage"
-        case canUploadCoverImage = "canUploadCoverImage"
-        case maxProfileImageSize = "maxProfileImageSize"
-        case maxProfileImageSizeMB = "maxProfileImageSizeMB"
-        case maxCoverImageSize = "maxCoverImageSize"
-        case maxCoverImageSizeMB = "maxCoverImageSizeMB"
-    }
 }
 
 // MARK: - Post DTOs
@@ -256,25 +178,9 @@ struct PostDataDTO: BaseDTO {
     let longitude: Double?
     let hashtags: [String]
     let mediaUrls: [String]
-    
-    enum CodingKeys: String, CodingKey {
-        case id, title, content
-        case authorId = "author_id"
-        case categoryId = "category_id"
-        case visibility
-        case publishedAt = "published_at"
-        case createdAt = "created_at"
-        case updatedAt = "updated_at"
-        case likesCount = "likes_count"
-        case commentsCount = "comments_count"
-        case sharesCount = "shares_count"
-        case location, latitude, longitude, hashtags
-        case mediaUrls = "media_urls"
-    }
 }
 
 typealias PostResponseDTO = ApiResponseDTO<PostDataDTO>
-typealias PostListResponseDTO = ApiResponseDTO<PostListDataDTO>
 
 struct PostListDataDTO: BaseDTO {
     let content: [PostDataDTO]
@@ -282,15 +188,26 @@ struct PostListDataDTO: BaseDTO {
     let totalPages: Int
     let currentPage: Int
     let size: Int
-    
-    enum CodingKeys: String, CodingKey {
-        case content
-        case totalElements = "total_elements"
-        case totalPages = "total_pages"
-        case currentPage = "current_page"
-        case size
-    }
 }
+
+typealias PostListResponseDTO = ApiResponseDTO<PostListDataDTO>
+
+// MARK: - Location DTOs
+struct LocationDataDTO: BaseDTO {
+    let latitude: Double
+    let longitude: Double
+    let country: String
+    let city: String
+    let state: String?
+    let address: String
+    let postalCode: String?
+    let timezone: String
+    let source: String
+    let accuracy: String
+    let detected: Bool
+}
+
+typealias LocationResponseDTO = ApiResponseDTO<LocationDataDTO>
 
 // MARK: - Marketplace DTOs
 struct MarketplaceItemDataDTO: BaseDTO {
@@ -322,7 +239,6 @@ struct MarketplaceItemDataDTO: BaseDTO {
 }
 
 typealias MarketplaceItemResponseDTO = ApiResponseDTO<MarketplaceItemDataDTO>
-typealias MarketplaceItemListResponseDTO = ApiResponseDTO<MarketplaceItemListDataDTO>
 
 struct MarketplaceItemListDataDTO: BaseDTO {
     let content: [MarketplaceItemDataDTO]
@@ -340,28 +256,9 @@ struct MarketplaceItemListDataDTO: BaseDTO {
     }
 }
 
-// MARK: - Location DTOs
-struct LocationDataDTO: BaseDTO {
-    let latitude: Double
-    let longitude: Double
-    let country: String
-    let city: String
-    let state: String?
-    let address: String
-    let postalCode: String?
-    let timezone: String
-    let source: String
-    let accuracy: String
-    let detected: Bool
-    
-    enum CodingKeys: String, CodingKey {
-        case latitude, longitude, country, city, state, address
-        case postalCode = "postal_code"
-        case timezone, source, accuracy, detected
-    }
-}
+typealias MarketplaceItemListResponseDTO = ApiResponseDTO<MarketplaceItemListDataDTO>
 
-typealias LocationResponseDTO = ApiResponseDTO<LocationDataDTO>
+
 
 // MARK: - Notification DTOs
 struct NotificationDataDTO: BaseDTO {
@@ -387,7 +284,6 @@ struct NotificationDataDTO: BaseDTO {
 }
 
 typealias NotificationResponseDTO = ApiResponseDTO<NotificationDataDTO>
-typealias NotificationListResponseDTO = ApiResponseDTO<NotificationListDataDTO>
 
 struct NotificationListDataDTO: BaseDTO {
     let content: [NotificationDataDTO]
@@ -404,6 +300,8 @@ struct NotificationListDataDTO: BaseDTO {
         case size
     }
 }
+
+typealias NotificationListResponseDTO = ApiResponseDTO<NotificationListDataDTO>
 
 // MARK: - Error Response (Generic)
 struct ErrorDetailsDTO: BaseDTO {

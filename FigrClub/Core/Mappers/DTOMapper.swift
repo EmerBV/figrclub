@@ -7,6 +7,16 @@
 
 import Foundation
 
+private extension Date {
+    init(fromTimestamp timestamp: Double) {
+        self.init(timeIntervalSince1970: timestamp / 1000.0)
+    }
+    
+    var toTimestamp: Double {
+        return timeIntervalSince1970 * 1000.0
+    }
+}
+
 // MARK: - Base Mapper Protocol
 protocol DTOMapper {
     associatedtype DTO: BaseDTO
@@ -17,193 +27,69 @@ protocol DTOMapper {
 }
 
 // MARK: - Base API Response Mapper
-struct ApiResponseMapper<DTOData: BaseDTO, DomainData> {
-    static func toDomainModel(
+struct ApiResponseMapper {
+    static func toDomainModel<DTOData, DomainData>(
         from dto: ApiResponseDTO<DTOData>,
         dataMapper: (DTOData) -> DomainData
     ) -> ApiResponse<DomainData> {
         return ApiResponse(
             message: dto.message,
             data: dataMapper(dto.data),
-            timestamp: Date(timeIntervalSince1970: dto.timestamp / 1000.0), // ✅ ACTUALIZADO: Convertir timestamp numérico a Date
+            timestamp: Date(fromTimestamp: dto.timestamp),
             currency: dto.currency,
             locale: dto.locale,
             status: dto.status
         )
     }
-    
-    static func toDTO(
-        from domainModel: ApiResponse<DomainData>,
-        dataMapper: (DomainData) -> DTOData
-    ) -> ApiResponseDTO<DTOData> {
-        return ApiResponseDTO(
-            message: domainModel.message,
-            data: dataMapper(domainModel.data),
-            timestamp: domainModel.timestamp.timeIntervalSince1970 * 1000, // ✅ ACTUALIZADO: Convertir Date a timestamp numérico
-            currency: domainModel.currency,
-            locale: domainModel.locale,
-            status: domainModel.status
-        )
-    }
 }
 
-// MARK: - Auth Mappers (Simplified with Generic)
-struct AuthMapper {
-    static func toDomainModel(from dto: AuthResponseDTO) -> AuthResponse {
+// MARK: - Auth Mappers (With Generic)
+struct AuthMappers {
+    
+    static func toAuthResponse(from dto: AuthResponseDTO) -> AuthResponse {
         return ApiResponseMapper.toDomainModel(from: dto) { authDataDTO in
-            AuthDataMapper.toDomainModel(from: authDataDTO)
+            AuthData(
+                authToken: AuthToken(
+                    id: authDataDTO.authToken.id,
+                    token: authDataDTO.authToken.token
+                ),
+                userId: authDataDTO.userId,
+                email: authDataDTO.email
+            )
         }
     }
     
-    static func toDTO(from domainModel: AuthResponse) -> AuthResponseDTO {
-        return ApiResponseMapper.toDTO(from: domainModel) { authData in
-            AuthDataMapper.toDTO(from: authData)
-        }
-    }
-}
-
-struct AuthDataMapper: DTOMapper {
-    typealias DTO = AuthDataDTO
-    typealias DomainModel = AuthData
-    
-    static func toDomainModel(from dto: AuthDataDTO) -> AuthData {
-        return AuthData(
-            authToken: AuthTokenMapper.toDomainModel(from: dto.authToken),
-            userId: dto.userId,
-            email: dto.email
-        )
-    }
-    
-    static func toDTO(from domainModel: AuthData) -> AuthDataDTO {
-        return AuthDataDTO(
-            authToken: AuthTokenMapper.toDTO(from: domainModel.authToken),
-            userId: domainModel.userId,
-            email: domainModel.email
-        )
-    }
-}
-
-struct AuthTokenMapper: DTOMapper {
-    typealias DTO = AuthTokenDTO
-    typealias DomainModel = AuthToken
-    
-    static func toDomainModel(from dto: AuthTokenDTO) -> AuthToken {
-        return AuthToken(
-            id: dto.id,
-            token: dto.token
-        )
-    }
-    
-    static func toDTO(from domainModel: AuthToken) -> AuthTokenDTO {
-        return AuthTokenDTO(
-            id: domainModel.id,
-            token: domainModel.token
-        )
-    }
-}
-
-// MARK: - Register Mapper (Simplified with Generic)
-struct RegisterMapper {
-    static func toDomainModel(from dto: RegisterResponseDTO) -> RegisterResponse {
+    static func toRegisterResponse(from dto: RegisterResponseDTO) -> RegisterResponse {
         return ApiResponseMapper.toDomainModel(from: dto) { registerDataDTO in
-            RegisterDataMapper.toDomainModel(from: registerDataDTO)
-        }
-    }
-    
-    static func toDTO(from domainModel: RegisterResponse) -> RegisterResponseDTO {
-        return ApiResponseMapper.toDTO(from: domainModel) { registerData in
-            RegisterDataMapper.toDTO(from: registerData)
-        }
-    }
-}
-
-struct RegisterDataMapper: DTOMapper {
-    typealias DTO = RegisterDataDTO
-    typealias DomainModel = RegisterData
-    
-    static func toDomainModel(from dto: RegisterDataDTO) -> RegisterData {
-        return RegisterData(
-            userId: dto.userId,
-            email: dto.email,
-            fullName: dto.fullName,
-            emailVerified: dto.emailVerified,
-            emailSent: dto.emailSent
-        )
-    }
-    
-    static func toDTO(from domainModel: RegisterData) -> RegisterDataDTO {
-        return RegisterDataDTO(
-            userId: domainModel.userId,
-            email: domainModel.email,
-            fullName: domainModel.fullName,
-            emailVerified: domainModel.emailVerified,
-            emailSent: domainModel.emailSent
-        )
-    }
-}
-
-// MARK: - User Mappers (Simplified with Generic)
-struct UserResponseMapper {
-    static func toDomainModel(from dto: UserResponseDTO) -> UserResponse {
-        return ApiResponseMapper.toDomainModel(from: dto) { userResponseDataDTO in
-            UserResponseDataMapper.toDomainModel(from: userResponseDataDTO)
-        }
-    }
-    
-    static func toDTO(from domainModel: UserResponse) -> UserResponseDTO {
-        return ApiResponseMapper.toDTO(from: domainModel) { userResponseData in
-            UserResponseDataMapper.toDTO(from: userResponseData)
+            RegisterData(
+                userId: registerDataDTO.userId,
+                email: registerDataDTO.email,
+                fullName: registerDataDTO.fullName,
+                emailVerified: registerDataDTO.emailVerified,
+                emailSent: registerDataDTO.emailSent
+            )
         }
     }
 }
 
-struct UserResponseDataMapper: DTOMapper {
-    typealias DTO = UserResponseDataDTO
-    typealias DomainModel = UserResponseData
+// MARK: - User Mappers (With Generic)
+struct UserMappers {
     
-    static func toDomainModel(from dto: UserResponseDataDTO) -> UserResponseData {
-        return UserResponseData(
-            roleInfo: RoleInfoMapper.toDomainModel(from: dto.roleInfo),
-            user: UserMapper.toDomainModel(from: dto.user)
-        )
+    static func toUserResponse(from dto: UserResponseDTO) -> UserResponse {
+        return ApiResponseMapper.toDomainModel(from: dto) { userResponseDTO in
+            UserResponseData(
+                roleInfo: RoleInfo(
+                    isAdmin: userResponseDTO.roleInfo.isAdmin,
+                    roleModifiable: userResponseDTO.roleInfo.roleModifiable,
+                    roleModificationReason: userResponseDTO.roleInfo.roleModificationReason,
+                    roleName: userResponseDTO.roleInfo.roleName
+                ),
+                user: mapUserFromDTO(userResponseDTO.user)
+            )
+        }
     }
     
-    static func toDTO(from domainModel: UserResponseData) -> UserResponseDataDTO {
-        return UserResponseDataDTO(
-            roleInfo: RoleInfoMapper.toDTO(from: domainModel.roleInfo),
-            user: UserMapper.toDTO(from: domainModel.user)
-        )
-    }
-}
-
-struct RoleInfoMapper: DTOMapper {
-    typealias DTO = RoleInfoDTO
-    typealias DomainModel = RoleInfo
-    
-    static func toDomainModel(from dto: RoleInfoDTO) -> RoleInfo {
-        return RoleInfo(
-            isAdmin: dto.isAdmin,
-            roleModifiable: dto.roleModifiable,
-            roleModificationReason: dto.roleModificationReason,
-            roleName: dto.roleName
-        )
-    }
-    
-    static func toDTO(from domainModel: RoleInfo) -> RoleInfoDTO {
-        return RoleInfoDTO(
-            isAdmin: domainModel.isAdmin,
-            roleModifiable: domainModel.roleModifiable,
-            roleModificationReason: domainModel.roleModificationReason,
-            roleName: domainModel.roleName
-        )
-    }
-}
-
-struct UserMapper: DTOMapper {
-    typealias DTO = UserDTO
-    typealias DomainModel = User
-    
-    static func toDomainModel(from dto: UserDTO) -> User {
+    private static func mapUserFromDTO(_ dto: UserDTO) -> User {
         return User(
             id: dto.id,
             firstName: dto.firstName,
@@ -245,66 +131,13 @@ struct UserMapper: DTOMapper {
             createdAt: dto.createdAt,
             createdBy: dto.createdBy,
             lastActivityAt: dto.lastActivityAt,
-            imageCapabilities: dto.imageCapabilities.map { ImageCapabilitiesMapper.toDomainModel(from: $0) },
+            imageCapabilities: dto.imageCapabilities.map { mapImageCapabilitiesFromDTO($0) },
             maxProfileImageSizeMB: dto.maxProfileImageSizeMB,
             maxCoverImageSizeMB: dto.maxCoverImageSizeMB
         )
     }
     
-    static func toDTO(from domainModel: User) -> UserDTO {
-        return UserDTO(
-            id: domainModel.id,
-            firstName: domainModel.firstName,
-            lastName: domainModel.lastName,
-            email: domainModel.email,
-            displayName: domainModel.displayName,
-            fullName: domainModel.fullName,
-            birthDate: domainModel.birthDate,
-            city: domainModel.city,
-            country: domainModel.country,
-            phone: domainModel.phone,
-            preferredLanguage: domainModel.preferredLanguage,
-            active: domainModel.active,
-            enabled: domainModel.enabled,
-            accountNonExpired: domainModel.accountNonExpired,
-            accountNonLocked: domainModel.accountNonLocked,
-            credentialsNonExpired: domainModel.credentialsNonExpired,
-            emailVerified: domainModel.emailVerified,
-            emailVerifiedAt: domainModel.emailVerifiedAt,
-            isVerified: domainModel.isVerified,
-            isPrivate: domainModel.isPrivate,
-            isPro: domainModel.isPro,
-            canAccessProFeatures: domainModel.canAccessProFeatures,
-            proSeller: domainModel.proSeller,
-            isActiveSellerProfile: domainModel.isActiveSellerProfile,
-            isSellingActive: domainModel.isSellingActive,
-            individualUser: domainModel.individualUser,
-            admin: domainModel.admin,
-            role: domainModel.role,
-            roleDescription: domainModel.roleDescription,
-            roleId: domainModel.roleId,
-            hasProfileImage: domainModel.hasProfileImage,
-            hasCoverImage: domainModel.hasCoverImage,
-            activeImageCount: domainModel.activeImageCount,
-            followersCount: domainModel.followersCount,
-            followingCount: domainModel.followingCount,
-            postsCount: domainModel.postsCount,
-            purchasesCount: domainModel.purchasesCount,
-            createdAt: domainModel.createdAt,
-            createdBy: domainModel.createdBy,
-            lastActivityAt: domainModel.lastActivityAt,
-            imageCapabilities: domainModel.imageCapabilities.map { ImageCapabilitiesMapper.toDTO(from: $0) },
-            maxProfileImageSizeMB: domainModel.maxProfileImageSizeMB,
-            maxCoverImageSizeMB: domainModel.maxCoverImageSizeMB
-        )
-    }
-}
-
-struct ImageCapabilitiesMapper: DTOMapper {
-    typealias DTO = ImageCapabilitiesDTO
-    typealias DomainModel = ImageCapabilities
-    
-    static func toDomainModel(from dto: ImageCapabilitiesDTO) -> ImageCapabilities {
+    private static func mapImageCapabilitiesFromDTO(_ dto: ImageCapabilitiesDTO) -> ImageCapabilities {
         return ImageCapabilities(
             canUploadProfileImage: dto.canUploadProfileImage,
             canUploadCoverImage: dto.canUploadCoverImage,
@@ -314,66 +147,30 @@ struct ImageCapabilitiesMapper: DTOMapper {
             maxCoverImageSizeMB: dto.maxCoverImageSizeMB
         )
     }
-    
-    static func toDTO(from domainModel: ImageCapabilities) -> ImageCapabilitiesDTO {
-        return ImageCapabilitiesDTO(
-            canUploadProfileImage: domainModel.canUploadProfileImage,
-            canUploadCoverImage: domainModel.canUploadCoverImage,
-            maxProfileImageSize: domainModel.maxProfileImageSize,
-            maxProfileImageSizeMB: domainModel.maxProfileImageSizeMB,
-            maxCoverImageSize: domainModel.maxCoverImageSize,
-            maxCoverImageSizeMB: domainModel.maxCoverImageSizeMB
-        )
-    }
 }
 
-// MARK: - Post Mappers (New with Generic)
-struct PostResponseMapper {
-    static func toDomainModel(from dto: PostResponseDTO) -> PostResponse {
+// MARK: - Post Mappers (With Generic)
+struct PostMappers {
+    
+    static func toPostResponse(from dto: PostResponseDTO) -> PostResponse {
         return ApiResponseMapper.toDomainModel(from: dto) { postDataDTO in
-            PostMapper.toDomainModel(from: postDataDTO)
+            mapPostFromDTO(postDataDTO)
         }
     }
-}
-
-struct PostListResponseMapper {
-    static func toDomainModel(from dto: PostListResponseDTO) -> PostListResponse {
+    
+    static func toPostListResponse(from dto: PostListResponseDTO) -> PostListResponse {
         return ApiResponseMapper.toDomainModel(from: dto) { postListDataDTO in
-            PostListDataMapper.toDomainModel(from: postListDataDTO)
+            PostListData(
+                content: postListDataDTO.content.map { mapPostFromDTO($0) },
+                totalElements: postListDataDTO.totalElements,
+                totalPages: postListDataDTO.totalPages,
+                currentPage: postListDataDTO.currentPage,
+                size: postListDataDTO.size
+            )
         }
     }
-}
-
-struct PostListDataMapper: DTOMapper {
-    typealias DTO = PostListDataDTO
-    typealias DomainModel = PostListData
     
-    static func toDomainModel(from dto: PostListDataDTO) -> PostListData {
-        return PostListData(
-            content: dto.content.map { PostMapper.toDomainModel(from: $0) },
-            totalElements: dto.totalElements,
-            totalPages: dto.totalPages,
-            currentPage: dto.currentPage,
-            size: dto.size
-        )
-    }
-    
-    static func toDTO(from domainModel: PostListData) -> PostListDataDTO {
-        return PostListDataDTO(
-            content: domainModel.content.map { PostMapper.toDTO(from: $0) },
-            totalElements: domainModel.totalElements,
-            totalPages: domainModel.totalPages,
-            currentPage: domainModel.currentPage,
-            size: domainModel.size
-        )
-    }
-}
-
-struct PostMapper: DTOMapper {
-    typealias DTO = PostDataDTO
-    typealias DomainModel = Post
-    
-    static func toDomainModel(from dto: PostDataDTO) -> Post {
+    private static func mapPostFromDTO(_ dto: PostDataDTO) -> Post {
         return Post(
             id: dto.id,
             title: dto.title,
@@ -394,194 +191,27 @@ struct PostMapper: DTOMapper {
             mediaUrls: dto.mediaUrls
         )
     }
+}
+
+// MARK: - Location Mappers
+struct LocationMappers {
     
-    static func toDTO(from domainModel: Post) -> PostDataDTO {
-        return PostDataDTO(
-            id: domainModel.id,
-            title: domainModel.title,
-            content: domainModel.content,
-            authorId: domainModel.authorId,
-            categoryId: domainModel.categoryId,
-            visibility: domainModel.visibility.rawValue,
-            publishedAt: domainModel.publishedAt.map { DateFormatter.iso8601.string(from: $0) },
-            createdAt: DateFormatter.iso8601.string(from: domainModel.createdAt),
-            updatedAt: DateFormatter.iso8601.string(from: domainModel.updatedAt),
-            likesCount: domainModel.likesCount,
-            commentsCount: domainModel.commentsCount,
-            sharesCount: domainModel.sharesCount,
-            location: domainModel.location,
-            latitude: domainModel.latitude,
-            longitude: domainModel.longitude,
-            hashtags: domainModel.hashtags,
-            mediaUrls: domainModel.mediaUrls
-        )
-    }
-}
-
-// MARK: - Domain Response Types (Using Generic ApiResponse)
-typealias AuthResponse = ApiResponse<AuthData>
-typealias RegisterResponse = ApiResponse<RegisterData>
-typealias UserResponse = ApiResponse<UserResponseData>
-typealias PostResponse = ApiResponse<Post>
-typealias PostListResponse = ApiResponse<PostListData>
-typealias LocationResponse = ApiResponse<Location>
-typealias NotificationResponse = ApiResponse<NotificationData>
-typealias NotificationListResponse = ApiResponse<NotificationListData>
-typealias MarketplaceItemResponse = ApiResponse<MarketplaceItem>
-typealias MarketplaceItemListResponse = ApiResponse<MarketplaceItemListData>
-
-struct PostListData {
-    let content: [Post]
-    let totalElements: Int
-    let totalPages: Int
-    let currentPage: Int
-    let size: Int
-}
-
-struct Post {
-    let id: Int
-    let title: String
-    let content: String
-    let authorId: Int
-    let categoryId: Int
-    let visibility: PostVisibility
-    let publishedAt: Date?
-    let createdAt: Date
-    let updatedAt: Date
-    let likesCount: Int
-    let commentsCount: Int
-    let sharesCount: Int
-    let location: String?
-    let latitude: Double?
-    let longitude: Double?
-    let hashtags: [String]
-    let mediaUrls: [String]
-}
-
-enum PostVisibility: String {
-    case publicPost = "PUBLIC"
-    case privatePost = "PRIVATE"
-    case friendsPost = "FRIENDS"
-}
-
-struct Location {
-    let latitude: Double
-    let longitude: Double
-    let country: String
-    let city: String
-    let state: String?
-    let address: String
-    let postalCode: String?
-    let timezone: String
-    let source: String
-    let accuracy: LocationAccuracy
-    let detected: Bool
-}
-
-enum LocationAccuracy: String {
-    case street = "STREET"
-    case city = "CITY"
-    case region = "REGION"
-    case country = "COUNTRY"
-    case unknown = "UNKNOWN"
-}
-
-struct NotificationData {
-    let id: Int
-    let userId: Int
-    let title: String
-    let message: String
-    let type: NotificationType
-    let isRead: Bool
-    let createdAt: Date
-    let actionUrl: String?
-    let metadata: [String: String]?
-}
-
-enum NotificationType: String {
-    case like = "LIKE"
-    case comment = "COMMENT"
-    case follow = "FOLLOW"
-    case mention = "MENTION"
-    case sale = "SALE"
-    case system = "SYSTEM"
-}
-
-struct NotificationListData {
-    let content: [NotificationData]
-    let totalElements: Int
-    let totalPages: Int
-    let currentPage: Int
-    let size: Int
-}
-
-struct MarketplaceItem {
-    let id: Int
-    let title: String
-    let description: String
-    let price: Double
-    let currency: String
-    let sellerId: Int
-    let categoryId: Int
-    let condition: ItemCondition
-    let isAvailable: Bool
-    let createdAt: Date
-    let updatedAt: Date
-    let location: String?
-    let imageUrls: [String]
-}
-
-enum ItemCondition: String {
-    case new = "NEW"
-    case likeNew = "LIKE_NEW"
-    case good = "GOOD"
-    case fair = "FAIR"
-    case poor = "POOR"
-}
-
-struct MarketplaceItemListData {
-    let content: [MarketplaceItem]
-    let totalElements: Int
-    let totalPages: Int
-    let currentPage: Int
-    let size: Int
-}
-
-// MARK: - Location Mapper (Complete)
-struct LocationMapper: DTOMapper {
-    typealias DTO = LocationDataDTO
-    typealias DomainModel = Location
-    
-    static func toDomainModel(from dto: LocationDataDTO) -> Location {
-        return Location(
-            latitude: dto.latitude,
-            longitude: dto.longitude,
-            country: dto.country,
-            city: dto.city,
-            state: dto.state,
-            address: dto.address,
-            postalCode: dto.postalCode,
-            timezone: dto.timezone,
-            source: dto.source,
-            accuracy: LocationAccuracy(rawValue: dto.accuracy) ?? .unknown,
-            detected: dto.detected
-        )
-    }
-    
-    static func toDTO(from domainModel: Location) -> LocationDataDTO {
-        return LocationDataDTO(
-            latitude: domainModel.latitude,
-            longitude: domainModel.longitude,
-            country: domainModel.country,
-            city: domainModel.city,
-            state: domainModel.state,
-            address: domainModel.address,
-            postalCode: domainModel.postalCode,
-            timezone: domainModel.timezone,
-            source: domainModel.source,
-            accuracy: domainModel.accuracy.rawValue,
-            detected: domainModel.detected
-        )
+    static func toLocationResponse(from dto: LocationResponseDTO) -> LocationResponse {
+        return ApiResponseMapper.toDomainModel(from: dto) { locationDataDTO in
+            Location(
+                latitude: locationDataDTO.latitude,
+                longitude: locationDataDTO.longitude,
+                country: locationDataDTO.country,
+                city: locationDataDTO.city,
+                state: locationDataDTO.state,
+                address: locationDataDTO.address,
+                postalCode: locationDataDTO.postalCode,
+                timezone: locationDataDTO.timezone,
+                source: locationDataDTO.source,
+                accuracy: LocationAccuracy(rawValue: locationDataDTO.accuracy) ?? .unknown,
+                detected: locationDataDTO.detected
+            )
+        }
     }
 }
 
@@ -741,4 +371,133 @@ struct MarketplaceItemMapper: DTOMapper {
             imageUrls: domainModel.imageUrls
         )
     }
+}
+
+// MARK: - Domain Response Types (Using Generic ApiResponse)
+typealias AuthResponse = ApiResponse<AuthData>
+typealias RegisterResponse = ApiResponse<RegisterData>
+typealias UserResponse = ApiResponse<UserResponseData>
+typealias PostResponse = ApiResponse<Post>
+typealias PostListResponse = ApiResponse<PostListData>
+typealias LocationResponse = ApiResponse<Location>
+typealias NotificationResponse = ApiResponse<NotificationData>
+typealias NotificationListResponse = ApiResponse<NotificationListData>
+typealias MarketplaceItemResponse = ApiResponse<MarketplaceItem>
+typealias MarketplaceItemListResponse = ApiResponse<MarketplaceItemListData>
+
+struct PostListData {
+    let content: [Post]
+    let totalElements: Int
+    let totalPages: Int
+    let currentPage: Int
+    let size: Int
+}
+
+struct Post {
+    let id: Int
+    let title: String
+    let content: String
+    let authorId: Int
+    let categoryId: Int
+    let visibility: PostVisibility
+    let publishedAt: Date?
+    let createdAt: Date
+    let updatedAt: Date
+    let likesCount: Int
+    let commentsCount: Int
+    let sharesCount: Int
+    let location: String?
+    let latitude: Double?
+    let longitude: Double?
+    let hashtags: [String]
+    let mediaUrls: [String]
+}
+
+enum PostVisibility: String {
+    case publicPost = "PUBLIC"
+    case privatePost = "PRIVATE"
+    case friendsPost = "FRIENDS"
+}
+
+struct Location {
+    let latitude: Double
+    let longitude: Double
+    let country: String
+    let city: String
+    let state: String?
+    let address: String
+    let postalCode: String?
+    let timezone: String
+    let source: String
+    let accuracy: LocationAccuracy
+    let detected: Bool
+}
+
+enum LocationAccuracy: String {
+    case street = "STREET"
+    case city = "CITY"
+    case region = "REGION"
+    case country = "COUNTRY"
+    case unknown = "UNKNOWN"
+}
+
+struct NotificationData {
+    let id: Int
+    let userId: Int
+    let title: String
+    let message: String
+    let type: NotificationType
+    let isRead: Bool
+    let createdAt: Date
+    let actionUrl: String?
+    let metadata: [String: String]?
+}
+
+enum NotificationType: String {
+    case like = "LIKE"
+    case comment = "COMMENT"
+    case follow = "FOLLOW"
+    case mention = "MENTION"
+    case sale = "SALE"
+    case system = "SYSTEM"
+}
+
+struct NotificationListData {
+    let content: [NotificationData]
+    let totalElements: Int
+    let totalPages: Int
+    let currentPage: Int
+    let size: Int
+}
+
+struct MarketplaceItem {
+    let id: Int
+    let title: String
+    let description: String
+    let price: Double
+    let currency: String
+    let sellerId: Int
+    let categoryId: Int
+    let condition: ItemCondition
+    let isAvailable: Bool
+    let createdAt: Date
+    let updatedAt: Date
+    let location: String?
+    let imageUrls: [String]
+}
+
+enum ItemCondition: String {
+    case new = "NEW"
+    case likeNew = "LIKE_NEW"
+    case good = "GOOD"
+    case fair = "FAIR"
+    case poor = "POOR"
+}
+
+struct MarketplaceItemListData {
+    let content: [MarketplaceItem]
+    let totalElements: Int
+    let totalPages: Int
+    let currentPage: Int
+    let size: Int
 }

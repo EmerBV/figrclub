@@ -8,21 +8,16 @@
 import Foundation
 import KeychainAccess
 
-final class TokenManager: ObservableObject, @unchecked Sendable {
+final class TokenManager: @unchecked Sendable {
     
     private let keychain: Keychain
     private let queue = DispatchQueue(label: "com.figrclub.tokenmanager", qos: .userInitiated)
-    
-    // Published properties para UI
-    @Published private(set) var isAuthenticated = false
-    @Published private(set) var currentToken: String?
-    @Published private(set) var currentUserId: Int?  // ✅ Nueva propiedad
     
     // MARK: - Keys for storage
     private enum Keys {
         static let accessToken = "access_token"
         static let refreshToken = "refresh_token"
-        static let userId = "current_user_id"  // ✅ Nueva clave
+        static let userId = "current_user_id"
     }
     
     // MARK: - Initializer
@@ -30,13 +25,10 @@ final class TokenManager: ObservableObject, @unchecked Sendable {
         self.keychain = Keychain(service: Bundle.main.bundleIdentifier ?? "com.emerbv.FigrClub")
             .accessibility(.whenUnlockedThisDeviceOnly)
         
-        // Initialize authentication status
-        Task {
-            await self.checkAuthenticationStatus()
-        }
+        Logger.debug("🔧 TokenManager: Initialized (Storage Only)")
     }
     
-    // MARK: - Thread-safe Public Methods
+    // MARK: - Core Token Operations
     
     func saveToken(_ token: String) async {
         await withCheckedContinuation { continuation in
@@ -48,12 +40,6 @@ final class TokenManager: ObservableObject, @unchecked Sendable {
                 
                 do {
                     try self.keychain.set(token, key: Keys.accessToken)
-                    
-                    DispatchQueue.main.async {
-                        self.currentToken = token
-                        self.isAuthenticated = true
-                    }
-                    
                     Logger.info("✅ TokenManager: Token saved successfully")
                 } catch {
                     Logger.error("❌ TokenManager: Failed to save token: \(error)")
@@ -94,11 +80,6 @@ final class TokenManager: ObservableObject, @unchecked Sendable {
                 
                 do {
                     try self.keychain.set(String(userId), key: Keys.userId)
-                    
-                    DispatchQueue.main.async {
-                        self.currentUserId = userId
-                    }
-                    
                     Logger.info("✅ TokenManager: UserId saved successfully: \(userId)")
                 } catch {
                     Logger.error("❌ TokenManager: Failed to save userId: \(error)")
@@ -184,13 +165,7 @@ final class TokenManager: ObservableObject, @unchecked Sendable {
                 do {
                     try self.keychain.remove(Keys.accessToken)
                     try self.keychain.remove(Keys.refreshToken)
-                    try self.keychain.remove(Keys.userId)  // ✅ También limpiar userId
-                    
-                    DispatchQueue.main.async {
-                        self.currentToken = nil
-                        self.currentUserId = nil
-                        self.isAuthenticated = false
-                    }
+                    try self.keychain.remove(Keys.userId)
                     
                     Logger.info("✅ TokenManager: All tokens cleared")
                 } catch {
@@ -200,19 +175,6 @@ final class TokenManager: ObservableObject, @unchecked Sendable {
                 continuation.resume()
             }
         }
-    }
-    
-    func checkAuthenticationStatus() async {
-        let token = await getToken()
-        let userId = await getCurrentUserId()
-        
-        await MainActor.run {
-            self.isAuthenticated = token != nil && userId != nil
-            self.currentToken = token
-            self.currentUserId = userId
-        }
-        
-        Logger.info("📊 TokenManager: Authentication status checked - Authenticated: \(isAuthenticated), UserId: \(userId?.description ?? "nil")")
     }
     
     // MARK: - Convenience Methods
@@ -229,17 +191,14 @@ final class TokenManager: ObservableObject, @unchecked Sendable {
         Logger.info("✅ TokenManager: Auth data saved (token + userId: \(userId))")
     }
     
-    // MARK: - Synchronous methods for backward compatibility
-    
-    /// Synchronous token check (use sparingly, prefer async version)
-    func hasValidToken() -> Bool {
-        do {
-            let hasToken = try keychain.contains(Keys.accessToken)
-            let hasUserId = try keychain.contains(Keys.userId)
-            return hasToken && hasUserId
-        } catch {
-            Logger.error("❌ TokenManager: Error checking token existence: \(error)")
-            return false
-        }
+    /// Verificación simple de credenciales válidas
+    func hasValidCredentials() async -> Bool {
+        let hasToken = await getToken() != nil
+        let hasUserId = await getCurrentUserId() != nil
+        let result = hasToken && hasUserId
+        
+        Logger.debug("🔍 TokenManager: Credentials check - Token: \(hasToken), UserId: \(hasUserId), Valid: \(result)")
+        return result
     }
+    
 }
