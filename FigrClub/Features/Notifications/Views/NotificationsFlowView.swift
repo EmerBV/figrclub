@@ -9,7 +9,6 @@ import SwiftUI
 
 struct NotificationsFlowView: View {
     let user: User
-    @EnvironmentObject private var coordinator: NotificationsCoordinator
     
     var body: some View {
         NavigationView {

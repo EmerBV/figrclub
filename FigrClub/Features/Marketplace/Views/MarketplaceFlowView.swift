@@ -9,7 +9,6 @@ import SwiftUI
 
 struct MarketplaceFlowView: View {
     let user: User
-    @EnvironmentObject private var coordinator: MarketplaceCoordinator
     
     var body: some View {
         NavigationView {

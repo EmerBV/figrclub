@@ -9,7 +9,6 @@ import SwiftUI
 
 struct CreateFlowView: View {
     let user: User
-    @EnvironmentObject private var coordinator: CreateCoordinator
     
     var body: some View {
         NavigationView {

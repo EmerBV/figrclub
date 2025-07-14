@@ -8,15 +8,15 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @StateObject private var tabCoordinator = CoordinatorFactory.makeMainTabCoordinator()
     @EnvironmentObject private var authStateManager: AuthStateManager
+    @StateObject private var navigationCoordinator = CoordinatorFactory.makeNavigationCoordinator()
+    @StateObject private var deepLinkManager = DeepLinkManager.shared
     
     var body: some View {
         if case .authenticated(let user) = authStateManager.authState {
-            TabView(selection: $tabCoordinator.selectedTab) {
+            TabView(selection: $deepLinkManager.selectedTab) {
                 // Feed Tab
                 FeedFlowView(user: user)
-                    .environmentObject(tabCoordinator.feedCoordinator)
                     .tabItem {
                         Image(systemName: MainTab.feed.icon)
                         Text(MainTab.feed.title)
@@ -25,7 +25,6 @@ struct MainTabView: View {
                 
                 // Marketplace Tab
                 MarketplaceFlowView(user: user)
-                    .environmentObject(tabCoordinator.marketplaceCoordinator)
                     .tabItem {
                         Image(systemName: MainTab.marketplace.icon)
                         Text(MainTab.marketplace.title)
@@ -34,7 +33,6 @@ struct MainTabView: View {
                 
                 // Create Tab
                 CreateFlowView(user: user)
-                    .environmentObject(tabCoordinator.createCoordinator)
                     .tabItem {
                         Image(systemName: MainTab.create.icon)
                         Text(MainTab.create.title)
@@ -43,7 +41,6 @@ struct MainTabView: View {
                 
                 // Notifications Tab
                 NotificationsFlowView(user: user)
-                    .environmentObject(tabCoordinator.notificationsCoordinator)
                     .tabItem {
                         Image(systemName: MainTab.notifications.icon)
                         Text(MainTab.notifications.title)
@@ -52,19 +49,25 @@ struct MainTabView: View {
                 
                 // Profile Tab
                 ProfileFlowView(user: user)
-                    .environmentObject(tabCoordinator.profileCoordinator)
                     .tabItem {
                         Image(systemName: MainTab.profile.icon)
                         Text(MainTab.profile.title)
                     }
                     .tag(MainTab.profile)
             }
-            .environmentObject(tabCoordinator)
+            .environmentObject(navigationCoordinator)
+            .onAppear {
+                // Setup deep link manager with navigation coordinator
+                deepLinkManager.setup(navigationCoordinator: navigationCoordinator)
+                deepLinkManager.processPendingDeepLinkIfNeeded()
+            }
             .onOpenURL { url in
-                DeepLinkManager.shared.handleDeepLink(url, coordinator: tabCoordinator)
+                deepLinkManager.handleURL(url)
+            }
+            .onChange(of: deepLinkManager.selectedTab) { oldValue, newValue in
+                Logger.debug("🔄 MainTabView: Tab changed from \(oldValue.title) to \(newValue.title)")
             }
         } else {
-            // Fallback en caso de que no haya usuario autenticado
             LoadingView()
         }
     }

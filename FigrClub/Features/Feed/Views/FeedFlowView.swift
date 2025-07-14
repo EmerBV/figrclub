@@ -9,7 +9,7 @@ import SwiftUI
 
 struct FeedFlowView: View {
     let user: User
-    @EnvironmentObject private var coordinator: FeedCoordinator
+    @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
     @EnvironmentObject private var authStateManager: AuthStateManager
     
     // Estado para el botón de logout
@@ -28,12 +28,12 @@ struct FeedFlowView: View {
                 // Botones de ejemplo para mostrar navegación con coordinator
                 VStack(spacing: 12) {
                     Button("Ver Post de Ejemplo") {
-                        coordinator.showPostDetail("post_123")
+                        navigationCoordinator.showPostDetail("post_123")
                     }
                     .buttonStyle(FigrButtonStyle())
                     
                     Button("Ver Perfil de Usuario") {
-                        coordinator.showUserProfile("user_456")
+                        navigationCoordinator.showUserProfile("user_456")
                     }
                     .buttonStyle(FigrButtonStyle())
                     
@@ -61,27 +61,29 @@ struct FeedFlowView: View {
             .navigationTitle("FigrClub")
         }
         // Navegación usando sheets por ahora (se puede cambiar a NavigationStack después)
-        .sheet(isPresented: $coordinator.showingPostDetail) {
-            if let postId = coordinator.selectedPostId {
+        .sheet(isPresented: $navigationCoordinator.showingPostDetail) {
+            if let postId = navigationCoordinator.selectedPostId {
                 NavigationView {
                     //PostDetailView(postId: postId, user: user)
                 }
             }
         }
-        .sheet(isPresented: $coordinator.showingUserProfile) {
-            if let userId = coordinator.selectedUserId {
+        .sheet(isPresented: $navigationCoordinator.showingUserProfile) {
+            if let userId = navigationCoordinator.selectedUserId {
                 NavigationView {
                     //UserProfileView(userId: userId, currentUser: user)
                 }
             }
         }
-        .sheet(isPresented: $coordinator.showingComments) {
-            if let postId = coordinator.commentsPostId {
-                NavigationView {
-                    //CommentsView(postId: postId, user: user)
-                }
-            }
-        }
+        /*
+         .sheet(isPresented: $navigationCoordinator.showingComments) {
+         if let postId = navigationCoordinator.commentsPostId {
+         NavigationView {
+         //CommentsView(postId: postId, user: user)
+         }
+         }
+         }
+         */
         // Alert de confirmación para logout
         .alert("Cerrar Sesión", isPresented: $showLogoutConfirmation) {
             Button("Cancelar", role: .cancel) {

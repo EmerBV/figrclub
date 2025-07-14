@@ -9,44 +9,46 @@ import SwiftUI
 
 struct ProfileFlowView: View {
     let user: User
-    @EnvironmentObject private var coordinator: ProfileCoordinator
+    @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
     @EnvironmentObject private var authStateManager: AuthStateManager
     
-    // Estado para el botón de logout
     @State private var isLoggingOut = false
     @State private var showLogoutConfirmation = false
     
     var body: some View {
         NavigationView {
-            VStack(spacing: Spacing.large) {
-                // Header del perfil
-                profileHeaderView
-                
-                // Información del usuario
-                userInfoSection
-                
-                // Botones de acciones del perfil
-                profileActionsSection
-                
-                Spacer()
+            ScrollView {
+                VStack(spacing: Spacing.large) {
+                    // Profile Header
+                    profileHeaderView
+                    
+                    // User Info
+                    userInfoSection
+                    
+                    // Action Buttons
+                    profileActionsSection
+                }
+                .padding()
             }
-            .padding()
             .navigationTitle("Perfil")
             .navigationBarTitleDisplayMode(.large)
         }
-        // Alert de confirmación para logout
         .alert("Cerrar Sesión", isPresented: $showLogoutConfirmation) {
             Button("Cancelar", role: .cancel) {
                 showLogoutConfirmation = false
             }
-            
             Button("Cerrar Sesión", role: .destructive) {
                 performLogout()
             }
         } message: {
             Text("¿Estás seguro de que quieres cerrar tu sesión?")
         }
-        // Observar estado de autenticación para resetear UI
+        .sheet(isPresented: $navigationCoordinator.showingSettings) {
+            SettingsView(user: user)
+        }
+        .sheet(isPresented: $navigationCoordinator.showingEditProfile) {
+            EditProfileView(user: user)
+        }
         .onReceive(authStateManager.$authState) { authState in
             if case .unauthenticated = authState {
                 isLoggingOut = false
@@ -54,11 +56,8 @@ struct ProfileFlowView: View {
         }
     }
     
-    // MARK: - Profile Header
-    
     private var profileHeaderView: some View {
         VStack(spacing: Spacing.medium) {
-            // Avatar
             Circle()
                 .fill(Color.blue.opacity(0.1))
                 .frame(width: 100, height: 100)
@@ -68,7 +67,6 @@ struct ProfileFlowView: View {
                         .foregroundColor(.blue)
                 )
             
-            // Verificación
             if user.isVerified {
                 HStack(spacing: Spacing.xSmall) {
                     Image(systemName: "checkmark.seal.fill")
@@ -80,8 +78,6 @@ struct ProfileFlowView: View {
             }
         }
     }
-    
-    // MARK: - User Info Section
     
     private var userInfoSection: some View {
         VStack(spacing: Spacing.small) {
@@ -97,7 +93,6 @@ struct ProfileFlowView: View {
                 .font(.callout)
                 .foregroundColor(.secondary)
             
-            // Stats
             HStack(spacing: Spacing.xLarge) {
                 statView(title: "Posts", count: user.postsCount)
                 statView(title: "Siguiendo", count: user.followingCount)
@@ -107,23 +102,18 @@ struct ProfileFlowView: View {
         }
     }
     
-    // MARK: - Profile Actions Section
-    
     private var profileActionsSection: some View {
         VStack(spacing: Spacing.medium) {
-            // Botón de editar perfil
             Button("Editar Perfil") {
-                coordinator.showEditProfile()
+                navigationCoordinator.showEditProfile()
             }
             .buttonStyle(FigrButtonStyle(isEnabled: true))
             
-            // Botón de configuración
             Button("Configuración") {
-                coordinator.showSettings()
+                navigationCoordinator.showSettings()
             }
             .buttonStyle(FigrButtonStyle(isEnabled: true))
             
-            // Botón de cerrar sesión
             Button {
                 showLogoutConfirmation = true
             } label: {
@@ -145,8 +135,6 @@ struct ProfileFlowView: View {
         .padding(.top, Spacing.large)
     }
     
-    // MARK: - Helper Views
-    
     private func statView(title: String, count: Int) -> some View {
         VStack(spacing: Spacing.xxSmall) {
             Text("\(count)")
@@ -159,32 +147,79 @@ struct ProfileFlowView: View {
         }
     }
     
-    // MARK: - Private Methods
-    
     private func performLogout() {
         guard !isLoggingOut else { return }
         
         isLoggingOut = true
         showLogoutConfirmation = false
         
-        Logger.info("🚪 ProfileFlowView: Starting logout process for user: \(user.displayName)")
+        Logger.info("🚪 ProfileFlowView: Starting logout")
         
         Task {
-            do {
-                // Usar el método logout del AuthStateManager directamente
-                await authStateManager.logout()
+            await authStateManager.logout()
+            Logger.info("✅ ProfileFlowView: Logout completed")
+        }
+    }
+}
+
+struct SettingsView: View {
+    let user: User
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                Text("Configuración")
+                    .font(.title)
                 
-                Logger.info("✅ ProfileFlowView: Logout completed successfully")
+                Text("Próximamente...")
+                    .foregroundColor(.secondary)
                 
-                // El estado de carga se resetea automáticamente cuando cambia authState
-                
-            } catch {
-                // En caso de error, resetear el estado de carga
-                await MainActor.run {
-                    isLoggingOut = false
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Configuración")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Cerrar") {
+                        dismiss()
+                    }
                 }
+            }
+        }
+    }
+}
+
+struct EditProfileView: View {
+    let user: User
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                Text("Editar Perfil")
+                    .font(.title)
                 
-                Logger.error("❌ ProfileFlowView: Logout failed: \(error)")
+                Text("Próximamente...")
+                    .foregroundColor(.secondary)
+                
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Editar Perfil")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancelar") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Guardar") {
+                        dismiss()
+                    }
+                }
             }
         }
     }
