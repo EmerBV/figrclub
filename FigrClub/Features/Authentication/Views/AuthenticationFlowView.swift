@@ -14,69 +14,23 @@ struct AuthenticationFlowView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Fondo
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color.blue.opacity(0.1),
-                        Color.purple.opacity(0.1)
-                    ]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                // Background
+                backgroundGradient
                 
                 ScrollView {
                     VStack(spacing: 30) {
                         // Header
-                        VStack(spacing: 16) {
-                            Image(systemName: "person.3.sequence.fill")
-                                .font(.system(size: 60, weight: .light))
-                                .foregroundColor(.blue)
-                            
-                            Text("FigrClub")
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
-                                .foregroundColor(.primary)
-                            
-                            Text(authViewModel?.isShowingLogin == true ? "Bienvenido de vuelta" : "Únete a la comunidad")
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(.top, 40)
+                        headerView
                         
-                        // Solo mostrar contenido si tenemos authViewModel
+                        // Content
                         if let viewModel = authViewModel {
-                            // Toggle between Login/Register
-                            HStack(spacing: 0) {
-                                AuthTabButton(
-                                    title: "Iniciar Sesión",
-                                    isSelected: viewModel.isShowingLogin
-                                ) {
-                                    viewModel.switchToLogin()
-                                    errorHandler.dismiss() // ← Limpiar errores al cambiar tab
-                                }
-                                
-                                AuthTabButton(
-                                    title: "Registrarse",
-                                    isSelected: !viewModel.isShowingLogin
-                                ) {
-                                    viewModel.switchToRegister()
-                                    errorHandler.dismiss() // ← Limpiar errores al cambiar tab
-                                }
-                            }
-                            .overlay(
-                                RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
-                                    .stroke(Color.blue, lineWidth: 1)
-                            )
-                            .padding(.horizontal, 20)
+                            // Tab selector
+                            tabSelectorView(viewModel: viewModel)
                             
-                            // Form Content
-                            if viewModel.isShowingLogin {
-                                LoginFormView(viewModel: viewModel, errorHandler: errorHandler)
-                            } else {
-                                RegisterFormView(viewModel: viewModel, errorHandler: errorHandler)
-                            }
+                            // Form content
+                            formContentView(viewModel: viewModel)
                         } else {
-                            // Loading state while creating ViewModel
+                            // Loading state
                             AuthLoadingView()
                         }
                     }
@@ -86,41 +40,99 @@ struct AuthenticationFlowView: View {
             }
         }
         .onAppear {
-            // Resolver AuthViewModel cuando la vista aparece
-            if authViewModel == nil {
-                authViewModel = DependencyInjector.shared.resolve(AuthViewModel.self)
+            setupViewModel()
+        }
+        .errorAlert(errorHandler: errorHandler) {
+            await retryAuthAction()
+        }
+    }
+    
+    // MARK: - Private Views
+    
+    private var backgroundGradient: some View {
+        LinearGradient(
+            gradient: Gradient(colors: [
+                Color.blue.opacity(0.1),
+                Color.purple.opacity(0.1)
+            ]),
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        .ignoresSafeArea()
+    }
+    
+    private var headerView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "person.3.sequence.fill")
+                .font(.system(size: 60, weight: .light))
+                .foregroundColor(.blue)
+            
+            Text("FigrClub")
+                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .foregroundColor(.primary)
+            
+            Text(authViewModel?.isShowingLogin == true ? "Bienvenido de vuelta" : "Únete a la comunidad")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(.secondary)
+        }
+        .padding(.top, 40)
+    }
+    
+    private func tabSelectorView(viewModel: AuthViewModel) -> some View {
+        HStack(spacing: 0) {
+            AuthTabButton(
+                title: "Iniciar Sesión",
+                isSelected: viewModel.isShowingLogin
+            ) {
+                viewModel.switchToLogin()
+                errorHandler.dismiss()
+            }
+            
+            AuthTabButton(
+                title: "Registrarse",
+                isSelected: !viewModel.isShowingLogin
+            ) {
+                viewModel.switchToRegister()
+                errorHandler.dismiss()
             }
         }
-        .errorAlert(errorHandler: errorHandler) { // ← Error handler con retry específico para auth
-            // Retry action específica para auth - usando métodos limpios
-            if let viewModel = authViewModel {
-                if viewModel.isShowingLogin {
-                    if let error = await viewModel.loginWithErrorHandling() {
-                        errorHandler.handle(error)
-                    }
-                } else {
-                    if let error = await viewModel.registerWithErrorHandling() {
-                        errorHandler.handle(error)
-                    }
-                }
+        .overlay(
+            RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
+                .stroke(Color.blue, lineWidth: 1)
+        )
+        .padding(.horizontal, 20)
+    }
+    
+    private func formContentView(viewModel: AuthViewModel) -> some View {
+        Group {
+            if viewModel.isShowingLogin {
+                LoginFormView(viewModel: viewModel, errorHandler: errorHandler)
+            } else {
+                RegisterFormView(viewModel: viewModel, errorHandler: errorHandler)
             }
         }
     }
-}
-
-struct AuthLoadingView: View {
-    var body: some View {
-        VStack(spacing: 16) {
-            ProgressView()
-                .progressViewStyle(CircularProgressViewStyle(tint: .blue))
-                .scaleEffect(1.2)
-            
-            Text("Preparando autenticación...")
-                .font(.callout)
-                .foregroundColor(.secondary)
+    
+    // MARK: - Private Methods
+    
+    private func setupViewModel() {
+        if authViewModel == nil {
+            authViewModel = DependencyInjector.shared.resolve(AuthViewModel.self)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 40)
+    }
+    
+    private func retryAuthAction() async {
+        guard let viewModel = authViewModel else { return }
+        
+        if viewModel.isShowingLogin {
+            if let error = await viewModel.loginWithErrorHandling() {
+                errorHandler.handle(error)
+            }
+        } else {
+            if let error = await viewModel.registerWithErrorHandling() {
+                errorHandler.handle(error)
+            }
+        }
     }
 }
 
@@ -175,8 +187,7 @@ struct LoginFormView: View {
             
             // Forgot Password
             Button("¿Olvidaste tu contraseña?") {
-                // TODO: Implementar recuperación de contraseña
-                Logger.info("🔗 Forgot password tapped")
+                handleForgotPassword()
             }
             .font(.system(size: 14, weight: .medium))
             .foregroundColor(.blue)
@@ -185,15 +196,19 @@ struct LoginFormView: View {
         .padding(.top, 20)
     }
     
+    // MARK: - Private Methods
+    
     private func performLogin() async {
-        // Limpiar errores previos
         errorHandler.dismiss()
         
-        // Usar el método público del ViewModel que retorna error
         if let error = await viewModel.loginWithErrorHandling() {
             errorHandler.handle(error)
         }
-        // Si no hay error, el login fue exitoso y AuthStateManager maneja la navegación
+    }
+    
+    private func handleForgotPassword() {
+        // TODO: Implement password recovery
+        Logger.info("🔗 Forgot password tapped")
     }
     
     private func getValidationState(_ validation: ValidationResult) -> ValidationState {
@@ -259,26 +274,12 @@ struct RegisterFormView: View {
             .disabled(viewModel.isLoading)
             
             // Terms and Conditions
-            HStack(alignment: .top, spacing: 12) {
-                Button {
-                    viewModel.acceptTerms.toggle()
-                } label: {
-                    Image(systemName: viewModel.acceptTerms ? "checkmark.square.fill" : "square")
-                        .font(.system(size: 20))
-                        .foregroundColor(viewModel.acceptTerms ? .blue : .gray)
-                }
-                .disabled(viewModel.isLoading)
-                
-                Text("Acepto los términos y condiciones y la política de privacidad")
-                    .font(.system(size: 14))
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.leading)
-            }
+            termsAndConditionsView
             
             // Register Button
             Button {
                 Task {
-                    await viewModel.register()
+                    await performRegister()
                 }
             } label: {
                 HStack {
@@ -301,15 +302,58 @@ struct RegisterFormView: View {
         .padding(.top, 20)
     }
     
+    // MARK: - Private Views
+    
+    private var termsAndConditionsView: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Button {
+                viewModel.acceptTerms.toggle()
+            } label: {
+                Image(systemName: viewModel.acceptTerms ? "checkmark.square.fill" : "square")
+                    .font(.system(size: 20))
+                    .foregroundColor(viewModel.acceptTerms ? .blue : .gray)
+            }
+            .disabled(viewModel.isLoading)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Acepto los ")
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
+                +
+                Text("términos y condiciones")
+                    .font(.system(size: 14))
+                    .foregroundColor(.blue)
+                    .underline()
+                +
+                Text(" y la ")
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
+                +
+                Text("política de privacidad")
+                    .font(.system(size: 14))
+                    .foregroundColor(.blue)
+                    .underline()
+            }
+            .multilineTextAlignment(.leading)
+            .onTapGesture {
+                handleTermsTapped()
+            }
+        }
+    }
+    
+    // MARK: - Private Methods
+    
     private func performRegister() async {
-        // Limpiar errores previos
         errorHandler.dismiss()
         
-        // Usar el método público del ViewModel que retorna error
         if let error = await viewModel.registerWithErrorHandling() {
             errorHandler.handle(error)
         }
-        // Si no hay error, el registro fue exitoso y AuthStateManager maneja la navegación
+    }
+    
+    private func handleTermsTapped() {
+        // TODO: Show terms and conditions
+        Logger.info("🔗 Terms and conditions tapped")
     }
     
     private func getValidationState(_ validation: ValidationResult) -> ValidationState {
@@ -319,6 +363,22 @@ struct RegisterFormView: View {
         case .invalid:
             return .invalid
         }
+    }
+}
+
+struct AuthLoadingView: View {
+    var body: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .progressViewStyle(CircularProgressViewStyle(tint: .blue))
+                .scaleEffect(1.2)
+            
+            Text("Preparando autenticación...")
+                .font(.callout)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 40)
     }
 }
 
