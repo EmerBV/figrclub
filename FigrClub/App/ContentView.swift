@@ -15,6 +15,7 @@ struct ContentView: View {
     @State private var initializationTimeout = false
     @State private var showDebugInfo = false
     @State private var hasInitialized = false
+    @State private var debugTapCount = 0
     
     init() {
         // Crear el coordinator en el hilo principal
@@ -22,53 +23,63 @@ struct ContentView: View {
     }
     
     var body: some View {
-        Group {
-            switch appCoordinator.currentScreen {
-            case .splash:
-                SplashView()
-                    .onAppear {
-                        setupInitializationTimeout()
-                    }
-                
-            case .authentication:
-                AuthenticationFlowView()
-                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
-                
-            case .main:
-                MainTabView()
-                    .transition(.opacity.combined(with: .move(edge: .bottom)))
-                    .onAppear {
-                        // Reset timeout cuando llegamos a main
-                        initializationTimeout = false
-                    }
+        ZStack {
+            // Contenido principal
+            Group {
+                switch appCoordinator.currentScreen {
+                case .splash:
+                    SplashView()
+                        .onAppear {
+                            setupInitializationTimeout()
+                        }
+                    
+                case .authentication:
+                    AuthenticationFlowView()
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .scale(scale: 0.95)),
+                            removal: .opacity.combined(with: .scale(scale: 1.05))
+                        ))
+                    
+                case .main:
+                    MainTabView()
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .move(edge: .bottom)),
+                            removal: .opacity.combined(with: .move(edge: .top))
+                        ))
+                        .onAppear {
+                            // Reset timeout cuando llegamos a main
+                            initializationTimeout = false
+                        }
+                }
             }
+            .animation(.easeInOut(duration: 0.5), value: appCoordinator.currentScreen)
+            
+            // Overlay para timeout
+            if initializationTimeout {
+                timeoutOverlay
+            }
+            
+            // Debug overlay
+#if DEBUG
+            if showDebugInfo {
+                debugOverlay
+            }
+#endif
         }
         .environmentObject(appCoordinator)
-        .animation(.easeInOut(duration: 0.5), value: appCoordinator.currentScreen)
         .task {
             if !hasInitialized {
                 await performInitialAuthCheck()
                 hasInitialized = true
             }
         }
-        // Overlay para manejar estado de timeout
-        .overlay(alignment: .topTrailing) {
-            if initializationTimeout {
-                timeoutOverlay
-            }
-        }
-        // Debug overlay en modo debug
+        // Debug tap gesture
 #if DEBUG
-        .overlay(alignment: .bottomTrailing) {
-            if showDebugInfo {
-                debugOverlay
-            }
-        }
-        .onLongPressGesture(minimumDuration: 3.0) {
-            showDebugInfo.toggle()
+        .onTapGesture(count: 5) {
+            handleDebugTap()
         }
 #endif
-        // Observar cambios en el estado de autenticación para logs
+        // Observar cambios de estado para logs
         .onReceive(authStateManager.$authState) { authState in
             Logger.debug("🔄 ContentView: AuthState changed to: \(authState)")
         }
@@ -80,66 +91,105 @@ struct ContentView: View {
     // MARK: - Private Views
     
     private var timeoutOverlay: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 24))
-                .foregroundColor(.orange)
+        ZStack {
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
             
-            Text("Inicialización tardando más de lo esperado")
-                .font(.callout)
-                .multilineTextAlignment(.center)
-            
-            HStack(spacing: 12) {
-                Button("Reintentar") {
-                    retryInitialization()
-                }
-                .buttonStyle(.bordered)
+            VStack(spacing: 20) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 32))
+                    .foregroundColor(.orange)
                 
-                Button("Continuar") {
-                    forceNavigationToAuth()
+                VStack(spacing: 8) {
+                    Text("Inicialización lenta")
+                        .font(.headline)
+                        .multilineTextAlignment(.center)
+                    
+                    Text("La app está tardando más de lo esperado en cargar")
+                        .font(.callout)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
                 }
-                .buttonStyle(.borderedProminent)
+                
+                HStack(spacing: 16) {
+                    Button("Reintentar") {
+                        retryInitialization()
+                    }
+                    .buttonStyle(.bordered)
+                    
+                    Button("Continuar") {
+                        forceNavigationToAuth()
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
             }
+            .padding(24)
+            .background(.regularMaterial)
+            .cornerRadius(16)
+            .shadow(radius: 10)
+            .padding()
         }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(radius: 8)
-        .padding()
     }
     
 #if DEBUG
     private var debugOverlay: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("🐛 Debug Info")
+        VStack(alignment: .leading, spacing: 6) {
+            Text("🐛 FigrClub Debug")
                 .font(.caption.bold())
+                .foregroundColor(.white)
             
-            Text("Screen: \(appCoordinator.currentScreen)")
-            Text("Auth: \(authStateManager.authState)")
-            Text("User: \(authStateManager.currentUser?.username ?? "nil")")
-            Text("Initialized: \(hasInitialized)")
-            
-            Button("Force Auth Check") {
-                Task {
-                    await authStateManager.checkInitialAuthState()
+            Group {
+                Text("Screen: \(appCoordinator.currentScreen)")
+                Text("Auth: \(authStateManager.authState.debugDescription)")
+                Text("User: \(authStateManager.currentUser?.username ?? "nil")")
+                Text("Initialized: \(hasInitialized)")
+                Text("Is Authenticated: \(authStateManager.isAuthenticated)")
+                
+                if let user = authStateManager.currentUser {
+                    Text("User ID: \(user.id)")
                 }
             }
-            .font(.caption)
-            .buttonStyle(.bordered)
+            .font(.caption2)
+            .foregroundColor(.white)
             
-            Button("Reset Coordinator") {
-                appCoordinator.resetToInitialState()
-                hasInitialized = false
+            VStack(spacing: 4) {
+                Button("Force Auth Check") {
+                    Task {
+                        await authStateManager.checkInitialAuthState()
+                    }
+                }
+                
+                Button("Reset App") {
+                    appCoordinator.resetToInitialState()
+                    hasInitialized = false
+                }
+                
+                Button("Go to Auth") {
+                    appCoordinator.debugNavigate(to: .authentication)
+                }
+                
+                Button("Go to Main") {
+                    appCoordinator.debugNavigate(to: .main)
+                }
+                
+                Button("Print States") {
+                    appCoordinator.debugPrintState()
+                    authStateManager.debugCurrentState()
+                }
+                
+                Button("Close Debug") {
+                    showDebugInfo = false
+                }
             }
-            .font(.caption)
+            .font(.caption2)
             .buttonStyle(.bordered)
         }
-        .font(.caption)
-        .padding(8)
+        .padding(12)
         .background(.black.opacity(0.8))
-        .foregroundColor(.white)
-        .cornerRadius(8)
+        .cornerRadius(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
+        .position(x: UIScreen.main.bounds.width / 2, y: 150)
     }
 #endif
     
@@ -195,9 +245,27 @@ struct ContentView: View {
         Logger.warning("🔧 ContentView: Force navigating to authentication")
         appCoordinator.navigate(to: .authentication)
     }
+    
+#if DEBUG
+    private func handleDebugTap() {
+        debugTapCount += 1
+        
+        if debugTapCount >= 5 {
+            showDebugInfo.toggle()
+            debugTapCount = 0
+            Logger.debug("🧪 ContentView: Debug mode toggled: \(showDebugInfo)")
+        }
+        
+        // Reset counter después de 2 segundos
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            debugTapCount = 0
+        }
+    }
+#endif
 }
 
-// MARK: - Supporting Views
+// MARK: - Supporting Views (sin cambios)
 struct LoadingView: View {
     var body: some View {
         ZStack {
@@ -217,58 +285,23 @@ struct LoadingView: View {
     }
 }
 
-// Error View mejorada para casos de fallo
-struct ErrorView: View {
-    let message: String
-    let onRetry: () -> Void
-    let onSkip: (() -> Void)?
-    
-    init(message: String, onRetry: @escaping () -> Void, onSkip: (() -> Void)? = nil) {
-        self.message = message
-        self.onRetry = onRetry
-        self.onSkip = onSkip
-    }
-    
-    var body: some View {
-        ZStack {
-            Color(.systemBackground)
-                .ignoresSafeArea()
-            
-            VStack(spacing: 24) {
-                Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 50))
-                    .foregroundColor(.orange)
-                
-                VStack(spacing: 8) {
-                    Text("Algo salió mal")
-                        .font(.title2.weight(.semibold))
-                    
-                    Text(message)
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                }
-                
-                VStack(spacing: 12) {
-                    Button("Reintentar") {
-                        onRetry()
-                    }
-                    .buttonStyle(FigrButtonStyle())
-                    
-                    if let onSkip = onSkip {
-                        Button("Continuar sin autenticación") {
-                            onSkip()
-                        }
-                        .font(.callout)
-                        .foregroundColor(.blue)
-                    }
-                }
-            }
-            .padding()
+// MARK: - Extensions para Debug
+#if DEBUG
+extension AuthState {
+    var debugDescription: String {
+        switch self {
+        case .loading:
+            return "Loading"
+        case .authenticated(let user):
+            return "Auth(\(user.displayName))"
+        case .unauthenticated:
+            return "Unauth"
+        case .error(let message):
+            return "Error(\(message.prefix(20)))"
         }
     }
 }
+#endif
 
 // MARK: - Preview
 #if DEBUG

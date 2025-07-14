@@ -43,6 +43,7 @@ class DeepLinkManager: ObservableObject {
     
     private var navigationCoordinator: NavigationCoordinator?
     private var cancellables = Set<AnyCancellable>()
+    private var isProcessingDeepLink = false
     
     private init() {
         Logger.info("🔗 DeepLinkManager: Initialized")
@@ -67,7 +68,13 @@ class DeepLinkManager: ObservableObject {
     }
     
     func handleDeepLink(_ deepLink: DeepLink) {
+        guard !isProcessingDeepLink else {
+            Logger.warning("🔗 DeepLinkManager: Already processing a deep link, ignoring")
+            return
+        }
+        
         Logger.info("🔗 DeepLinkManager: Handling deep link: \(deepLink)")
+        isProcessingDeepLink = true
         
         // Cambiar al tab correcto si es necesario
         if let targetTab = deepLink.targetTab {
@@ -75,8 +82,10 @@ class DeepLinkManager: ObservableObject {
         }
         
         // Dar tiempo para que el tab se active, luego ejecutar navegación específica
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.executeDeepLinkNavigation(deepLink)
+        Task {
+            try? await Task.sleep(for: .milliseconds(200))
+            await executeDeepLinkNavigation(deepLink)
+            isProcessingDeepLink = false
         }
     }
     
@@ -166,38 +175,40 @@ class DeepLinkManager: ObservableObject {
     }
     
     // MARK: - Navigation Execution
-    private func executeDeepLinkNavigation(_ deepLink: DeepLink) {
+    private func executeDeepLinkNavigation(_ deepLink: DeepLink) async {
         guard let coordinator = navigationCoordinator else {
             Logger.warning("🔗 DeepLinkManager: NavigationCoordinator not available, storing pending link")
             pendingDeepLink = deepLink
             return
         }
         
-        switch deepLink {
-        case .post(let id):
-            coordinator.showPostDetail(id)
+        await MainActor.run {
+            switch deepLink {
+            case .post(let id):
+                coordinator.showPostDetail(id)
+                
+            case .user(let id):
+                coordinator.showUserProfile(id)
+                
+            case .product(let id):
+                // Para el futuro cuando implementes marketplace
+                Logger.info("🔗 DeepLinkManager: Product deep link: \(id) (feature not implemented)")
+                
+            case .profile:
+                // Ya estamos en el tab de profile, no necesita navegación adicional
+                break
+                
+            case .settings:
+                coordinator.showSettings()
+                
+            case .feed, .marketplace, .notifications:
+                // Solo cambio de tab, sin navegación adicional
+                break
+            }
             
-        case .user(let id):
-            coordinator.showUserProfile(id)
-            
-        case .product(let id):
-            // Para el futuro cuando implementes marketplace
-            Logger.info("🔗 DeepLinkManager: Product deep link: \(id) (feature not implemented)")
-            
-        case .profile:
-            // Ya estamos en el tab de profile, no necesita navegación adicional
-            break
-            
-        case .settings:
-            coordinator.showSettings()
-            
-        case .feed, .marketplace, .notifications:
-            // Solo cambio de tab, sin navegación adicional
-            break
+            // Limpiar pending deep link
+            pendingDeepLink = nil
         }
-        
-        // Limpiar pending deep link
-        pendingDeepLink = nil
     }
     
     // MARK: - Process Pending Deep Links
@@ -205,7 +216,17 @@ class DeepLinkManager: ObservableObject {
         guard let pending = pendingDeepLink else { return }
         
         Logger.info("🔗 DeepLinkManager: Processing pending deep link: \(pending)")
-        executeDeepLinkNavigation(pending)
+        Task {
+            await executeDeepLinkNavigation(pending)
+        }
+    }
+    
+    // MARK: - Manual Tab Selection
+    func selectTab(_ tab: MainTab) {
+        guard selectedTab != tab else { return }
+        
+        Logger.info("🔗 DeepLinkManager: Manual tab selection: \(tab.title)")
+        selectedTab = tab
     }
 }
 

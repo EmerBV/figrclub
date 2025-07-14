@@ -12,9 +12,12 @@ struct MainTabView: View {
     @StateObject private var navigationCoordinator = CoordinatorFactory.makeNavigationCoordinator()
     @StateObject private var deepLinkManager = DeepLinkManager.shared
     
+    // Estado local para el tab seleccionado
+    @State private var selectedTab: MainTab = .feed
+    
     var body: some View {
         if case .authenticated(let user) = authStateManager.authState {
-            TabView(selection: $deepLinkManager.selectedTab) {
+            TabView(selection: $selectedTab) {
                 // Feed Tab
                 FeedFlowView(user: user)
                     .tabItem {
@@ -57,19 +60,38 @@ struct MainTabView: View {
             }
             .environmentObject(navigationCoordinator)
             .onAppear {
-                // Setup deep link manager with navigation coordinator
-                deepLinkManager.setup(navigationCoordinator: navigationCoordinator)
-                deepLinkManager.processPendingDeepLinkIfNeeded()
+                setupDeepLinkManager()
             }
             .onOpenURL { url in
                 deepLinkManager.handleURL(url)
             }
+            // Sincronizar con DeepLinkManager solo cuando sea necesario
             .onChange(of: deepLinkManager.selectedTab) { oldValue, newValue in
-                Logger.debug("🔄 MainTabView: Tab changed from \(oldValue.title) to \(newValue.title)")
+                Logger.debug("🔄 MainTabView: DeepLink changed tab from \(oldValue.title) to \(newValue.title)")
+                selectedTab = newValue
+            }
+            // Actualizar DeepLinkManager cuando el usuario cambie tab manualmente
+            .onChange(of: selectedTab) { oldValue, newValue in
+                Logger.debug("🔄 MainTabView: User changed tab from \(oldValue.title) to \(newValue.title)")
+                deepLinkManager.selectedTab = newValue
             }
         } else {
+            // Estado de carga mientras se verifica autenticación
             LoadingView()
+                .onAppear {
+                    Logger.debug("🔄 MainTabView: Showing loading view - auth state: \(authStateManager.authState)")
+                }
         }
+    }
+    
+    // MARK: - Private Methods
+    
+    private func setupDeepLinkManager() {
+        // Setup deep link manager con navigation coordinator
+        deepLinkManager.setup(navigationCoordinator: navigationCoordinator)
+        deepLinkManager.processPendingDeepLinkIfNeeded()
+        
+        Logger.debug("✅ MainTabView: DeepLinkManager setup completed")
     }
 }
 
