@@ -14,6 +14,7 @@ struct ContentView: View {
     // Estado para manejar timeouts y errores de inicialización
     @State private var initializationTimeout = false
     @State private var showDebugInfo = false
+    @State private var hasInitialized = false
     
     init() {
         // Crear el coordinator en el hilo principal
@@ -31,10 +32,11 @@ struct ContentView: View {
                 
             case .authentication:
                 AuthenticationFlowView()
-                    .environmentObject(authStateManager)
+                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
                 
             case .main:
                 MainTabView()
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
                     .onAppear {
                         // Reset timeout cuando llegamos a main
                         initializationTimeout = false
@@ -42,9 +44,12 @@ struct ContentView: View {
             }
         }
         .environmentObject(appCoordinator)
-        .animation(.easeInOut(duration: AppConfig.UI.animationDuration), value: appCoordinator.currentScreen)
+        .animation(.easeInOut(duration: 0.5), value: appCoordinator.currentScreen)
         .task {
-            await performInitialAuthCheck()
+            if !hasInitialized {
+                await performInitialAuthCheck()
+                hasInitialized = true
+            }
         }
         // Overlay para manejar estado de timeout
         .overlay(alignment: .topTrailing) {
@@ -63,6 +68,13 @@ struct ContentView: View {
             showDebugInfo.toggle()
         }
 #endif
+        // Observar cambios en el estado de autenticación para logs
+        .onReceive(authStateManager.$authState) { authState in
+            Logger.debug("🔄 ContentView: AuthState changed to: \(authState)")
+        }
+        .onReceive(appCoordinator.$currentScreen) { screen in
+            Logger.debug("🧭 ContentView: Screen changed to: \(screen)")
+        }
     }
     
     // MARK: - Private Views
@@ -105,6 +117,7 @@ struct ContentView: View {
             Text("Screen: \(appCoordinator.currentScreen)")
             Text("Auth: \(authStateManager.authState)")
             Text("User: \(authStateManager.currentUser?.username ?? "nil")")
+            Text("Initialized: \(hasInitialized)")
             
             Button("Force Auth Check") {
                 Task {
@@ -116,6 +129,7 @@ struct ContentView: View {
             
             Button("Reset Coordinator") {
                 appCoordinator.resetToInitialState()
+                hasInitialized = false
             }
             .font(.caption)
             .buttonStyle(.bordered)
@@ -134,8 +148,15 @@ struct ContentView: View {
     private func performInitialAuthCheck() async {
         Logger.info("🚀 ContentView: Starting initial auth check")
         
+        // Asegurar que comenzamos en splash
+        await MainActor.run {
+            if appCoordinator.currentScreen != .splash {
+                appCoordinator.navigate(to: .splash)
+            }
+        }
+        
         // Pequeño delay para permitir que la UI se configure
-        try? await Task.sleep(for: .milliseconds(100))
+        try? await Task.sleep(for: .milliseconds(500))
         
         await authStateManager.checkInitialAuthState()
         
@@ -143,13 +164,13 @@ struct ContentView: View {
     }
     
     private func setupInitializationTimeout() {
-        // Timeout de 10 segundos para la inicialización
+        // Timeout de 15 segundos para la inicialización
         Task {
-            try? await Task.sleep(for: .seconds(10))
+            try? await Task.sleep(for: .seconds(15))
             
             await MainActor.run {
                 // Solo mostrar timeout si aún estamos en splash
-                if appCoordinator.currentScreen == .splash {
+                if appCoordinator.currentScreen == .splash && hasInitialized {
                     initializationTimeout = true
                     Logger.warning("⚠️ ContentView: Initialization timeout reached")
                 }
@@ -159,11 +180,13 @@ struct ContentView: View {
     
     private func retryInitialization() {
         initializationTimeout = false
+        hasInitialized = false
         Logger.info("🔄 ContentView: Retrying initialization")
         
         Task {
             appCoordinator.resetToInitialState()
             await performInitialAuthCheck()
+            hasInitialized = true
         }
     }
     

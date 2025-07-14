@@ -75,23 +75,30 @@ final class AuthViewModel: ObservableObject {
         Task { @MainActor in
             self.setupValidation()
             self.setupAuthStateSubscription()
+            Logger.info("✅ AuthViewModel: Initialized successfully")
         }
     }
     
     // MARK: - Public Methods
     
     func login() async {
-        guard canLogin else { return }
+        guard canLogin else {
+            Logger.warning("⚠️ AuthViewModel: Cannot login - validation failed")
+            return
+        }
         
+        Logger.info("🔐 AuthViewModel: Starting login process for: \(loginEmail)")
         isLoading = true
         hideError()
         
         let result = await authStateManager.login(email: loginEmail, password: loginPassword)
         
         switch result {
-        case .success:
+        case .success(let user):
+            Logger.info("✅ AuthViewModel: Login successful for user: \(user.displayName)")
             clearLoginForm()
         case .failure(let error):
+            Logger.error("❌ AuthViewModel: Login failed: \(error)")
             showErrorMessage(error.localizedDescription)
         }
         
@@ -99,8 +106,12 @@ final class AuthViewModel: ObservableObject {
     }
     
     func register() async {
-        guard canRegister else { return }
+        guard canRegister else {
+            Logger.warning("⚠️ AuthViewModel: Cannot register - validation failed")
+            return
+        }
         
+        Logger.info("📝 AuthViewModel: Starting registration process for: \(registerEmail)")
         isLoading = true
         hideError()
         
@@ -112,9 +123,11 @@ final class AuthViewModel: ObservableObject {
         )
         
         switch result {
-        case .success:
+        case .success(let user):
+            Logger.info("✅ AuthViewModel: Registration successful for user: \(user.displayName)")
             clearRegisterForm()
         case .failure(let error):
+            Logger.error("❌ AuthViewModel: Registration failed: \(error)")
             showErrorMessage(error.localizedDescription)
         }
         
@@ -122,17 +135,19 @@ final class AuthViewModel: ObservableObject {
     }
     
     func switchToLogin() {
-        withAnimation(.easeInOut(duration: AppConfig.UI.animationDuration)) {
-            isShowingLogin = true
-        }
+        Logger.info("🔄 AuthViewModel: Switching to login screen")
+        
+        // NO usar withAnimation aquí - dejar que la vista maneje la animación
+        isShowingLogin = true
         hideError()
         clearRegisterForm()
     }
     
     func switchToRegister() {
-        withAnimation(.easeInOut(duration: AppConfig.UI.animationDuration)) {
-            isShowingLogin = false
-        }
+        Logger.info("🔄 AuthViewModel: Switching to register screen")
+        
+        // NO usar withAnimation aquí - dejar que la vista maneje la animación
+        isShowingLogin = false
         hideError()
         clearLoginForm()
     }
@@ -231,24 +246,43 @@ final class AuthViewModel: ObservableObject {
             }
             .assign(to: \.confirmPasswordValidation, on: self)
             .store(in: &cancellables)
+        
+        Logger.debug("✅ AuthViewModel: Validation setup completed")
     }
     
     private func setupAuthStateSubscription() {
         authStateManager.$authState
             .receive(on: DispatchQueue.main)
             .sink { [weak self] authState in
+                guard let self = self else { return }
+                
+                Logger.debug("🔄 AuthViewModel: AuthState changed to: \(authState)")
+                
                 switch authState {
                 case .loading:
-                    self?.isLoading = true
-                case .authenticated, .unauthenticated:
-                    self?.isLoading = false
-                    self?.hideError()
+                    // Solo mostrar loading si estamos haciendo login/register
+                    // NO cambiar isLoading aquí para evitar conflictos
+                    break
+                case .authenticated:
+                    // Limpiar estado cuando el usuario se autentica exitosamente
+                    self.isLoading = false
+                    self.hideError()
+                    // NO resetear isShowingLogin aquí
+                case .unauthenticated:
+                    self.isLoading = false
+                    self.hideError()
+                    // Resetear a login cuando no está autenticado
+                    if !self.isShowingLogin {
+                        self.isShowingLogin = true
+                    }
                 case .error(let message):
-                    self?.isLoading = false
-                    self?.showErrorMessage(message)
+                    self.isLoading = false
+                    self.showErrorMessage(message)
                 }
             }
             .store(in: &cancellables)
+        
+        Logger.debug("✅ AuthViewModel: AuthState subscription setup completed")
     }
     
     private func clearLoginForm() {
@@ -280,6 +314,7 @@ extension AuthViewModel {
             ))
         }
         
+        Logger.info("🔐 AuthViewModel: Login with error handling for: \(loginEmail)")
         isLoading = true
         hideError()
         
@@ -288,15 +323,15 @@ extension AuthViewModel {
         switch result {
         case .success(let user):
             clearLoginForm()
+            isLoading = false
             Logger.info("✅ Login successful for user: \(user.displayName)")
             return nil // No error
             
         case .failure(let error):
+            isLoading = false
             Logger.error("❌ Login failed: \(error)")
             return NetworkError.from(error)
         }
-        
-        // Note: isLoading is managed by authStateManager through authState changes
     }
     
     /// Perform registration and return error if any
@@ -309,6 +344,7 @@ extension AuthViewModel {
             ))
         }
         
+        Logger.info("📝 AuthViewModel: Register with error handling for: \(registerEmail)")
         isLoading = true
         hideError()
         
@@ -322,15 +358,15 @@ extension AuthViewModel {
         switch result {
         case .success(let user):
             clearRegisterForm()
+            isLoading = false
             Logger.info("✅ Registration successful for user: \(user.displayName)")
             return nil // No error
             
         case .failure(let error):
+            isLoading = false
             Logger.error("❌ Registration failed: \(error)")
             return NetworkError.from(error)
         }
-        
-        // Note: isLoading is managed by authStateManager through authState changes
     }
     
     // MARK: - Public Clear Methods
@@ -350,6 +386,7 @@ extension AuthViewModel {
         clearLoginForm()
         clearRegisterForm()
         hideError()
+        // NO resetear isShowingLogin aquí
     }
 }
 

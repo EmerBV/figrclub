@@ -139,7 +139,7 @@ import SwiftUI
  */
 
 struct AuthenticationFlowView: View {
-    @State private var authViewModel: AuthViewModel?
+    @StateObject private var authViewModel = DependencyInjector.shared.resolve(AuthViewModel.self)
     @StateObject private var errorHandler = ErrorHandler()
     
     var body: some View {
@@ -149,50 +149,43 @@ struct AuthenticationFlowView: View {
                 Color(.systemBackground)
                     .ignoresSafeArea()
                 
-                if let viewModel = authViewModel {
-                    if viewModel.isShowingLogin {
-                        LoginFormView(viewModel: viewModel, errorHandler: errorHandler)
-                            .transition(.asymmetric(
-                                insertion: .move(edge: .leading),
-                                removal: .move(edge: .trailing)
-                            ))
-                    } else {
-                        RegisterFormView(viewModel: viewModel, errorHandler: errorHandler)
-                            .transition(.asymmetric(
-                                insertion: .move(edge: .trailing),
-                                removal: .move(edge: .leading)
-                            ))
-                    }
+                // Content with explicit transition
+                if authViewModel.isShowingLogin {
+                    LoginFormView(viewModel: authViewModel, errorHandler: errorHandler)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .leading).combined(with: .opacity),
+                            removal: .move(edge: .trailing).combined(with: .opacity)
+                        ))
+                        .zIndex(authViewModel.isShowingLogin ? 1 : 0)
                 } else {
-                    // Loading state
-                    AuthLoadingView()
+                    RegisterFormView(viewModel: authViewModel, errorHandler: errorHandler)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .trailing).combined(with: .opacity),
+                            removal: .move(edge: .leading).combined(with: .opacity)
+                        ))
+                        .zIndex(authViewModel.isShowingLogin ? 0 : 1)
                 }
             }
+            .animation(.easeInOut(duration: 0.4), value: authViewModel.isShowingLogin)
         }
         .onAppear {
-            setupViewModel()
+            Logger.info("✅ AuthenticationFlowView: Appeared with login state: \(authViewModel.isShowingLogin)")
         }
         .errorAlert(errorHandler: errorHandler) {
             await retryAuthAction()
         }
-        .animation(.easeInOut(duration: 0.3), value: authViewModel?.isShowingLogin)
-    }
-    
-    private func setupViewModel() {
-        if authViewModel == nil {
-            authViewModel = DependencyInjector.shared.resolve(AuthViewModel.self)
+        .onChange(of: authViewModel.isShowingLogin) { oldValue, newValue in
+            Logger.info("🔄 AuthenticationFlowView: Screen changed from \(oldValue) to \(newValue)")
         }
     }
     
     private func retryAuthAction() async {
-        guard let viewModel = authViewModel else { return }
-        
-        if viewModel.isShowingLogin {
-            if let error = await viewModel.loginWithErrorHandling() {
+        if authViewModel.isShowingLogin {
+            if let error = await authViewModel.loginWithErrorHandling() {
                 errorHandler.handle(error)
             }
         } else {
-            if let error = await viewModel.registerWithErrorHandling() {
+            if let error = await authViewModel.registerWithErrorHandling() {
                 errorHandler.handle(error)
             }
         }
@@ -291,20 +284,21 @@ struct LoginFormView: View {
     @ObservedObject var errorHandler: ErrorHandler
     
     var body: some View {
-        VStack(spacing: 32) {
-            // Header Section
-            headerSection
-            
-            // Form Section
-            formSection
-            
-            // Action Buttons
-            actionButtonsSection
-            
-            Spacer()
+        ScrollView {
+            VStack(spacing: 32) {
+                // Header Section
+                headerSection
+                
+                // Form Section
+                formSection
+                
+                // Action Buttons
+                actionButtonsSection
+            }
+            .padding(.horizontal, 32)
+            .padding(.top, 60)
+            .padding(.bottom, 40)
         }
-        .padding(.horizontal, 32)
-        .padding(.top, 60)
     }
     
     // MARK: - Header Section
@@ -312,7 +306,7 @@ struct LoginFormView: View {
     private var headerSection: some View {
         VStack(spacing: 20) {
             // Logo
-            Image("logo") // Asegúrate de tener el logo en Assets
+            Image("logo")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 80, height: 80)
@@ -363,7 +357,7 @@ struct LoginFormView: View {
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.primary)
                 
-                SecureField("Crea una contraseña", text: $viewModel.loginPassword)
+                SecureField("Tu contraseña", text: $viewModel.loginPassword)
                     .textFieldStyle(AuthTextFieldStyle(
                         isValid: getValidationState(viewModel.loginPasswordValidation) != .invalid
                     ))
@@ -378,26 +372,6 @@ struct LoginFormView: View {
                 }
                 .font(.system(size: 14, weight: .regular))
                 .foregroundColor(.blue)
-                .disabled(viewModel.isLoading)
-            }
-            
-            // Remember Me Toggle
-            HStack {
-                Button(action: {
-                    // Toggle remember me functionality
-                }) {
-                    HStack(spacing: 12) {
-                        Image(systemName: "circle")
-                            .font(.system(size: 20))
-                            .foregroundColor(.gray)
-                        
-                        Text("Recordarme")
-                            .font(.system(size: 16, weight: .regular))
-                            .foregroundColor(.primary)
-                        
-                        Spacer()
-                    }
-                }
                 .disabled(viewModel.isLoading)
             }
         }
@@ -450,7 +424,7 @@ struct LoginFormView: View {
             
             // Create Account Button
             Button("Crear una cuenta") {
-                // Switch to register
+                Logger.info("🔄 LoginFormView: User tapped 'Crear una cuenta'")
                 viewModel.switchToRegister()
             }
             .font(.system(size: 16, weight: .semibold))
@@ -636,20 +610,21 @@ struct RegisterFormView: View {
     @ObservedObject var errorHandler: ErrorHandler
     
     var body: some View {
-        VStack(spacing: 32) {
-            // Header Section
-            headerSection
-            
-            // Form Section
-            formSection
-            
-            // Action Buttons
-            actionButtonsSection
-            
-            Spacer()
+        ScrollView {
+            VStack(spacing: 32) {
+                // Header Section
+                headerSection
+                
+                // Form Section
+                formSection
+                
+                // Action Buttons
+                actionButtonsSection
+            }
+            .padding(.horizontal, 32)
+            .padding(.top, 60)
+            .padding(.bottom, 40)
         }
-        .padding(.horizontal, 32)
-        .padding(.top, 60)
     }
     
     private var headerSection: some View {
@@ -840,6 +815,7 @@ struct RegisterFormView: View {
             
             // Login Button
             Button("¿Ya tienes cuenta? Inicia sesión") {
+                Logger.info("🔄 RegisterFormView: User tapped 'Ya tienes cuenta'")
                 viewModel.switchToLogin()
             }
             .font(.system(size: 16, weight: .semibold))

@@ -13,6 +13,14 @@ enum AppScreen: Hashable, CaseIterable {
     case splash
     case authentication
     case main
+    
+    var description: String {
+        switch self {
+        case .splash: return "Splash"
+        case .authentication: return "Authentication"
+        case .main: return "Main"
+        }
+    }
 }
 
 @MainActor
@@ -21,6 +29,7 @@ class AppCoordinator: ObservableObject {
     
     private let authStateManager: AuthStateManager
     private var cancellables = Set<AnyCancellable>()
+    private var isTransitioning = false
     
     init(authStateManager: AuthStateManager) {
         self.authStateManager = authStateManager
@@ -36,12 +45,19 @@ class AppCoordinator: ObservableObject {
                 
                 Logger.debug("🔄 AppCoordinator: AuthState changed to: \(authState)")
                 
+                // Evitar navegaciones duplicadas durante transiciones
+                guard !self.isTransitioning else {
+                    Logger.debug("🔄 AppCoordinator: Skipping navigation - already transitioning")
+                    return
+                }
+                
                 switch authState {
                 case .loading:
-                    // Solo mostrar splash en loading inicial o durante verificaciones largas
-                    // No cambiar a splash si ya estamos en main o auth
+                    // Solo mantener splash en loading inicial
                     if self.currentScreen == .splash {
-                        self.navigate(to: .splash)
+                        Logger.debug("🔄 AppCoordinator: Staying on splash during loading")
+                    } else {
+                        Logger.debug("🔄 AppCoordinator: Loading state - no navigation change")
                     }
                     
                 case .authenticated(let user):
@@ -54,22 +70,24 @@ class AppCoordinator: ObservableObject {
                     
                 case .error(let errorMessage):
                     Logger.error("❌ AppCoordinator: Auth error: \(errorMessage)")
-                    // En caso de error, ir a authentication en lugar de splash
+                    // En caso de error, ir a authentication
                     self.navigate(to: .authentication)
                 }
             }
             .store(in: &cancellables)
         
-        // Observar cambios en isAuthenticated para mayor robustez
+        // Observar cambios en isAuthenticated para validación adicional
         authStateManager.$isAuthenticated
             .receive(on: DispatchQueue.main)
             .sink { [weak self] isAuthenticated in
+                guard let self = self else { return }
+                
                 Logger.debug("🔄 AppCoordinator: IsAuthenticated changed to: \(isAuthenticated)")
                 
-                // Validación adicional para asegurar consistencia
-                if !isAuthenticated && self?.currentScreen == .main {
+                // Validación para prevenir inconsistencias
+                if !isAuthenticated && self.currentScreen == .main && !self.isTransitioning {
                     Logger.warning("⚠️ AppCoordinator: Detected inconsistency - not authenticated but on main screen")
-                    self?.navigate(to: .authentication)
+                    self.navigate(to: .authentication)
                 }
             }
             .store(in: &cancellables)
@@ -78,14 +96,29 @@ class AppCoordinator: ObservableObject {
     func navigate(to screen: AppScreen) {
         // Evitar navegaciones innecesarias
         guard currentScreen != screen else {
-            Logger.debug("🔄 AppCoordinator: Already on screen \(screen), skipping navigation")
+            Logger.debug("🔄 AppCoordinator: Already on screen \(screen.description), skipping navigation")
             return
         }
         
-        Logger.info("🧭 AppCoordinator: Navigating from \(currentScreen) to \(screen)")
+        // Evitar navegaciones duplicadas durante transiciones
+        guard !isTransitioning else {
+            Logger.debug("🔄 AppCoordinator: Navigation to \(screen.description) blocked - already transitioning")
+            return
+        }
         
-        withAnimation(.easeInOut(duration: AppConfig.UI.animationDuration)) {
-            currentScreen = screen
+        Logger.info("🧭 AppCoordinator: Navigating from \(currentScreen.description) to \(screen.description)")
+        
+        isTransitioning = true
+        
+        // Usar un pequeño delay para suavizar la transición
+        Task { @MainActor in
+            withAnimation(.easeInOut(duration: AppConfig.UI.animationDuration)) {
+                currentScreen = screen
+            }
+            
+            // Reset transition flag después de la animación
+            try? await Task.sleep(for: .milliseconds(Int(AppConfig.UI.animationDuration * 1000) + 100))
+            isTransitioning = false
         }
     }
     
@@ -100,8 +133,11 @@ class AppCoordinator: ObservableObject {
     // Método de emergencia para resetear estado
     func resetToInitialState() {
         Logger.warning("🔄 AppCoordinator: Resetting to initial state")
+        isTransitioning = false
         navigate(to: .splash)
         Task {
+            // Pequeño delay antes de verificar auth state
+            try? await Task.sleep(for: .milliseconds(200))
             await authStateManager.checkInitialAuthState()
         }
     }
