@@ -14,7 +14,7 @@ struct MainTabView: View {
     var body: some View {
         if case .authenticated(let user) = authStateManager.authState {
             TabView(selection: $tabCoordinator.selectedTab) {
-                // Feed Tab - usando coordinador para navegación futura
+                // Feed Tab
                 FeedFlowView(user: user)
                     .environmentObject(tabCoordinator.feedCoordinator)
                     .tabItem {
@@ -23,36 +23,32 @@ struct MainTabView: View {
                     }
                     .tag(MainTab.feed)
                 
-                // TODO
-                /*
-                 // Marketplace Tab
-                 MarketplaceFlowView(user: user)
-                 .environmentObject(tabCoordinator.marketplaceCoordinator)
-                 .tabItem {
-                 Image(systemName: MainTab.marketplace.icon)
-                 Text(MainTab.marketplace.title)
-                 }
-                 .tag(MainTab.marketplace)
-                 
-                 // Create Tab
-                 CreateFlowView(user: user)
-                 .environmentObject(tabCoordinator.createCoordinator)
-                 .tabItem {
-                 Image(systemName: MainTab.create.icon)
-                 Text(MainTab.create.title)
-                 }
-                 .tag(MainTab.create)
-                 
-                 // Notifications Tab
-                 NotificationsFlowView(user: user)
-                 .environmentObject(tabCoordinator.notificationsCoordinator)
-                 .tabItem {
-                 Image(systemName: MainTab.notifications.icon)
-                 Text(MainTab.notifications.title)
-                 }
-                 .tag(MainTab.notifications)
-                 
-                 */
+                // Marketplace Tab
+                MarketplaceFlowView(user: user)
+                    .environmentObject(tabCoordinator.marketplaceCoordinator)
+                    .tabItem {
+                        Image(systemName: MainTab.marketplace.icon)
+                        Text(MainTab.marketplace.title)
+                    }
+                    .tag(MainTab.marketplace)
+                
+                // Create Tab
+                CreateFlowView(user: user)
+                    .environmentObject(tabCoordinator.createCoordinator)
+                    .tabItem {
+                        Image(systemName: MainTab.create.icon)
+                        Text(MainTab.create.title)
+                    }
+                    .tag(MainTab.create)
+                
+                // Notifications Tab
+                NotificationsFlowView(user: user)
+                    .environmentObject(tabCoordinator.notificationsCoordinator)
+                    .tabItem {
+                        Image(systemName: MainTab.notifications.icon)
+                        Text(MainTab.notifications.title)
+                    }
+                    .tag(MainTab.notifications)
                 
                 // Profile Tab
                 ProfileFlowView(user: user)
