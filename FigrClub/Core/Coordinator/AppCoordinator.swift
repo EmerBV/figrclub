@@ -25,18 +25,50 @@ class AppCoordinator: ObservableObject {
     init(authStateManager: AuthStateManager) {
         self.authStateManager = authStateManager
         setupBindings()
+        Logger.info("🎯 AppCoordinator: Initialized and bindings setup")
     }
     
     private func setupBindings() {
         authStateManager.$authState
             .receive(on: DispatchQueue.main)
             .sink { [weak self] authState in
+                guard let self = self else { return }
+                
+                Logger.debug("🔄 AppCoordinator: AuthState changed to: \(authState)")
+                
                 switch authState {
                 case .loading:
-                    self?.navigate(to: .splash)
-                case .authenticated:
-                    self?.navigate(to: .main)
-                case .unauthenticated, .error:
+                    // Solo mostrar splash en loading inicial o durante verificaciones largas
+                    // No cambiar a splash si ya estamos en main o auth
+                    if self.currentScreen == .splash {
+                        self.navigate(to: .splash)
+                    }
+                    
+                case .authenticated(let user):
+                    Logger.info("✅ AppCoordinator: User authenticated: \(user.displayName)")
+                    self.navigate(to: .main)
+                    
+                case .unauthenticated:
+                    Logger.info("📱 AppCoordinator: User unauthenticated")
+                    self.navigate(to: .authentication)
+                    
+                case .error(let errorMessage):
+                    Logger.error("❌ AppCoordinator: Auth error: \(errorMessage)")
+                    // En caso de error, ir a authentication en lugar de splash
+                    self.navigate(to: .authentication)
+                }
+            }
+            .store(in: &cancellables)
+        
+        // Observar cambios en isAuthenticated para mayor robustez
+        authStateManager.$isAuthenticated
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isAuthenticated in
+                Logger.debug("🔄 AppCoordinator: IsAuthenticated changed to: \(isAuthenticated)")
+                
+                // Validación adicional para asegurar consistencia
+                if !isAuthenticated && self?.currentScreen == .main {
+                    Logger.warning("⚠️ AppCoordinator: Detected inconsistency - not authenticated but on main screen")
                     self?.navigate(to: .authentication)
                 }
             }
@@ -44,8 +76,33 @@ class AppCoordinator: ObservableObject {
     }
     
     func navigate(to screen: AppScreen) {
+        // Evitar navegaciones innecesarias
+        guard currentScreen != screen else {
+            Logger.debug("🔄 AppCoordinator: Already on screen \(screen), skipping navigation")
+            return
+        }
+        
+        Logger.info("🧭 AppCoordinator: Navigating from \(currentScreen) to \(screen)")
+        
         withAnimation(.easeInOut(duration: AppConfig.UI.animationDuration)) {
             currentScreen = screen
+        }
+    }
+    
+    // Método para forzar re-evaluación del estado
+    func reevaluateAuthState() {
+        Logger.debug("🔄 AppCoordinator: Re-evaluating auth state")
+        Task {
+            await authStateManager.checkInitialAuthState()
+        }
+    }
+    
+    // Método de emergencia para resetear estado
+    func resetToInitialState() {
+        Logger.warning("🔄 AppCoordinator: Resetting to initial state")
+        navigate(to: .splash)
+        Task {
+            await authStateManager.checkInitialAuthState()
         }
     }
 }

@@ -33,7 +33,10 @@ final class AuthStateManager: ObservableObject {
     // MARK: - Public Methods
     
     func login(email: String, password: String) async -> Result<User, Error> {
-        authState = .loading
+        // 🔧 FIX: Asegurar que el estado se actualiza en el hilo principal
+        await MainActor.run {
+            authState = .loading
+        }
         
         do {
             let user = try await authRepository.login(email: email, password: password)
@@ -48,7 +51,10 @@ final class AuthStateManager: ObservableObject {
     }
     
     func register(email: String, password: String, username: String, fullName: String?) async -> Result<User, Error> {
-        authState = .loading
+        // Asegurar que el estado se actualiza en el hilo principal
+        await MainActor.run {
+            authState = .loading
+        }
         
         do {
             let user = try await authRepository.register(
@@ -68,17 +74,29 @@ final class AuthStateManager: ObservableObject {
     }
     
     func logout() async {
-        authState = .loading
+        Logger.info("🚪 AuthStateManager: Starting logout process...")
+        
+        // Cambiar inmediatamente a estado loading en el hilo principal
+        await MainActor.run {
+            authState = .loading
+        }
         
         do {
+            // Ejecutar logout del servidor en paralelo (no bloqueante)
             try await authRepository.logout()
-            await updateUnauthenticatedState()
-            Logger.info("✅ AuthStateManager: Logout successful")
+            Logger.info("✅ AuthStateManager: Server logout successful")
         } catch {
-            Logger.error("❌ AuthStateManager: Logout failed: \(error)")
-            // Even if logout fails on server, clear local state
-            await updateUnauthenticatedState()
+            Logger.error("❌ AuthStateManager: Server logout failed: \(error), continuing with local cleanup...")
+            // No detener el proceso si falla el logout del servidor
         }
+        
+        // Limpiar estado local SIEMPRE, sin importar si el servidor falló
+        await clearLocalAuthData()
+        
+        // Actualizar inmediatamente a unauthenticated
+        await updateUnauthenticatedState()
+        
+        Logger.info("✅ AuthStateManager: Logout completed successfully")
     }
     
     func refreshToken() async -> Bool {
@@ -95,7 +113,7 @@ final class AuthStateManager: ObservableObject {
     }
     
     func getCurrentUser() async -> Result<User, Error> {
-        // ✅ Verificar credenciales usando el método async
+        // Verificar credenciales usando el método async
         guard await tokenManager.hasValidCredentials() else {
             let error = AuthError.noUserIdFound
             Logger.error("❌ AuthStateManager: No valid credentials found")
@@ -130,7 +148,12 @@ final class AuthStateManager: ObservableObject {
     func checkInitialAuthState() async {
         Logger.info("🔍 AuthStateManager: Checking initial authentication state")
         
-        // ✅ Usar método async para verificar credenciales
+        // Mantener estado loading durante la verificación inicial
+        await MainActor.run {
+            authState = .loading
+        }
+        
+        // Usar método async para verificar credenciales
         guard await tokenManager.hasValidCredentials() else {
             await updateUnauthenticatedState()
             Logger.info("📱 AuthStateManager: No valid authentication found")
@@ -159,6 +182,7 @@ final class AuthStateManager: ObservableObject {
     func updateUser(_ user: User) async {
         currentUser = user
         authState = .authenticated(user)
+        isAuthenticated = true
         Logger.info("🔄 AuthStateManager: User updated: \(user.displayName)")
     }
     
@@ -168,8 +192,20 @@ final class AuthStateManager: ObservableObject {
         return await getCurrentUser()
     }
     
+    /// Método para limpiar datos locales
+    private func clearLocalAuthData() async {
+        // Limpiar tokens
+        await tokenManager.clearTokens()
+        
+        // Limpiar usuario en memoria
+        currentUser = nil
+        isAuthenticated = false
+        
+        Logger.debug("🗑️ AuthStateManager: Local auth data cleared")
+    }
+    
     private func setupCredentialMonitoring() {
-        // ✅ Monitor credentials periodically instead of reactive subscriptions
+        // Monitor credentials periodically instead of reactive subscriptions
         credentialCheckTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 await self?.checkCredentialsIfAuthenticated()
@@ -194,25 +230,29 @@ final class AuthStateManager: ObservableObject {
     // MARK: - Private Methods
     
     private func updateAuthenticatedState(with user: User) async {
-        currentUser = user
-        authState = .authenticated(user)
-        isAuthenticated = true
+        await MainActor.run {
+            currentUser = user
+            authState = .authenticated(user)
+            isAuthenticated = true
+        }
         Logger.debug("✅ AuthStateManager: Updated to authenticated state for user: \(user.displayName)")
     }
     
     private func updateUnauthenticatedState() async {
-        currentUser = nil
-        authState = .unauthenticated
-        isAuthenticated = false
+        await MainActor.run {
+            currentUser = nil
+            authState = .unauthenticated
+            isAuthenticated = false
+        }
         
-        // Clear tokens when updating to unauthenticated state
-        await tokenManager.clearTokens()
         Logger.debug("📱 AuthStateManager: Updated to unauthenticated state")
     }
     
     private func updateErrorState(_ error: Error) async {
-        authState = .error(error.localizedDescription)
-        isAuthenticated = false
+        await MainActor.run {
+            authState = .error(error.localizedDescription)
+            isAuthenticated = false
+        }
         Logger.error("❌ AuthStateManager: Updated to error state: \(error.localizedDescription)")
     }
     
@@ -270,6 +310,12 @@ extension AuthStateManager {
                 print("  - UserId: \(userId?.description ?? "nil")")
             }
         }
+    }
+    
+    /// Método de debug para forzar logout (útil para testing)
+    func debugForceLogout() async {
+        Logger.debug("🔧 Debug: Force logout triggered")
+        await logout()
     }
 }
 #endif

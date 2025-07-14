@@ -78,13 +78,47 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
     }
     
     func logout() async throws {
-        try await authService.logout()
+        Logger.info("🚪 AuthRepository: Starting logout process...")
         
-        // Clear local data
+        // Crear una tarea para el logout del servidor que no bloquee el proceso
+        let serverLogoutTask = Task {
+            do {
+                try await authService.logout()
+                Logger.info("✅ AuthRepository: Server logout successful")
+            } catch {
+                Logger.error("❌ AuthRepository: Server logout failed: \(error)")
+                // No lanzar el error, solo registrarlo
+            }
+        }
+        
+        // Limpiar datos locales inmediatamente
+        await clearLocalData()
+        
+        // Esperar máximo 5 segundos por el logout del servidor
+        do {
+            try await serverLogoutTask.value
+        } catch {
+            // Si el servidor no responde en tiempo, continuar anyway
+            Logger.warning("⚠️ AuthRepository: Server logout timeout, continuing with local cleanup")
+        }
+        
+        Logger.info("✅ AuthRepository: Logout process completed")
+    }
+    
+    // Método separado para limpiar datos locales
+    private func clearLocalData() async {
+        // Limpiar tokens del TokenManager
         await tokenManager.clearTokens()
-        try clearUser()
         
-        Logger.info("✅ AuthRepository: Logout successful - Local data cleared")
+        // Limpiar datos del usuario del almacenamiento seguro
+        do {
+            try clearUser()
+            Logger.debug("✅ AuthRepository: Local user data cleared")
+        } catch {
+            Logger.error("❌ AuthRepository: Failed to clear user data: \(error)")
+        }
+        
+        Logger.info("✅ AuthRepository: All local auth data cleared")
     }
     
     func refreshToken() async throws -> User {
@@ -141,5 +175,15 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
     private func clearUser() throws {
         try secureStorage.remove(forKey: AppConfig.Auth.userKey)
         Logger.debug("🗑️ AuthRepository: User data cleared from secure storage")
+    }
+    
+    // Método de utilidad para verificar estado de almacenamiento
+    func hasStoredCredentials() async -> Bool {
+        let hasToken = await tokenManager.getToken() != nil
+        let hasUserId = await tokenManager.getCurrentUserId() != nil
+        let hasUser = getCachedUser() != nil
+        
+        Logger.debug("🔍 AuthRepository: Credentials check - Token: \(hasToken), UserId: \(hasUserId), User: \(hasUser)")
+        return hasToken && hasUserId && hasUser
     }
 }
