@@ -41,12 +41,28 @@ struct FigrTextFieldStyle: TextFieldStyle {
 
 // MARK: - Extensions for SecureField
 extension SecureField {
+    /*
+     func textFieldStyle<S>(_ style: S) -> some View where S: TextFieldStyle {
+     // SecureField wrapper que aplica el mismo estilo
+     self.padding(.horizontal, 16)
+     .padding(.vertical, 14)
+     .background(Color(.systemGray6))
+     .cornerRadius(AppConfig.UI.cornerRadius)
+     .overlay(
+     RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
+     .stroke(Color(.systemGray4), lineWidth: 0.5)
+     )
+     .font(.system(size: 16, weight: .regular))
+     }
+     */
+    
     func textFieldStyle<S>(_ style: S) -> some View where S: TextFieldStyle {
-        // SecureField wrapper que aplica el mismo estilo
         self.padding(.horizontal, 16)
             .padding(.vertical, 14)
-            .background(Color(.systemGray6))
-            .cornerRadius(AppConfig.UI.cornerRadius)
+            .background(
+                RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
+                    .fill(Color(.systemGray6))
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
                     .stroke(Color(.systemGray4), lineWidth: 0.5)
