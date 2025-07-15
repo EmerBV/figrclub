@@ -29,14 +29,9 @@ final class AuthViewModel: ObservableObject {
     @Published var registerConfirmPassword = ""
     @Published var acceptTerms = false
     
-    // Validation states
-    @Published var loginEmailValidation: ValidationResult = .valid
-    @Published var loginPasswordValidation: ValidationResult = .valid
-    @Published var registerEmailValidation: ValidationResult = .valid
-    @Published var registerPasswordValidation: ValidationResult = .valid
-    @Published var usernameValidation: ValidationResult = .valid
-    @Published var fullNameValidation: ValidationResult = .valid
-    @Published var confirmPasswordValidation: ValidationResult = .valid
+    // MARK: - Validation Management
+    @StateObject private var loginValidationManager = FormValidationManager()
+    @StateObject private var registerValidationManager = FormValidationManager()
     
     // MARK: - Dependencies
     private nonisolated let authStateManager: AuthStateManager
@@ -48,8 +43,7 @@ final class AuthViewModel: ObservableObject {
         !loginEmail.isEmpty &&
         !loginPassword.isEmpty &&
         !isLoading &&
-        loginEmailValidation.isValid &&
-        loginPasswordValidation.isValid
+        loginValidationManager.isFormValid
     }
     
     var canRegister: Bool {
@@ -60,11 +54,36 @@ final class AuthViewModel: ObservableObject {
         registerPassword == registerConfirmPassword &&
         acceptTerms &&
         !isLoading &&
-        registerEmailValidation.isValid &&
-        registerPasswordValidation.isValid &&
-        usernameValidation.isValid &&
-        fullNameValidation.isValid &&
-        confirmPasswordValidation.isValid
+        registerValidationManager.isFormValid
+    }
+    
+    // MARK: - Validation Access
+    var loginEmailValidation: ValidationResult {
+        loginValidationManager.getValidation(for: "email")
+    }
+    
+    var loginPasswordValidation: ValidationResult {
+        loginValidationManager.getValidation(for: "password")
+    }
+    
+    var registerEmailValidation: ValidationResult {
+        registerValidationManager.getValidation(for: "email")
+    }
+    
+    var registerPasswordValidation: ValidationResult {
+        registerValidationManager.getValidation(for: "password")
+    }
+    
+    var usernameValidation: ValidationResult {
+        registerValidationManager.getValidation(for: "username")
+    }
+    
+    var fullNameValidation: ValidationResult {
+        registerValidationManager.getValidation(for: "fullName")
+    }
+    
+    var confirmPasswordValidation: ValidationResult {
+        registerValidationManager.getValidation(for: "confirmPassword")
     }
     
     // MARK: - Initializer
@@ -82,62 +101,30 @@ final class AuthViewModel: ObservableObject {
     // MARK: - Public Methods
     
     func login() async {
-        guard canLogin else {
-            Logger.warning("⚠️ AuthViewModel: Cannot login - validation failed")
-            return
-        }
-        
-        Logger.info("🔐 AuthViewModel: Starting login process for: \(loginEmail)")
-        isLoading = true
-        hideError()
-        
-        let result = await authStateManager.login(email: loginEmail, password: loginPassword)
-        
-        switch result {
-        case .success(let user):
+        await performAuthAction(canPerform: canLogin, action: "login") {
+            await authStateManager.login(email: loginEmail, password: loginPassword)
+        } onSuccess: { user in
             Logger.info("✅ AuthViewModel: Login successful for user: \(user.displayName)")
             clearLoginForm()
-        case .failure(let error):
-            Logger.error("❌ AuthViewModel: Login failed: \(error)")
-            showErrorMessage(error.localizedDescription)
         }
-        
-        isLoading = false
     }
     
     func register() async {
-        guard canRegister else {
-            Logger.warning("⚠️ AuthViewModel: Cannot register - validation failed")
-            return
-        }
-        
-        Logger.info("📝 AuthViewModel: Starting registration process for: \(registerEmail)")
-        isLoading = true
-        hideError()
-        
-        let result = await authStateManager.register(
-            email: registerEmail,
-            password: registerPassword,
-            username: registerUsername,
-            fullName: registerFullName.isEmpty ? nil : registerFullName
-        )
-        
-        switch result {
-        case .success(let user):
+        await performAuthAction(canPerform: canRegister, action: "register") {
+            await authStateManager.register(
+                email: registerEmail,
+                password: registerPassword,
+                username: registerUsername,
+                fullName: registerFullName.isEmpty ? nil : registerFullName
+            )
+        } onSuccess: { user in
             Logger.info("✅ AuthViewModel: Registration successful for user: \(user.displayName)")
             clearRegisterForm()
-        case .failure(let error):
-            Logger.error("❌ AuthViewModel: Registration failed: \(error)")
-            showErrorMessage(error.localizedDescription)
         }
-        
-        isLoading = false
     }
     
     func switchToLogin() {
         Logger.info("🔄 AuthViewModel: Switching to login screen")
-        
-        // NO usar withAnimation aquí - dejar que la vista maneje la animación
         isShowingLogin = true
         hideError()
         clearRegisterForm()
@@ -145,8 +132,6 @@ final class AuthViewModel: ObservableObject {
     
     func switchToRegister() {
         Logger.info("🔄 AuthViewModel: Switching to register screen")
-        
-        // NO usar withAnimation aquí - dejar que la vista maneje la animación
         isShowingLogin = false
         hideError()
         clearLoginForm()
@@ -155,6 +140,233 @@ final class AuthViewModel: ObservableObject {
     func hideError() {
         errorMessage = nil
         showError = false
+    }
+    
+    // MARK: - Error Handling Methods
+    
+    func loginWithErrorHandling() async -> NetworkError? {
+        guard canLogin else {
+            return createValidationError("Por favor completa todos los campos correctamente")
+        }
+        
+        return await performAuthActionWithErrorHandling(action: "login") {
+            await authStateManager.login(email: loginEmail, password: loginPassword)
+        } onSuccess: {
+            clearLoginForm()
+        }
+    }
+    
+    func registerWithErrorHandling() async -> NetworkError? {
+        guard canRegister else {
+            return createValidationError("Por favor completa todos los campos correctamente y acepta los términos")
+        }
+        
+        return await performAuthActionWithErrorHandling(action: "register") {
+            await authStateManager.register(
+                email: registerEmail,
+                password: registerPassword,
+                username: registerUsername,
+                fullName: registerFullName.isEmpty ? nil : registerFullName
+            )
+        } onSuccess: {
+            clearRegisterForm()
+        }
+    }
+    
+    // MARK: - Form Management
+    
+    func clearLoginFormPublic() {
+        clearLoginForm()
+    }
+    
+    func clearRegisterFormPublic() {
+        clearRegisterForm()
+    }
+    
+    func clearAllForms() {
+        clearLoginForm()
+        clearRegisterForm()
+        hideError()
+    }
+    
+    // MARK: - Validation Helpers
+    
+    var loginValidationErrors: [String] {
+        return loginValidationManager.getErrors()
+    }
+    
+    var registerValidationErrors: [String] {
+        return registerValidationManager.getErrors()
+    }
+}
+
+// MARK: - Private Methods
+private extension AuthViewModel {
+    
+    func setupValidation() {
+        setupLoginValidation()
+        setupRegisterValidation()
+        Logger.debug("✅ AuthViewModel: Validation setup completed")
+    }
+    
+    func setupLoginValidation() {
+        // Email validation
+        let emailValidation = ValidationHelper.createValidationPublisher(
+            for: $loginEmail.eraseToAnyPublisher(),
+            using: { [weak self] email in
+                self?.validationService.validateEmail(email) ?? .valid
+            }
+        )
+        loginValidationManager.addValidation(for: "email", publisher: emailValidation)
+        
+        // Password validation
+        let passwordValidation = ValidationHelper.createValidationPublisher(
+            for: $loginPassword.eraseToAnyPublisher(),
+            using: { [weak self] password in
+                self?.validationService.validatePassword(password) ?? .valid
+            }
+        )
+        loginValidationManager.addValidation(for: "password", publisher: passwordValidation)
+    }
+    
+    func setupRegisterValidation() {
+        // Email validation
+        let emailValidation = ValidationHelper.createValidationPublisher(
+            for: $registerEmail.eraseToAnyPublisher(),
+            using: { [weak self] email in
+                self?.validationService.validateEmail(email) ?? .valid
+            }
+        )
+        registerValidationManager.addValidation(for: "email", publisher: emailValidation)
+        
+        // Password validation
+        let passwordValidation = ValidationHelper.createValidationPublisher(
+            for: $registerPassword.eraseToAnyPublisher(),
+            using: { [weak self] password in
+                self?.validationService.validatePassword(password) ?? .valid
+            }
+        )
+        registerValidationManager.addValidation(for: "password", publisher: passwordValidation)
+        
+        // Username validation
+        let usernameValidation = ValidationHelper.createValidationPublisher(
+            for: $registerUsername.eraseToAnyPublisher(),
+            using: { [weak self] username in
+                self?.validationService.validateUsername(username) ?? .valid
+            }
+        )
+        registerValidationManager.addValidation(for: "username", publisher: usernameValidation)
+        
+        // Full name validation
+        let fullNameValidation = ValidationHelper.createValidationPublisher(
+            for: $registerFullName.eraseToAnyPublisher(),
+            using: { [weak self] fullName in
+                self?.validationService.validateFullName(fullName) ?? .valid
+            }
+        )
+        registerValidationManager.addValidation(for: "fullName", publisher: fullNameValidation)
+        
+        // Confirm password validation
+        let confirmPasswordValidation = ValidationHelper.createPasswordConfirmationPublisher(
+            password: $registerPassword.eraseToAnyPublisher(),
+            confirmPassword: $registerConfirmPassword.eraseToAnyPublisher()
+        )
+        registerValidationManager.addValidation(for: "confirmPassword", publisher: confirmPasswordValidation)
+    }
+    
+    func setupAuthStateSubscription() {
+        authStateManager.$authState
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] authState in
+                self?.handleAuthStateChange(authState)
+            }
+            .store(in: &cancellables)
+        
+        Logger.debug("✅ AuthViewModel: AuthState subscription setup completed")
+    }
+    
+    func handleAuthStateChange(_ authState: AuthState) {
+        Logger.debug("🔄 AuthViewModel: AuthState changed to: \(authState)")
+        
+        switch authState {
+        case .loading:
+            break // Managed by individual actions
+        case .loggingOut:
+            isLoading = true
+            hideError()
+        case .authenticated:
+            isLoading = false
+            hideError()
+        case .unauthenticated:
+            isLoading = false
+            hideError()
+            if !isShowingLogin {
+                isShowingLogin = true
+            }
+        case .error(let message):
+            isLoading = false
+            showErrorMessage(message)
+        }
+    }
+    
+    func performAuthAction(
+        canPerform: Bool,
+        action: String,
+        authCall: () async -> Result<User, Error>,
+        onSuccess: (User) -> Void
+    ) async {
+        guard canPerform else {
+            Logger.warning("⚠️ AuthViewModel: Cannot \(action) - validation failed")
+            return
+        }
+        
+        Logger.info("🔐 AuthViewModel: Starting \(action) process")
+        isLoading = true
+        hideError()
+        
+        let result = await authCall()
+        
+        switch result {
+        case .success(let user):
+            onSuccess(user)
+        case .failure(let error):
+            Logger.error("❌ AuthViewModel: \(action.capitalized) failed: \(error)")
+            showErrorMessage(error.localizedDescription)
+        }
+        
+        isLoading = false
+    }
+    
+    func performAuthActionWithErrorHandling(
+        action: String,
+        authCall: () async -> Result<User, Error>,
+        onSuccess: () -> Void
+    ) async -> NetworkError? {
+        Logger.info("🔐 AuthViewModel: \(action.capitalized) with error handling")
+        isLoading = true
+        hideError()
+        
+        let result = await authCall()
+        
+        switch result {
+        case .success(let user):
+            onSuccess()
+            isLoading = false
+            Logger.info("✅ \(action.capitalized) successful for user: \(user.displayName)")
+            return nil
+        case .failure(let error):
+            isLoading = false
+            Logger.error("❌ \(action.capitalized) failed: \(error)")
+            return NetworkError.from(error)
+        }
+    }
+    
+    func createValidationError(_ message: String) -> NetworkError {
+        return NetworkError.badRequest(APIError(
+            message: message,
+            code: "VALIDATION_ERROR",
+            details: nil
+        ))
     }
     
     func showErrorMessage(_ message: String) {
@@ -168,279 +380,18 @@ final class AuthViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Private Methods
-    
-    private func setupValidation() {
-        // Login email validation
-        $loginEmail
-            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
-            .removeDuplicates()
-            .map { [weak self] email in
-                guard !email.isEmpty else { return ValidationResult.valid }
-                return self?.validationService.validateEmail(email) ?? .valid
-            }
-            .assign(to: \.loginEmailValidation, on: self)
-            .store(in: &cancellables)
-        
-        // Login password validation
-        $loginPassword
-            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
-            .removeDuplicates()
-            .map { [weak self] password in
-                guard !password.isEmpty else { return ValidationResult.valid }
-                return self?.validationService.validatePassword(password) ?? .valid
-            }
-            .assign(to: \.loginPasswordValidation, on: self)
-            .store(in: &cancellables)
-        
-        // Register email validation
-        $registerEmail
-            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
-            .removeDuplicates()
-            .map { [weak self] email in
-                guard !email.isEmpty else { return ValidationResult.valid }
-                return self?.validationService.validateEmail(email) ?? .valid
-            }
-            .assign(to: \.registerEmailValidation, on: self)
-            .store(in: &cancellables)
-        
-        // Register password validation
-        $registerPassword
-            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
-            .removeDuplicates()
-            .map { [weak self] password in
-                guard !password.isEmpty else { return ValidationResult.valid }
-                return self?.validationService.validatePassword(password) ?? .valid
-            }
-            .assign(to: \.registerPasswordValidation, on: self)
-            .store(in: &cancellables)
-        
-        // Username validation
-        $registerUsername
-            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
-            .removeDuplicates()
-            .map { [weak self] username in
-                guard !username.isEmpty else { return ValidationResult.valid }
-                return self?.validationService.validateUsername(username) ?? .valid
-            }
-            .assign(to: \.usernameValidation, on: self)
-            .store(in: &cancellables)
-        
-        // Full name validation
-        $registerFullName
-            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
-            .removeDuplicates()
-            .map { [weak self] fullName in
-                guard !fullName.isEmpty else { return ValidationResult.valid }
-                return self?.validationService.validateFullName(fullName) ?? .valid
-            }
-            .assign(to: \.fullNameValidation, on: self)
-            .store(in: &cancellables)
-        
-        // Confirm password validation
-        Publishers.CombineLatest($registerPassword, $registerConfirmPassword)
-            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
-            .map { password, confirmPassword in
-                guard !confirmPassword.isEmpty else { return ValidationResult.valid }
-                return password == confirmPassword ? .valid : .invalid("Las contraseñas no coinciden")
-            }
-            .assign(to: \.confirmPasswordValidation, on: self)
-            .store(in: &cancellables)
-        
-        Logger.debug("✅ AuthViewModel: Validation setup completed")
-    }
-    
-    private func setupAuthStateSubscription() {
-        authStateManager.$authState
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] authState in
-                guard let self = self else { return }
-                
-                Logger.debug("🔄 AuthViewModel: AuthState changed to: \(authState)")
-                
-                switch authState {
-                case .loading:
-                    // Solo mostrar loading si estamos haciendo login/register
-                    // NO cambiar isLoading aquí para evitar conflictos
-                    break
-                case .loggingOut:  // 🆕 Nuevo caso para logout
-                    // No hacer nada en AuthViewModel durante logout
-                    Logger.debug("🚪 AuthViewModel: Logout in progress")
-                    break
-                case .authenticated:
-                    // Limpiar estado cuando el usuario se autentica exitosamente
-                    self.isLoading = false
-                    self.hideError()
-                    // NO resetear isShowingLogin aquí
-                case .unauthenticated:
-                    self.isLoading = false
-                    self.hideError()
-                    // Resetear a login cuando no está autenticado
-                    if !self.isShowingLogin {
-                        self.isShowingLogin = true
-                    }
-                case .error(let message):
-                    self.isLoading = false
-                    self.showErrorMessage(message)
-                }
-            }
-            .store(in: &cancellables)
-        
-        Logger.debug("✅ AuthViewModel: AuthState subscription setup completed")
-    }
-    
-    private func clearLoginForm() {
+    func clearLoginForm() {
         loginEmail = ""
         loginPassword = ""
     }
     
-    private func clearRegisterForm() {
+    func clearRegisterForm() {
         registerEmail = ""
         registerPassword = ""
         registerUsername = ""
         registerFullName = ""
         registerConfirmPassword = ""
         acceptTerms = false
-    }
-}
-
-extension AuthViewModel {
-    
-    // MARK: - Public Methods with Error Return
-    
-    /// Perform login and return error if any
-    func loginWithErrorHandling() async -> NetworkError? {
-        guard canLogin else {
-            return NetworkError.badRequest(APIError(
-                message: "Por favor completa todos los campos correctamente",
-                code: "VALIDATION_ERROR",
-                details: nil
-            ))
-        }
-        
-        Logger.info("🔐 AuthViewModel: Login with error handling for: \(loginEmail)")
-        isLoading = true
-        hideError()
-        
-        let result = await authStateManager.login(email: loginEmail, password: loginPassword)
-        
-        switch result {
-        case .success(let user):
-            clearLoginForm()
-            isLoading = false
-            Logger.info("✅ Login successful for user: \(user.displayName)")
-            return nil // No error
-            
-        case .failure(let error):
-            isLoading = false
-            Logger.error("❌ Login failed: \(error)")
-            return NetworkError.from(error)
-        }
-    }
-    
-    /// Perform registration and return error if any
-    func registerWithErrorHandling() async -> NetworkError? {
-        guard canRegister else {
-            return NetworkError.badRequest(APIError(
-                message: "Por favor completa todos los campos correctamente y acepta los términos",
-                code: "VALIDATION_ERROR",
-                details: nil
-            ))
-        }
-        
-        Logger.info("📝 AuthViewModel: Register with error handling for: \(registerEmail)")
-        isLoading = true
-        hideError()
-        
-        let result = await authStateManager.register(
-            email: registerEmail,
-            password: registerPassword,
-            username: registerUsername,
-            fullName: registerFullName.isEmpty ? nil : registerFullName
-        )
-        
-        switch result {
-        case .success(let user):
-            clearRegisterForm()
-            isLoading = false
-            Logger.info("✅ Registration successful for user: \(user.displayName)")
-            return nil // No error
-            
-        case .failure(let error):
-            isLoading = false
-            Logger.error("❌ Registration failed: \(error)")
-            return NetworkError.from(error)
-        }
-    }
-    
-    // MARK: - Public Clear Methods
-    
-    /// Public method to clear login form
-    func clearLoginFormPublic() {
-        clearLoginForm()
-    }
-    
-    /// Public method to clear register form
-    func clearRegisterFormPublic() {
-        clearRegisterForm()
-    }
-    
-    /// Clear all forms and reset state
-    func clearAllForms() {
-        clearLoginForm()
-        clearRegisterForm()
-        hideError()
-        // NO resetear isShowingLogin aquí
-    }
-}
-
-// MARK: - Validation Helper Extension
-extension AuthViewModel {
-    
-    /// Get validation errors for current login form
-    var loginValidationErrors: [String] {
-        var errors: [String] = []
-        
-        if case .invalid(let errorMessage) = loginEmailValidation {
-            errors.append(errorMessage)
-        }
-        
-        if case .invalid(let errorMessage) = loginPasswordValidation {
-            errors.append(errorMessage)
-        }
-        
-        return errors
-    }
-    
-    /// Get validation errors for current register form
-    var registerValidationErrors: [String] {
-        var errors: [String] = []
-        
-        if case .invalid(let errorMessage) = registerEmailValidation {
-            errors.append(errorMessage)
-        }
-        
-        if case .invalid(let errorMessage) = registerPasswordValidation {
-            errors.append(errorMessage)
-        }
-        
-        if case .invalid(let errorMessage) = usernameValidation {
-            errors.append(errorMessage)
-        }
-        
-        if case .invalid(let errorMessage) = fullNameValidation {
-            errors.append(errorMessage)
-        }
-        
-        if case .invalid(let errorMessage) = confirmPasswordValidation {
-            errors.append(errorMessage)
-        }
-        
-        if !acceptTerms {
-            errors.append("Debes aceptar los términos y condiciones")
-        }
-        
-        return errors
     }
 }
 

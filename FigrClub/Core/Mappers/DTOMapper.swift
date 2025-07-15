@@ -7,6 +7,7 @@
 
 import Foundation
 
+// MARK: - Enhanced Date Extensions
 private extension Date {
     init(fromTimestamp timestamp: Double) {
         self.init(timeIntervalSince1970: timestamp / 1000.0)
@@ -17,37 +18,11 @@ private extension Date {
     }
 }
 
-// MARK: - Base Mapper Protocol
-protocol DTOMapper {
-    associatedtype DTO: BaseDTO
-    associatedtype DomainModel
-    
-    static func toDomainModel(from dto: DTO) -> DomainModel
-    static func toDTO(from domainModel: DomainModel) -> DTO
-}
-
-// MARK: - Base API Response Mapper
-struct ApiResponseMapper {
-    static func toDomainModel<DTOData, DomainData>(
-        from dto: ApiResponseDTO<DTOData>,
-        dataMapper: (DTOData) -> DomainData
-    ) -> ApiResponse<DomainData> {
-        return ApiResponse(
-            message: dto.message,
-            data: dataMapper(dto.data),
-            timestamp: Date(fromTimestamp: dto.timestamp),
-            currency: dto.currency,
-            locale: dto.locale,
-            status: dto.status
-        )
-    }
-}
-
-// MARK: - Auth Mappers (With Generic)
+// MARK: - Auth Mappers (Simplified with Generic Mapper)
 struct AuthMappers {
     
     static func toAuthResponse(from dto: AuthResponseDTO) -> AuthResponse {
-        return ApiResponseMapper.toDomainModel(from: dto) { authDataDTO in
+        return GenericResponseMapper.mapResponse(from: dto) { authDataDTO in
             AuthData(
                 authToken: AuthToken(
                     id: authDataDTO.authToken.id,
@@ -60,7 +35,7 @@ struct AuthMappers {
     }
     
     static func toRegisterResponse(from dto: RegisterResponseDTO) -> RegisterResponse {
-        return ApiResponseMapper.toDomainModel(from: dto) { registerDataDTO in
+        return GenericResponseMapper.mapResponse(from: dto) { registerDataDTO in
             RegisterData(
                 userId: registerDataDTO.userId,
                 email: registerDataDTO.email,
@@ -72,24 +47,42 @@ struct AuthMappers {
     }
 }
 
-// MARK: - User Mappers (With Generic)
-struct UserMappers {
+// MARK: - User Mappers (Simplified)
+struct UserMappers: Mappable {
+    typealias DTO = UserResponseDTO
+    typealias DomainModel = UserResponse
     
-    static func toUserResponse(from dto: UserResponseDTO) -> UserResponse {
-        return ApiResponseMapper.toDomainModel(from: dto) { userResponseDTO in
+    static func toDomainModel(from dto: UserResponseDTO) -> UserResponse {
+        return GenericResponseMapper.mapResponse(from: dto) { userResponseDTO in
             UserResponseData(
-                roleInfo: RoleInfo(
-                    isAdmin: userResponseDTO.roleInfo.isAdmin,
-                    roleModifiable: userResponseDTO.roleInfo.roleModifiable,
-                    roleModificationReason: userResponseDTO.roleInfo.roleModificationReason,
-                    roleName: userResponseDTO.roleInfo.roleName
-                ),
-                user: mapUserFromDTO(userResponseDTO.user)
+                roleInfo: mapRoleInfo(userResponseDTO.roleInfo),
+                user: mapUser(userResponseDTO.user)
             )
         }
     }
     
-    private static func mapUserFromDTO(_ dto: UserDTO) -> User {
+    static func toDTO(from domainModel: UserResponse) -> UserResponseDTO {
+        // Implementation for reverse mapping if needed
+        fatalError("Not implemented - typically not needed for API responses")
+    }
+    
+    // MARK: - Convenience Method for AuthService compatibility
+    static func toUserResponse(from dto: UserResponseDTO) -> UserResponse {
+        return toDomainModel(from: dto)
+    }
+    
+    // MARK: - Private Mapping Methods
+    
+    private static func mapRoleInfo(_ dto: RoleInfoDTO) -> RoleInfo {
+        return RoleInfo(
+            isAdmin: dto.isAdmin,
+            roleModifiable: dto.roleModifiable,
+            roleModificationReason: dto.roleModificationReason,
+            roleName: dto.roleName
+        )
+    }
+    
+    private static func mapUser(_ dto: UserDTO) -> User {
         return User(
             id: dto.id,
             firstName: dto.firstName,
@@ -131,13 +124,13 @@ struct UserMappers {
             createdAt: dto.createdAt,
             createdBy: dto.createdBy,
             lastActivityAt: dto.lastActivityAt,
-            imageCapabilities: dto.imageCapabilities.map { mapImageCapabilitiesFromDTO($0) },
+            imageCapabilities: dto.imageCapabilities.mapToDomain(using: mapImageCapabilities),
             maxProfileImageSizeMB: dto.maxProfileImageSizeMB,
             maxCoverImageSizeMB: dto.maxCoverImageSizeMB
         )
     }
     
-    private static func mapImageCapabilitiesFromDTO(_ dto: ImageCapabilitiesDTO) -> ImageCapabilities {
+    private static func mapImageCapabilities(_ dto: ImageCapabilitiesDTO) -> ImageCapabilities {
         return ImageCapabilities(
             canUploadProfileImage: dto.canUploadProfileImage,
             canUploadCoverImage: dto.canUploadCoverImage,
@@ -149,38 +142,36 @@ struct UserMappers {
     }
 }
 
-// MARK: - Post Mappers (With Generic)
+// MARK: - Post Mappers (Using Generic Paginated Mapper)
 struct PostMappers {
     
     static func toPostResponse(from dto: PostResponseDTO) -> PostResponse {
-        return ApiResponseMapper.toDomainModel(from: dto) { postDataDTO in
-            mapPostFromDTO(postDataDTO)
-        }
+        return GenericResponseMapper.mapResponse(from: dto, dataMapper: mapPost)
     }
     
     static func toPostListResponse(from dto: PostListResponseDTO) -> PostListResponse {
-        return ApiResponseMapper.toDomainModel(from: dto) { postListDataDTO in
-            PostListData(
-                content: postListDataDTO.content.map { mapPostFromDTO($0) },
-                totalElements: postListDataDTO.totalElements,
-                totalPages: postListDataDTO.totalPages,
-                currentPage: postListDataDTO.currentPage,
-                size: postListDataDTO.size
+        return GenericResponseMapper.mapResponse(from: dto) { listData in
+            PaginatedData<Post>(
+                content: listData.content.map(mapPost),
+                totalElements: listData.totalElements,
+                totalPages: listData.totalPages,
+                currentPage: listData.currentPage,
+                size: listData.size
             )
         }
     }
     
-    private static func mapPostFromDTO(_ dto: PostDataDTO) -> Post {
+    private static func mapPost(_ dto: PostDataDTO) -> Post {
         return Post(
             id: dto.id,
             title: dto.title,
             content: dto.content,
             authorId: dto.authorId,
             categoryId: dto.categoryId,
-            visibility: PostVisibility(rawValue: dto.visibility) ?? .publicPost,
-            publishedAt: dto.publishedAt.flatMap { DateFormatter.iso8601.date(from: $0) },
-            createdAt: DateFormatter.iso8601.date(from: dto.createdAt) ?? Date(),
-            updatedAt: DateFormatter.iso8601.date(from: dto.updatedAt) ?? Date(),
+            visibility: EnumMapper.mapToEnum(rawValue: dto.visibility, defaultValue: PostVisibility.publicPost),
+            publishedAt: DateMapper.dateFromString(dto.publishedAt),
+            createdAt: DateMapper.dateFromString(dto.createdAt) ?? Date(),
+            updatedAt: DateMapper.dateFromString(dto.updatedAt) ?? Date(),
             likesCount: dto.likesCount,
             commentsCount: dto.commentsCount,
             sharesCount: dto.sharesCount,
@@ -197,7 +188,7 @@ struct PostMappers {
 struct LocationMappers {
     
     static func toLocationResponse(from dto: LocationResponseDTO) -> LocationResponse {
-        return ApiResponseMapper.toDomainModel(from: dto) { locationDataDTO in
+        return GenericResponseMapper.mapResponse(from: dto) { locationDataDTO in
             Location(
                 latitude: locationDataDTO.latitude,
                 longitude: locationDataDTO.longitude,
@@ -208,135 +199,79 @@ struct LocationMappers {
                 postalCode: locationDataDTO.postalCode,
                 timezone: locationDataDTO.timezone,
                 source: locationDataDTO.source,
-                accuracy: LocationAccuracy(rawValue: locationDataDTO.accuracy) ?? .unknown,
+                accuracy: EnumMapper.mapToEnum(rawValue: locationDataDTO.accuracy, defaultValue: LocationAccuracy.unknown),
                 detected: locationDataDTO.detected
             )
         }
     }
 }
 
-// MARK: - Notification Mappers
-struct NotificationResponseMapper {
+// MARK: - Notification Mappers (Using new pattern)
+struct NotificationMappers: Mappable {
+    typealias DTO = NotificationResponseDTO
+    typealias DomainModel = NotificationResponse
+    
     static func toDomainModel(from dto: NotificationResponseDTO) -> NotificationResponse {
-        return ApiResponseMapper.toDomainModel(from: dto) { notificationDataDTO in
-            NotificationMapper.toDomainModel(from: notificationDataDTO)
+        return GenericResponseMapper.mapResponse(from: dto, dataMapper: mapNotification)
+    }
+    
+    static func toDTO(from domainModel: NotificationResponse) -> NotificationResponseDTO {
+        fatalError("Not implemented - reverse mapping not needed")
+    }
+    
+    static func toNotificationListResponse(from dto: NotificationListResponseDTO) -> NotificationListResponse {
+        return GenericResponseMapper.mapResponse(from: dto) { listData in
+            PaginatedData<NotificationData>(
+                content: listData.content.map(mapNotification),
+                totalElements: listData.totalElements,
+                totalPages: listData.totalPages,
+                currentPage: listData.currentPage,
+                size: listData.size
+            )
         }
     }
-}
-
-struct NotificationListResponseMapper {
-    static func toDomainModel(from dto: NotificationListResponseDTO) -> NotificationListResponse {
-        return ApiResponseMapper.toDomainModel(from: dto) { notificationListDataDTO in
-            NotificationListDataMapper.toDomainModel(from: notificationListDataDTO)
-        }
-    }
-}
-
-struct NotificationListDataMapper: DTOMapper {
-    typealias DTO = NotificationListDataDTO
-    typealias DomainModel = NotificationListData
     
-    static func toDomainModel(from dto: NotificationListDataDTO) -> NotificationListData {
-        return NotificationListData(
-            content: dto.content.map { NotificationMapper.toDomainModel(from: $0) },
-            totalElements: dto.totalElements,
-            totalPages: dto.totalPages,
-            currentPage: dto.currentPage,
-            size: dto.size
-        )
-    }
-    
-    static func toDTO(from domainModel: NotificationListData) -> NotificationListDataDTO {
-        return NotificationListDataDTO(
-            content: domainModel.content.map { NotificationMapper.toDTO(from: $0) },
-            totalElements: domainModel.totalElements,
-            totalPages: domainModel.totalPages,
-            currentPage: domainModel.currentPage,
-            size: domainModel.size
-        )
-    }
-}
-
-struct NotificationMapper: DTOMapper {
-    typealias DTO = NotificationDataDTO
-    typealias DomainModel = NotificationData
-    
-    static func toDomainModel(from dto: NotificationDataDTO) -> NotificationData {
+    private static func mapNotification(_ dto: NotificationDataDTO) -> NotificationData {
         return NotificationData(
             id: dto.id,
             userId: dto.userId,
             title: dto.title,
             message: dto.message,
-            type: NotificationType(rawValue: dto.type) ?? .system,
+            type: EnumMapper.mapToEnum(rawValue: dto.type, defaultValue: NotificationType.system),
             isRead: dto.isRead,
-            createdAt: DateFormatter.iso8601.date(from: dto.createdAt) ?? Date(),
+            createdAt: DateMapper.dateFromString(dto.createdAt) ?? Date(),
             actionUrl: dto.actionUrl,
             metadata: dto.metadata
         )
     }
-    
-    static func toDTO(from domainModel: NotificationData) -> NotificationDataDTO {
-        return NotificationDataDTO(
-            id: domainModel.id,
-            userId: domainModel.userId,
-            title: domainModel.title,
-            message: domainModel.message,
-            type: domainModel.type.rawValue,
-            isRead: domainModel.isRead,
-            createdAt: DateFormatter.iso8601.string(from: domainModel.createdAt),
-            actionUrl: domainModel.actionUrl,
-            metadata: domainModel.metadata
-        )
-    }
 }
 
-// MARK: - Marketplace Mappers
-struct MarketplaceItemResponseMapper {
+// MARK: - Marketplace Mappers (Using new pattern)
+struct MarketplaceMappers: Mappable {
+    typealias DTO = MarketplaceItemResponseDTO
+    typealias DomainModel = MarketplaceItemResponse
+    
     static func toDomainModel(from dto: MarketplaceItemResponseDTO) -> MarketplaceItemResponse {
-        return ApiResponseMapper.toDomainModel(from: dto) { itemDataDTO in
-            MarketplaceItemMapper.toDomainModel(from: itemDataDTO)
+        return GenericResponseMapper.mapResponse(from: dto, dataMapper: mapMarketplaceItem)
+    }
+    
+    static func toDTO(from domainModel: MarketplaceItemResponse) -> MarketplaceItemResponseDTO {
+        fatalError("Not implemented - reverse mapping not needed")
+    }
+    
+    static func toMarketplaceItemListResponse(from dto: MarketplaceItemListResponseDTO) -> MarketplaceItemListResponse {
+        return GenericResponseMapper.mapResponse(from: dto) { listData in
+            PaginatedData<MarketplaceItem>(
+                content: listData.content.map(mapMarketplaceItem),
+                totalElements: listData.totalElements,
+                totalPages: listData.totalPages,
+                currentPage: listData.currentPage,
+                size: listData.size
+            )
         }
     }
-}
-
-struct MarketplaceItemListResponseMapper {
-    static func toDomainModel(from dto: MarketplaceItemListResponseDTO) -> MarketplaceItemListResponse {
-        return ApiResponseMapper.toDomainModel(from: dto) { itemListDataDTO in
-            MarketplaceItemListDataMapper.toDomainModel(from: itemListDataDTO)
-        }
-    }
-}
-
-struct MarketplaceItemListDataMapper: DTOMapper {
-    typealias DTO = MarketplaceItemListDataDTO
-    typealias DomainModel = MarketplaceItemListData
     
-    static func toDomainModel(from dto: MarketplaceItemListDataDTO) -> MarketplaceItemListData {
-        return MarketplaceItemListData(
-            content: dto.content.map { MarketplaceItemMapper.toDomainModel(from: $0) },
-            totalElements: dto.totalElements,
-            totalPages: dto.totalPages,
-            currentPage: dto.currentPage,
-            size: dto.size
-        )
-    }
-    
-    static func toDTO(from domainModel: MarketplaceItemListData) -> MarketplaceItemListDataDTO {
-        return MarketplaceItemListDataDTO(
-            content: domainModel.content.map { MarketplaceItemMapper.toDTO(from: $0) },
-            totalElements: domainModel.totalElements,
-            totalPages: domainModel.totalPages,
-            currentPage: domainModel.currentPage,
-            size: domainModel.size
-        )
-    }
-}
-
-struct MarketplaceItemMapper: DTOMapper {
-    typealias DTO = MarketplaceItemDataDTO
-    typealias DomainModel = MarketplaceItem
-    
-    static func toDomainModel(from dto: MarketplaceItemDataDTO) -> MarketplaceItem {
+    private static func mapMarketplaceItem(_ dto: MarketplaceItemDataDTO) -> MarketplaceItem {
         return MarketplaceItem(
             id: dto.id,
             title: dto.title,
@@ -345,30 +280,12 @@ struct MarketplaceItemMapper: DTOMapper {
             currency: dto.currency,
             sellerId: dto.sellerId,
             categoryId: dto.categoryId,
-            condition: ItemCondition(rawValue: dto.condition) ?? .good,
+            condition: EnumMapper.mapToEnum(rawValue: dto.condition, defaultValue: ItemCondition.good),
             isAvailable: dto.isAvailable,
-            createdAt: DateFormatter.iso8601.date(from: dto.createdAt) ?? Date(),
-            updatedAt: DateFormatter.iso8601.date(from: dto.updatedAt) ?? Date(),
+            createdAt: DateMapper.dateFromString(dto.createdAt) ?? Date(),
+            updatedAt: DateMapper.dateFromString(dto.updatedAt) ?? Date(),
             location: dto.location,
             imageUrls: dto.imageUrls
-        )
-    }
-    
-    static func toDTO(from domainModel: MarketplaceItem) -> MarketplaceItemDataDTO {
-        return MarketplaceItemDataDTO(
-            id: domainModel.id,
-            title: domainModel.title,
-            description: domainModel.description,
-            price: domainModel.price,
-            currency: domainModel.currency,
-            sellerId: domainModel.sellerId,
-            categoryId: domainModel.categoryId,
-            condition: domainModel.condition.rawValue,
-            isAvailable: domainModel.isAvailable,
-            createdAt: DateFormatter.iso8601.string(from: domainModel.createdAt),
-            updatedAt: DateFormatter.iso8601.string(from: domainModel.updatedAt),
-            location: domainModel.location,
-            imageUrls: domainModel.imageUrls
         )
     }
 }
@@ -378,20 +295,14 @@ typealias AuthResponse = ApiResponse<AuthData>
 typealias RegisterResponse = ApiResponse<RegisterData>
 typealias UserResponse = ApiResponse<UserResponseData>
 typealias PostResponse = ApiResponse<Post>
-typealias PostListResponse = ApiResponse<PostListData>
+typealias PostListResponse = ApiResponse<PaginatedData<Post>>
 typealias LocationResponse = ApiResponse<Location>
 typealias NotificationResponse = ApiResponse<NotificationData>
-typealias NotificationListResponse = ApiResponse<NotificationListData>
+typealias NotificationListResponse = ApiResponse<PaginatedData<NotificationData>>
 typealias MarketplaceItemResponse = ApiResponse<MarketplaceItem>
-typealias MarketplaceItemListResponse = ApiResponse<MarketplaceItemListData>
+typealias MarketplaceItemListResponse = ApiResponse<PaginatedData<MarketplaceItem>>
 
-struct PostListData {
-    let content: [Post]
-    let totalElements: Int
-    let totalPages: Int
-    let currentPage: Int
-    let size: Int
-}
+// MARK: - Domain Models (Using PaginatedData generic type)
 
 struct Post {
     let id: Int
@@ -462,14 +373,6 @@ enum NotificationType: String {
     case system = "SYSTEM"
 }
 
-struct NotificationListData {
-    let content: [NotificationData]
-    let totalElements: Int
-    let totalPages: Int
-    let currentPage: Int
-    let size: Int
-}
-
 struct MarketplaceItem {
     let id: Int
     let title: String
@@ -492,12 +395,4 @@ enum ItemCondition: String {
     case good = "GOOD"
     case fair = "FAIR"
     case poor = "POOR"
-}
-
-struct MarketplaceItemListData {
-    let content: [MarketplaceItem]
-    let totalElements: Int
-    let totalPages: Int
-    let currentPage: Int
-    let size: Int
 }
