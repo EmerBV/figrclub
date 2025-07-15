@@ -60,7 +60,7 @@ final class NetworkAssembly: Assembly {
             let tokenManager = resolver.resolve(TokenManager.self)!
             return NetworkDispatcher(sessionProvider: sessionProvider, tokenManager: tokenManager)
         }.inObjectScope(.container)
-
+        
         
         Logger.info("🔧 NetworkAssembly: All network dependencies registered with centralized configuration")
     }

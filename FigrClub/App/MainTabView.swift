@@ -77,7 +77,7 @@ struct MainTabView: View {
             }
         } else {
             // Estado de carga mientras se verifica autenticación
-            LoadingView()
+            EBVLoadingView()
                 .onAppear {
                     Logger.debug("🔄 MainTabView: Showing loading view - auth state: \(authStateManager.authState)")
                 }

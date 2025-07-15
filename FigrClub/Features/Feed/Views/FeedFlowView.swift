@@ -126,12 +126,12 @@ struct FeedFlowView: View {
             Button("Ver Post de Ejemplo") {
                 navigationCoordinator.showPostDetail("post_123")
             }
-            .buttonStyle(FigrButtonStyle())
+            .buttonStyle(EBVPrimaryBtnStyle())
             
             Button("Ver Perfil de Usuario") {
                 navigationCoordinator.showUserProfile("user_456")
             }
-            .buttonStyle(FigrButtonStyle())
+            .buttonStyle(EBVPrimaryBtnStyle())
             
             // Separador
             Rectangle()
@@ -155,7 +155,7 @@ struct FeedFlowView: View {
                     }
                 }
             }
-            .buttonStyle(FigrButtonStyle(isEnabled: !isLoggingOut, isLoading: isLoggingOut))
+            .buttonStyle(EBVPrimaryBtnStyle(isEnabled: !isLoggingOut, isLoading: isLoggingOut))
             .disabled(isLoggingOut)
         }
     }

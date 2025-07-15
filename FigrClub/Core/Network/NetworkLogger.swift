@@ -368,18 +368,6 @@ final class NetworkLogger: NetworkLoggerProtocol, @unchecked Sendable {
     }
 }
 
-// MARK: - Data Extension for Pretty Printing JSON
-extension Data {
-    var prettyPrintedJSONString: String? {
-        guard let jsonObject = try? JSONSerialization.jsonObject(with: self, options: []),
-              let prettyData = try? JSONSerialization.data(withJSONObject: jsonObject, options: [.prettyPrinted, .sortedKeys]),
-              let prettyString = String(data: prettyData, encoding: .utf8) else {
-            return nil
-        }
-        return prettyString
-    }
-}
-
 // MARK: - Network Logger Factory
 extension NetworkLogger {
     

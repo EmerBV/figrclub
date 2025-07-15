@@ -107,12 +107,12 @@ struct ProfileFlowView: View {
             Button("Editar Perfil") {
                 navigationCoordinator.showEditProfile()
             }
-            .buttonStyle(FigrButtonStyle(isEnabled: true))
+            .buttonStyle(EBVPrimaryBtnStyle(isEnabled: true))
             
             Button("Configuración") {
                 navigationCoordinator.showSettings()
             }
-            .buttonStyle(FigrButtonStyle(isEnabled: true))
+            .buttonStyle(EBVPrimaryBtnStyle(isEnabled: true))
             
             Button {
                 showLogoutConfirmation = true
@@ -129,7 +129,7 @@ struct ProfileFlowView: View {
                     }
                 }
             }
-            .buttonStyle(FigrButtonStyle(isEnabled: !isLoggingOut, isLoading: isLoggingOut))
+            .buttonStyle(EBVPrimaryBtnStyle(isEnabled: !isLoggingOut, isLoading: isLoggingOut))
             .disabled(isLoggingOut)
         }
         .padding(.top, Spacing.large)

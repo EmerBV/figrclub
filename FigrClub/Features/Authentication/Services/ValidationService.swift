@@ -7,6 +7,11 @@
 
 import Foundation
 
+// MARK: - Validation State
+enum ValidationState {
+    case idle, valid, invalid
+}
+
 // MARK: - Validation Result
 enum ValidationResult: Equatable {
     case valid
@@ -27,27 +32,6 @@ enum ValidationResult: Equatable {
             return nil
         case .invalid(let message):
             return message
-        }
-    }
-}
-
-// MARK: - Auth State
-enum AuthState: Equatable {
-    case loading
-    case authenticated(User)
-    case unauthenticated
-    case error(String)
-    
-    static func == (lhs: AuthState, rhs: AuthState) -> Bool {
-        switch (lhs, rhs) {
-        case (.loading, .loading), (.unauthenticated, .unauthenticated):
-            return true
-        case (.authenticated(let user1), .authenticated(let user2)):
-            return user1 == user2
-        case (.error(let error1), .error(let error2)):
-            return error1 == error2
-        default:
-            return false
         }
     }
 }

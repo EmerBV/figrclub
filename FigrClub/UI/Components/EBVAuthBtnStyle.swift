@@ -1,13 +1,13 @@
 //
-//  FigrButtonStyle.swift
+//  EBVAuthBtnStyle.swift
 //  FigrClub
 //
-//  Created by Emerson Balahan Varona on 7/7/25.
+//  Created by Emerson Balahan Varona on 14/7/25.
 //
 
 import SwiftUI
 
-struct FigrButtonStyle: ButtonStyle {
+struct EBVAuthBtnStyle: ButtonStyle {
     let isEnabled: Bool
     let isLoading: Bool
     
@@ -19,15 +19,19 @@ struct FigrButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .foregroundColor(.white)
-            .font(.callout.weight(.medium))
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, Spacing.medium)
             .background(
-                isEnabled ? Color.blue : Color.gray
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(buttonColor)
             )
-            .cornerRadius(AppConfig.UI.cornerRadius)
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
             .disabled(!isEnabled || isLoading)
+    }
+    
+    private var buttonColor: Color {
+        if !isEnabled || isLoading {
+            return Color.gray.opacity(0.6)
+        }
+        return Color.black
     }
 }

@@ -8,6 +8,27 @@
 import Foundation
 import Combine
 
+// MARK: - Auth State
+enum AuthState: Equatable {
+    case loading
+    case authenticated(User)
+    case unauthenticated
+    case error(String)
+    
+    static func == (lhs: AuthState, rhs: AuthState) -> Bool {
+        switch (lhs, rhs) {
+        case (.loading, .loading), (.unauthenticated, .unauthenticated):
+            return true
+        case (.authenticated(let user1), .authenticated(let user2)):
+            return user1 == user2
+        case (.error(let error1), .error(let error2)):
+            return error1 == error2
+        default:
+            return false
+        }
+    }
+}
+
 @MainActor
 final class AuthStateManager: ObservableObject {
     @Published var authState: AuthState = .loading
