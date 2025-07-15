@@ -185,6 +185,7 @@ struct RegisterFormView: View {
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             .scaleEffect(0.8)
+                        Text("Creando cuenta...")
                     } else {
                         Text("Crear Cuenta")
                             .font(.system(size: 16, weight: .semibold))

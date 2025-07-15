@@ -128,6 +128,7 @@ struct LoginFormView: View {
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             .scaleEffect(0.8)
+                        Text("Iniciando sesión...")
                     } else {
                         Text("Iniciar Sesión")
                             .font(.system(size: 16, weight: .semibold))

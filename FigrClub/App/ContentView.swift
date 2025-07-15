@@ -41,15 +41,35 @@ struct ContentView: View {
                         ))
                     
                 case .main:
-                    MainTabView()
-                        .transition(.asymmetric(
-                            insertion: .opacity.combined(with: .move(edge: .bottom)),
-                            removal: .opacity.combined(with: .move(edge: .top))
-                        ))
-                        .onAppear {
-                            // Reset timeout cuando llegamos a main
-                            initializationTimeout = false
-                        }
+                    // ✅ FIX: Renderizar MainTabView solo cuando tenemos un usuario autenticado
+                    if case .authenticated(let user) = authStateManager.authState {
+                        MainTabView(user: user)
+                            .transition(.asymmetric(
+                                insertion: .opacity.combined(with: .move(edge: .bottom)),
+                                removal: .opacity.combined(with: .move(edge: .top))
+                            ))
+                            .onAppear {
+                                // Reset timeout cuando llegamos a main
+                                initializationTimeout = false
+                            }
+                    } else {
+                        // ✅ Mostrar loading mientras se obtiene el usuario
+                        EBVLoadingView.appLaunch
+                            .onAppear {
+                                Logger.debug("🔄 ContentView: Waiting for authenticated user in main screen")
+                                // Si llevamos mucho tiempo sin usuario, volver a auth
+                                Task {
+                                    try? await Task.sleep(for: .seconds(5))
+                                    if case .main = appCoordinator.currentScreen,
+                                       !authStateManager.isAuthenticated {
+                                        Logger.warning("⚠️ ContentView: No authenticated user found, returning to auth")
+                                        await MainActor.run {
+                                            appCoordinator.navigate(to: .authentication)
+                                        }
+                                    }
+                                }
+                            }
+                    }
                 }
             }
             .animation(.easeInOut(duration: 0.5), value: appCoordinator.currentScreen)
@@ -79,9 +99,10 @@ struct ContentView: View {
             handleDebugTap()
         }
 #endif
-        // Observar cambios de estado para logs
+        // ✅ Observar cambios de estado para navegación automática
         .onReceive(authStateManager.$authState) { authState in
             Logger.debug("🔄 ContentView: AuthState changed to: \(authState)")
+            handleAuthStateChange(authState)
         }
         .onReceive(appCoordinator.$currentScreen) { screen in
             Logger.debug("🧭 ContentView: Screen changed to: \(screen)")
@@ -194,6 +215,37 @@ struct ContentView: View {
 #endif
     
     // MARK: - Private Methods
+    
+    private func handleAuthStateChange(_ authState: AuthState) {
+        Task { @MainActor in
+            switch authState {
+            case .authenticated(let user):
+                Logger.info("✅ ContentView: User authenticated: \(user.displayName)")
+                // Solo navegar a main si no estamos ya ahí
+                if appCoordinator.currentScreen != .main {
+                    appCoordinator.navigate(to: .main)
+                }
+                
+            case .unauthenticated:
+                Logger.info("🚪 ContentView: User unauthenticated")
+                // Solo navegar a auth si no estamos ya ahí o en splash
+                if appCoordinator.currentScreen == .main {
+                    appCoordinator.navigate(to: .authentication)
+                }
+                
+            case .error(let errorMessage):
+                Logger.error("❌ ContentView: Auth error: \(errorMessage)")
+                // En caso de error, ir a authentication para que el usuario pueda reintentar
+                if appCoordinator.currentScreen == .main {
+                    appCoordinator.navigate(to: .authentication)
+                }
+                
+            case .loading:
+                Logger.debug("🔄 ContentView: Auth loading...")
+                // No hacer nada, mantener pantalla actual
+            }
+        }
+    }
     
     private func performInitialAuthCheck() async {
         Logger.info("🚀 ContentView: Starting initial auth check")
