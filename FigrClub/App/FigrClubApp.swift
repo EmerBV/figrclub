@@ -21,9 +21,13 @@ struct FigrClubApp: App {
         // Initialize dependency injection (auto-configures in init)
         _ = DependencyInjector.shared
         
-        // Initialize auth state manager FIRST (required stored property)
-        let authManager = DependencyInjector.shared.resolve(AuthStateManager.self)
-        let flagManager = DependencyInjector.shared.resolve(FeatureFlagManager.self)
+        // Initialize managers on main actor to avoid actor isolation issues
+        let authManager = MainActor.assumeIsolated {
+            DependencyInjector.shared.resolve(AuthStateManager.self)
+        }
+        let flagManager = MainActor.assumeIsolated {
+            DependencyInjector.shared.resolve(FeatureFlagManager.self)
+        }
         
         self._authStateManager = StateObject(wrappedValue: authManager)
         self._featureFlagManager = StateObject(wrappedValue: flagManager)
@@ -45,7 +49,7 @@ struct FigrClubApp: App {
                 .environmentObject(featureFlagManager)
                 .onAppear {
                     Task {
-                        try? await featureFlagManager.refreshFlags()
+                        await setupFeatureFlags()
                     }
                     Logger.info("🚀 FigrClub app launched successfully")
                 }
@@ -53,21 +57,20 @@ struct FigrClubApp: App {
     }
 }
 
+// MARK: - Feature Flags Setup
 extension FigrClubApp {
     
     /// Setup Feature Flags in App initialization
-    func setupFeatureFlags() {
-        // Feature Flags are automatically initialized through DependencyInjector
-        let featureFlagManager = DependencyInjector.shared.getFeatureFlagManager()
+    @MainActor
+    private func setupFeatureFlags() async {
+        Logger.info("🚩 FigrClubApp: Setting up feature flags...")
         
-        // Initial refresh
-        Task {
-            do {
-                try await featureFlagManager.refreshFlags()
-                Logger.info("✅ FigrClubApp: Feature flags initialized successfully")
-            } catch {
-                Logger.warning("⚠️ FigrClubApp: Failed to initialize feature flags: \(error)")
-            }
+        do {
+            try await featureFlagManager.refreshFlags()
+            Logger.info("✅ FigrClubApp: Feature flags initialized successfully")
+        } catch {
+            Logger.warning("⚠️ FigrClubApp: Failed to initialize feature flags: \(error)")
+            // Continue with fallback flags - don't crash the app
         }
     }
 }
@@ -86,7 +89,9 @@ private extension FigrClubApp {
 #else
         Logger.info("📱 Environment: Production")
 #endif
-        
+        // Configure Firebase
+        FirebaseApp.configure()
+        Logger.info("🔥 Firebase configured successfully")
         Logger.info("✅ Logging system initialized")
     }
     
@@ -140,4 +145,20 @@ private extension FigrClubApp {
         Logger.error("🔧 Check assembly configurations in DI container")
     }
 #endif
+}
+
+// MARK: - Feature Flag App Extensions
+extension FigrClubApp {
+    
+    /// Check if a feature is enabled at app level
+    @MainActor
+    func isFeatureEnabled(_ key: FeatureFlagKey) -> Bool {
+        return featureFlagManager.isFeatureEnabledSync(key)
+    }
+    
+    /// Get feature flag value at app level
+    @MainActor
+    func getFeatureValue(_ key: FeatureFlagKey) -> Int {
+        return featureFlagManager.getFeatureValueSync(key)
+    }
 }

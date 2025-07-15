@@ -118,6 +118,7 @@ enum FeatureFlagKey: String, CaseIterable {
     case darkMode = "dark_mode"
     case customThemes = "custom_themes"
     case newDesign = "new_design"
+    case appLogo = "app_logo"
     
     // Experimental Features
     case beta_feature_1 = "beta_feature_1"
@@ -201,6 +202,8 @@ enum FeatureFlagKey: String, CaseIterable {
             return "Temas personalizados"
         case .newDesign:
             return "Nuevo diseño"
+        case .appLogo:
+            return "Logo de la app"
         case .beta_feature_1:
             return "Feature Beta 1"
         case .beta_feature_2:
@@ -244,7 +247,7 @@ struct FeatureFlagConfiguration {
     let enableBackgroundRefresh: Bool
     
     static let `default` = FeatureFlagConfiguration(
-        remoteURL: "https://raw.githubusercontent.com/figrclub/feature-flags/main/flags.json",
+        remoteURL: "https://github.com/EmerBV/figrclub-feature-flags/blob/main/main/flags.json",
         fallbackFlags: Dictionary(uniqueKeysWithValues: FeatureFlagKey.allCases.map { ($0, $0.defaultValue) }),
         refreshInterval: 300, // 5 minutos
         enableLocalStorage: true,
@@ -252,7 +255,7 @@ struct FeatureFlagConfiguration {
     )
     
     static let development = FeatureFlagConfiguration(
-        remoteURL: "https://raw.githubusercontent.com/figrclub/feature-flags/develop/flags.json",
+        remoteURL: "https://github.com/EmerBV/figrclub-feature-flags/blob/main/develop/flags.json",
         fallbackFlags: Dictionary(uniqueKeysWithValues: FeatureFlagKey.allCases.map { ($0, $0.defaultValue) }),
         refreshInterval: 60, // 1 minuto para desarrollo
         enableLocalStorage: true,
@@ -260,7 +263,7 @@ struct FeatureFlagConfiguration {
     )
     
     static let testing = FeatureFlagConfiguration(
-        remoteURL: "https://raw.githubusercontent.com/figrclub/feature-flags/test/flags.json",
+        remoteURL: "https://github.com/EmerBV/figrclub-feature-flags/blob/main/staging/flags.json",
         fallbackFlags: Dictionary(uniqueKeysWithValues: FeatureFlagKey.allCases.map { ($0, 1) }), // Todas activadas para testing
         refreshInterval: 30,
         enableLocalStorage: false,

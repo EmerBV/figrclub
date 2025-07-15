@@ -283,11 +283,17 @@ struct LoginFormView: View {
     @ObservedObject var viewModel: AuthViewModel
     @ObservedObject var errorHandler: ErrorHandler
     
+    @EnvironmentObject private var featureFlagManager: FeatureFlagManager
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 32) {
                 // Header Section
-                headerSection
+                //headerSection
+                
+                if featureFlagManager.isFeatureEnabledSync(.appLogo) {
+                    headerSection
+                }
                 
                 // Form Section
                 formSection

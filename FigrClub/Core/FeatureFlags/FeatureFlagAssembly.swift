@@ -52,19 +52,23 @@ final class FeatureFlagAssembly: Assembly {
         
         // MARK: - Manager
         
-        // Feature Flag Manager
+        // Feature Flag Manager - Create on main actor
         container.register(FeatureFlagManagerProtocol.self) { resolver in
             let service = resolver.resolve(FeatureFlagServiceProtocol.self)!
             let configuration = resolver.resolve(FeatureFlagConfiguration.self)!
             
-            return FeatureFlagManager(
-                service: service,
-                configuration: configuration
-            )
+            // Create on main actor to avoid actor isolation issues
+            return MainActor.assumeIsolated {
+                return FeatureFlagManager(
+                    service: service,
+                    configuration: configuration
+                )
+            }
         }.inObjectScope(.container)
         
         // Register concrete type for @EnvironmentObject
         container.register(FeatureFlagManager.self) { resolver in
+            // This will be resolved on main actor too
             return resolver.resolve(FeatureFlagManagerProtocol.self)! as! FeatureFlagManager
         }.inObjectScope(.container)
         
@@ -130,62 +134,35 @@ extension DependencyInjector {
 #if DEBUG
 extension FeatureFlagManager {
     
-    /// Override feature flag for testing
-    func overrideFeature(_ key: FeatureFlagKey, value: Int) {
-        let testFlag = FeatureFlag(id: key.rawValue, value: value)
-        flags[key.rawValue] = testFlag
-        Logger.debug("🧪 FeatureFlagManager: Override \(key.rawValue) = \(value)")
-    }
-    
-    /// Reset all overrides
-    func resetOverrides() {
-        flags.removeAll()
-        Logger.debug("🧪 FeatureFlagManager: All overrides reset")
-    }
-    
-    /// Enable all features for testing
-    func enableAllFeatures() {
-        for key in FeatureFlagKey.allCases {
-            overrideFeature(key, value: 1)
+    /// Test helper for feature flags
+    struct FeatureFlagTestHelper {
+        static let shared = FeatureFlagTestHelper()
+        
+        private init() {}
+        
+        /// Create test configuration
+        func createTestConfiguration() -> FeatureFlagConfiguration {
+            return FeatureFlagConfiguration(
+                remoteURL: "https://github.com/EmerBV/figrclub-feature-flags/blob/main/test/flags.json",
+                fallbackFlags: Dictionary(uniqueKeysWithValues: FeatureFlagKey.allCases.map { ($0, 1) }),
+                refreshInterval: 10,
+                enableLocalStorage: false,
+                enableBackgroundRefresh: false
+            )
         }
-        Logger.debug("🧪 FeatureFlagManager: All features enabled for testing")
-    }
-    
-    /// Disable all features for testing
-    func disableAllFeatures() {
-        for key in FeatureFlagKey.allCases {
-            overrideFeature(key, value: 0)
+        
+        /// Create mock service
+        func createMockService() -> MockFeatureFlagService {
+            return MockFeatureFlagService()
         }
-        Logger.debug("🧪 FeatureFlagManager: All features disabled for testing")
-    }
-}
-
-/// Test helper for feature flags
-struct FeatureFlagTestHelper {
-    static let shared = FeatureFlagTestHelper()
-    
-    private init() {}
-    
-    /// Create test configuration
-    func createTestConfiguration() -> FeatureFlagConfiguration {
-        return FeatureFlagConfiguration(
-            remoteURL: "https://raw.githubusercontent.com/figrclub/feature-flags/test/flags.json",
-            fallbackFlags: Dictionary(uniqueKeysWithValues: FeatureFlagKey.allCases.map { ($0, 1) }),
-            refreshInterval: 10,
-            enableLocalStorage: false,
-            enableBackgroundRefresh: false
-        )
-    }
-    
-    /// Create mock service
-    func createMockService() -> MockFeatureFlagService {
-        return MockFeatureFlagService()
     }
 }
 
 /// Mock Feature Flag Service for testing
-class MockFeatureFlagService: FeatureFlagServiceProtocol {
+final class MockFeatureFlagService: FeatureFlagServiceProtocol, @unchecked Sendable {
     private var mockFlags: [String: FeatureFlag] = [:]
+    
+    // MARK: - FeatureFlagServiceProtocol Implementation
     
     func fetchRemoteFlags() async throws -> [FeatureFlag] {
         return Array(mockFlags.values)
@@ -196,7 +173,7 @@ class MockFeatureFlagService: FeatureFlagServiceProtocol {
     }
     
     func getFeatureValue(_ key: FeatureFlagKey) async -> Int {
-        return mockFlags[key.rawValue]?.value ?? 0
+        return mockFlags[key.rawValue]?.value ?? key.defaultValue
     }
     
     func getAllFlags() async -> [FeatureFlag] {
@@ -204,20 +181,30 @@ class MockFeatureFlagService: FeatureFlagServiceProtocol {
     }
     
     func refreshFlags() async throws {
-        // Mock implementation
+        // Mock implementation - simulate successful refresh
+        // In real implementation this would fetch and update flags
     }
     
     func setupPeriodicRefresh() {
-        // Mock implementation
+        // Mock implementation - do nothing
     }
     
     func stopPeriodicRefresh() {
-        // Mock implementation
+        // Mock implementation - do nothing
     }
     
-    // Test helpers
+    // MARK: - Mock-specific methods
+    
     func setMockFlag(_ key: FeatureFlagKey, value: Int) {
         mockFlags[key.rawValue] = FeatureFlag(id: key.rawValue, value: value)
+    }
+    
+    func enableMockFlag(_ key: FeatureFlagKey) {
+        setMockFlag(key, value: 1)
+    }
+    
+    func disableMockFlag(_ key: FeatureFlagKey) {
+        setMockFlag(key, value: 0)
     }
     
     func clearMockFlags() {

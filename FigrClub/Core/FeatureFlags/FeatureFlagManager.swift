@@ -15,8 +15,8 @@ protocol FeatureFlagManagerProtocol: ObservableObject {
     func getFeatureValue(_ key: FeatureFlagKey) async -> Int
     func refreshFlags() async throws
     func getAllFlags() async -> [FeatureFlag]
-    func setupPeriodicRefresh()
-    func stopPeriodicRefresh()
+    func setupPeriodicRefresh() async
+    func stopPeriodicRefresh() async
     
     // Sync methods for SwiftUI views
     func isFeatureEnabledSync(_ key: FeatureFlagKey) -> Bool
@@ -25,7 +25,7 @@ protocol FeatureFlagManagerProtocol: ObservableObject {
 
 // MARK: - Feature Flag Manager Implementation
 @MainActor
-final class FeatureFlagManager: FeatureFlagManagerProtocol {
+final class FeatureFlagManager: ObservableObject, FeatureFlagManagerProtocol {
     
     // MARK: - Published Properties
     @Published public var flags: [String: FeatureFlag] = [:]
@@ -68,35 +68,28 @@ final class FeatureFlagManager: FeatureFlagManagerProtocol {
         let value = await service.getFeatureValue(key)
         
         // Update cache
-        await MainActor.run {
-            flags[key.rawValue] = FeatureFlag(id: key.rawValue, value: value)
-        }
+        let newFlag = FeatureFlag(id: key.rawValue, value: value)
+        flags[key.rawValue] = newFlag
         
         return value
     }
     
     func refreshFlags() async throws {
-        await MainActor.run {
-            isLoading = true
-            lastError = nil
-        }
+        isLoading = true
+        lastError = nil
         
         do {
             let fetchedFlags = try await service.fetchRemoteFlags()
             
-            await MainActor.run {
-                updateFlags(with: fetchedFlags)
-                isLoading = false
-                lastRefreshTime = Date()
-            }
+            updateFlags(with: fetchedFlags)
+            isLoading = false
+            lastRefreshTime = Date()
             
             Logger.info("✅ FeatureFlagManager: Successfully refreshed \(fetchedFlags.count) flags")
             
         } catch let error as FeatureFlagError {
-            await MainActor.run {
-                lastError = error
-                isLoading = false
-            }
+            lastError = error
+            isLoading = false
             
             Logger.error("❌ FeatureFlagManager: Failed to refresh flags: \(error)")
             throw error
@@ -106,9 +99,7 @@ final class FeatureFlagManager: FeatureFlagManagerProtocol {
     func getAllFlags() async -> [FeatureFlag] {
         if flags.isEmpty {
             let serviceFlags = await service.getAllFlags()
-            await MainActor.run {
-                updateFlags(with: serviceFlags)
-            }
+            updateFlags(with: serviceFlags)
         }
         
         return Array(flags.values)
@@ -136,9 +127,7 @@ final class FeatureFlagManager: FeatureFlagManagerProtocol {
     
     private func loadInitialFlags() async {
         let serviceFlags = await service.getAllFlags()
-        await MainActor.run {
-            updateFlags(with: serviceFlags)
-        }
+        updateFlags(with: serviceFlags)
         
         // Try to fetch fresh flags in background
         Task {
@@ -239,197 +228,44 @@ struct FeatureFlagButton<Content: View>: View {
             } else if let disabledContent = disabledContent {
                 disabledContent
             } else {
-                content
-                    .opacity(0.5)
+                EmptyView()
             }
         }
         .disabled(!featureFlagManager.isFeatureEnabledSync(key))
     }
 }
 
-// MARK: - Feature Flag Hook for SwiftUI
-@propertyWrapper
-struct FeatureFlagEnabled: DynamicProperty {
-    private let key: FeatureFlagKey
-    @EnvironmentObject private var featureFlagManager: FeatureFlagManager
-    
-    var wrappedValue: Bool {
-        featureFlagManager.isFeatureEnabledSync(key)
-    }
-    
-    init(_ key: FeatureFlagKey) {
-        self.key = key
-    }
-}
-
-// MARK: - Feature Flag Value Hook
-@propertyWrapper
-struct FeatureFlagValue: DynamicProperty {
-    private let key: FeatureFlagKey
-    @EnvironmentObject private var featureFlagManager: FeatureFlagManager
-    
-    var wrappedValue: Int {
-        featureFlagManager.getFeatureValueSync(key)
-    }
-    
-    init(_ key: FeatureFlagKey) {
-        self.key = key
-    }
-}
-
-// MARK: - Conditional View Based on Feature Flag
-struct ConditionalFeatureView<EnabledContent: View, DisabledContent: View>: View {
-    let key: FeatureFlagKey
-    let enabledContent: EnabledContent
-    let disabledContent: DisabledContent
-    
-    @EnvironmentObject private var featureFlagManager: FeatureFlagManager
-    
-    init(
-        key: FeatureFlagKey,
-        @ViewBuilder enabled: () -> EnabledContent,
-        @ViewBuilder disabled: () -> DisabledContent
-    ) {
-        self.key = key
-        self.enabledContent = enabled()
-        self.disabledContent = disabled()
-    }
-    
-    var body: some View {
-        Group {
-            if featureFlagManager.isFeatureEnabledSync(key) {
-                enabledContent
-            } else {
-                disabledContent
-            }
-        }
-    }
-}
-
-// MARK: - Feature Flag Debug View
+// MARK: - Feature Flag Testing Support
 #if DEBUG
-struct FeatureFlagDebugView: View {
-    @EnvironmentObject private var featureFlagManager: FeatureFlagManager
-    @State private var flags: [FeatureFlag] = []
-    @State private var isLoading = false
-    @State private var searchText = ""
+extension FeatureFlagManager {
     
-    var body: some View {
-        NavigationView {
-            VStack {
-                // Search bar
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.secondary)
-                    TextField("Buscar feature flags...", text: $searchText)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                }
-                .padding()
-                
-                // Refresh button
-                Button(action: refreshFlags) {
-                    HStack {
-                        Image(systemName: "arrow.clockwise")
-                        Text("Actualizar Flags")
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(isLoading)
-                
-                // Flags list
-                List(filteredFlags, id: \.id) { flag in
-                    FeatureFlagRow(flag: flag)
-                }
-                .refreshable {
-                    await refreshFlags()
-                }
-            }
-            .navigationTitle("Feature Flags")
-            .navigationBarTitleDisplayMode(.inline)
-            .onAppear {
-                loadFlags()
-            }
-        }
+    /// Override feature flag for testing
+    func overrideFeature(_ key: FeatureFlagKey, value: Int) {
+        let testFlag = FeatureFlag(id: key.rawValue, value: value)
+        flags[key.rawValue] = testFlag
+        Logger.debug("🧪 FeatureFlagManager: Override \(key.rawValue) = \(value)")
     }
     
-    private var filteredFlags: [FeatureFlag] {
-        if searchText.isEmpty {
-            return flags
-        } else {
-            return flags.filter { flag in
-                flag.id.localizedCaseInsensitiveContains(searchText) ||
-                FeatureFlagKey(rawValue: flag.id)?.description.localizedCaseInsensitiveContains(searchText) == true
-            }
-        }
+    /// Reset all overrides
+    func resetOverrides() {
+        flags.removeAll()
+        Logger.debug("🧪 FeatureFlagManager: All overrides reset")
     }
     
-    private func loadFlags() {
-        Task {
-            let allFlags = await featureFlagManager.getAllFlags()
-            await MainActor.run {
-                flags = allFlags.sorted { $0.id < $1.id }
-            }
+    /// Enable all features for testing
+    func enableAllFeatures() {
+        for key in FeatureFlagKey.allCases {
+            overrideFeature(key, value: 1)
         }
+        Logger.debug("🧪 FeatureFlagManager: All features enabled for testing")
     }
     
-    private func refreshFlags() {
-        isLoading = true
-        Task {
-            do {
-                try await featureFlagManager.refreshFlags()
-                await loadFlags()
-            } catch {
-                Logger.error("Failed to refresh flags: \(error)")
-            }
-            await MainActor.run {
-                isLoading = false
-            }
+    /// Disable all features for testing
+    func disableAllFeatures() {
+        for key in FeatureFlagKey.allCases {
+            overrideFeature(key, value: 0)
         }
-    }
-}
-
-struct FeatureFlagRow: View {
-    let flag: FeatureFlag
-    
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(flag.id)
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                
-                if let key = FeatureFlagKey(rawValue: flag.id) {
-                    Text(key.description)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                if let lastUpdated = flag.lastUpdated {
-                    Text("Updated: \(lastUpdated.formatted(.relative(presentation: .numeric)))")
-                        .font(.caption2)
-                        .foregroundColor(.green)
-                }
-            }
-            
-            Spacer()
-            
-            VStack(alignment: .trailing, spacing: 4) {
-                HStack {
-                    Text(flag.isEnabled ? "ON" : "OFF")
-                        .font(.caption.weight(.bold))
-                        .foregroundColor(flag.isEnabled ? .green : .red)
-                    
-                    Circle()
-                        .fill(flag.isEnabled ? Color.green : Color.red)
-                        .frame(width: 12, height: 12)
-                }
-                
-                Text("Value: \(flag.value)")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-        }
-        .padding(.vertical, 4)
+        Logger.debug("🧪 FeatureFlagManager: All features disabled for testing")
     }
 }
 #endif
