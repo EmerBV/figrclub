@@ -94,6 +94,9 @@ class AppCoordinator: ObservableObject {
                 Logger.debug("🔄 AppCoordinator: Loading state - maintaining current screen: \(currentScreen.description)")
             }
             
+        case .loggingOut:  // 🆕 Nuevo caso para logout
+                    Logger.debug("🚪 AppCoordinator: Logout in progress - maintaining current screen: \(currentScreen.description)")
+            
         case .authenticated(let user):
             Logger.info("✅ AppCoordinator: User authenticated: \(user.displayName)")
             invalidateSplashTimer()
@@ -270,6 +273,8 @@ extension AuthState {
         switch self {
         case .loading:
             return "Loading"
+        case .loggingOut:
+                    return "LoggingOut"
         case .authenticated(let user):
             return "Authenticated(\(user.displayName))"
         case .unauthenticated:

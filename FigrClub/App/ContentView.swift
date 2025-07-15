@@ -54,10 +54,9 @@ struct ContentView: View {
                             }
                     } else {
                         // ✅ Mostrar loading mientras se obtiene el usuario
-                        EBVLoadingView.appLaunch
+                        loadingViewForCurrentAuthState
                             .onAppear {
                                 Logger.debug("🔄 ContentView: Waiting for authenticated user in main screen")
-                                // Si llevamos mucho tiempo sin usuario, volver a auth
                                 Task {
                                     try? await Task.sleep(for: .seconds(5))
                                     if case .main = appCoordinator.currentScreen,
@@ -214,6 +213,21 @@ struct ContentView: View {
     }
 #endif
     
+    // MARK: - Private Views
+    
+    private var loadingViewForCurrentAuthState: some View {
+        Group {
+            switch authStateManager.authState {
+            case .loggingOut:
+                EBVLoadingView.logout  // ✅ Muestra "Cerrando sesión..."
+            case .loading:
+                EBVLoadingView.appLaunch  // ✅ Muestra "Cargando FigrClub..."
+            default:
+                EBVLoadingView.appLaunch  // Fallback
+            }
+        }
+    }
+    
     // MARK: - Private Methods
     
     private func handleAuthStateChange(_ authState: AuthState) {
@@ -240,7 +254,7 @@ struct ContentView: View {
                     appCoordinator.navigate(to: .authentication)
                 }
                 
-            case .loading:
+            case .loading, .loggingOut:
                 Logger.debug("🔄 ContentView: Auth loading...")
                 // No hacer nada, mantener pantalla actual
             }
@@ -331,7 +345,7 @@ extension ContentView {
 extension AuthState {
     var debugDescription: String {
         switch self {
-        case .loading:
+        case .loading, .loggingOut:
             return "Loading"
         case .authenticated(let user):
             return "Auth(\(user.displayName))"

@@ -263,6 +263,10 @@ final class AuthViewModel: ObservableObject {
                     // Solo mostrar loading si estamos haciendo login/register
                     // NO cambiar isLoading aquí para evitar conflictos
                     break
+                case .loggingOut:  // 🆕 Nuevo caso para logout
+                    // No hacer nada en AuthViewModel durante logout
+                    Logger.debug("🚪 AuthViewModel: Logout in progress")
+                    break
                 case .authenticated:
                     // Limpiar estado cuando el usuario se autentica exitosamente
                     self.isLoading = false

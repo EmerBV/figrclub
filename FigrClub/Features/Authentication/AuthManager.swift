@@ -11,13 +11,16 @@ import Combine
 // MARK: - Auth State
 enum AuthState: Equatable {
     case loading
+    case loggingOut
     case authenticated(User)
     case unauthenticated
     case error(String)
     
     static func == (lhs: AuthState, rhs: AuthState) -> Bool {
         switch (lhs, rhs) {
-        case (.loading, .loading), (.unauthenticated, .unauthenticated):
+        case (.loading, .loading),
+            (.loggingOut, .loggingOut),
+            (.unauthenticated, .unauthenticated):
             return true
         case (.authenticated(let user1), .authenticated(let user2)):
             return user1 == user2
@@ -99,7 +102,7 @@ final class AuthStateManager: ObservableObject {
         
         // Cambiar inmediatamente a estado loading en el hilo principal
         await MainActor.run {
-            authState = .loading
+            authState = .loggingOut
         }
         
         do {
