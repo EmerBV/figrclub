@@ -48,14 +48,7 @@ final class ViewModelAssembly: Assembly {
         }.inObjectScope(.transient)
         
         // MARK: - Validation Managers
-        
-        // Form Validation Manager Factory - MainActor
-        container.register(FormValidationManager.self) { _ in
-            // Create on MainActor
-            return MainActor.assumeIsolated {
-                FormValidationManager()
-            }
-        }.inObjectScope(.transient)
+        // FormValidationManager instances are created directly in ViewModels
         
         // MARK: - Future ViewModels
         // ViewModels for specific features will be registered here when implemented

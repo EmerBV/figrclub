@@ -30,8 +30,8 @@ final class AuthViewModel: ObservableObject {
     @Published var acceptTerms = false
     
     // MARK: - Validation Management
-    @StateObject private var loginValidationManager = FormValidationManager()
-    @StateObject private var registerValidationManager = FormValidationManager()
+    private let loginValidationManager: FormValidationManager
+    private let registerValidationManager: FormValidationManager
     
     // MARK: - Dependencies
     private nonisolated let authStateManager: AuthStateManager
@@ -90,6 +90,14 @@ final class AuthViewModel: ObservableObject {
     nonisolated init(authStateManager: AuthStateManager, validationService: ValidationServiceProtocol) {
         self.authStateManager = authStateManager
         self.validationService = validationService
+        
+        // Create validation managers on MainActor
+        self.loginValidationManager = MainActor.assumeIsolated {
+            FormValidationManager()
+        }
+        self.registerValidationManager = MainActor.assumeIsolated {
+            FormValidationManager()
+        }
         
         Task { @MainActor in
             self.setupValidation()
