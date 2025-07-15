@@ -863,6 +863,7 @@ struct AuthLoadingView: View {
 }
 
 // MARK: - Preview
+/*
 #if DEBUG
 struct AuthenticationFlowView_Previews: PreviewProvider {
     static var previews: some View {
@@ -871,5 +872,6 @@ struct AuthenticationFlowView_Previews: PreviewProvider {
     }
 }
 #endif
+ */
 
 

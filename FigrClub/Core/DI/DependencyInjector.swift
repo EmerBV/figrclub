@@ -24,6 +24,9 @@ final class DependencyInjector {
                 NetworkAssembly(),
                 StorageAssembly(),
                 
+                // MARK: - Feature Flags
+                FeatureFlagAssembly(),
+                
                 // MARK: - Data
                 ServiceAssembly(),
                 RepositoryAssembly(),

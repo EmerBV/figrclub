@@ -14,6 +14,7 @@ struct FigrClubApp: App {
     
     // MARK: - Properties
     @StateObject private var authStateManager: AuthStateManager
+    @StateObject private var featureFlagManager: FeatureFlagManager
     
     // MARK: - Initialization
     init() {
@@ -22,7 +23,10 @@ struct FigrClubApp: App {
         
         // Initialize auth state manager FIRST (required stored property)
         let authManager = DependencyInjector.shared.resolve(AuthStateManager.self)
+        let flagManager = DependencyInjector.shared.resolve(FeatureFlagManager.self)
+        
         self._authStateManager = StateObject(wrappedValue: authManager)
+        self._featureFlagManager = StateObject(wrappedValue: flagManager)
         
         // Setup logging after all stored properties are initialized
         setupLogging()
@@ -38,9 +42,32 @@ struct FigrClubApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(authStateManager)
+                .environmentObject(featureFlagManager)
                 .onAppear {
+                    Task {
+                        try? await featureFlagManager.refreshFlags()
+                    }
                     Logger.info("🚀 FigrClub app launched successfully")
                 }
+        }
+    }
+}
+
+extension FigrClubApp {
+    
+    /// Setup Feature Flags in App initialization
+    func setupFeatureFlags() {
+        // Feature Flags are automatically initialized through DependencyInjector
+        let featureFlagManager = DependencyInjector.shared.getFeatureFlagManager()
+        
+        // Initial refresh
+        Task {
+            do {
+                try await featureFlagManager.refreshFlags()
+                Logger.info("✅ FigrClubApp: Feature flags initialized successfully")
+            } catch {
+                Logger.warning("⚠️ FigrClubApp: Failed to initialize feature flags: \(error)")
+            }
         }
     }
 }

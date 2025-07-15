@@ -265,6 +265,15 @@ struct ContentView: View {
 #endif
 }
 
+extension ContentView {
+    
+    /// Add Feature Flag Manager to environment
+    var bodyWithFeatureFlags: some View {
+        body
+            .environmentObject(DependencyInjector.shared.getFeatureFlagManager())
+    }
+}
+
 // MARK: - Supporting Views (sin cambios)
 struct LoadingView: View {
     var body: some View {
