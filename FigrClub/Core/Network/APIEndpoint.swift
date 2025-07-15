@@ -17,6 +17,8 @@ protocol APIEndpoint {
     var requiresAuth: Bool { get }
     var isRefreshTokenEndpoint: Bool { get }
     var retryPolicy: RetryPolicy { get }
+    var cachePolicy: CachePolicy { get }
+    var cacheMaxAge: TimeInterval { get }
 }
 
 extension APIEndpoint {
@@ -26,6 +28,8 @@ extension APIEndpoint {
     var requiresAuth: Bool { true }
     var isRefreshTokenEndpoint: Bool { false }
     var retryPolicy: RetryPolicy { .default }
+    var cachePolicy: CachePolicy { .cacheFirst }
+    var cacheMaxAge: TimeInterval { 300 } // 5 minutes default
 }
 
 // MARK: - Helper Extension

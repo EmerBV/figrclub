@@ -263,7 +263,7 @@ final class NetworkDispatcher: NetworkDispatcherProtocol, @unchecked Sendable {
     }
     
     // MARK: - Response Validation
-    private func validateResponse(data: Data, response: HTTPURLResponse) throws -> Data {
+    func validateResponse(data: Data, response: HTTPURLResponse) throws -> Data {
         switch response.statusCode {
         case 200...299:
             return data

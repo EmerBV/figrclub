@@ -54,14 +54,66 @@ final class NetworkAssembly: Assembly {
             return URLSessionProvider(configuration: configuration, logger: logger)
         }.inObjectScope(.container)
         
+        // MARK: - Enhanced Network Layer Components
+        
+        // Network Cache
+        container.register(NetworkCacheProtocol.self) { _ in
+            return NetworkCache(maxMemorySize: 50 * 1024 * 1024, defaultMaxAge: 300) // 50MB, 5min default
+        }.inObjectScope(.container)
+        
+        // Network Analytics Service
+        container.register(NetworkAnalyticsServiceProtocol.self) { _ in
+            return NetworkAnalyticsService()
+        }.inObjectScope(.container)
+        
+        // ETag Manager
+        container.register(ETagManagerProtocol.self) { resolver in
+            let cache = resolver.resolve(NetworkCacheProtocol.self)!
+            return ETagManager(cache: cache)
+        }.inObjectScope(.container)
+        
+        // Retry Policy Manager
+        container.register(RetryPolicyManager.self) { _ in
+            return RetryPolicyManager()
+        }.inObjectScope(.container)
+        
+        // Circuit Breaker Manager
+        container.register(CircuitBreakerManager.self) { _ in
+            return CircuitBreakerManager()
+        }.inObjectScope(.container)
+        
+        // Network Connectivity Monitor
+        container.register(NetworkConnectivityMonitor.self) { _ in
+            return NetworkConnectivityMonitor()
+        }.inObjectScope(.container)
+        
+        // Offline Request Queue
+        container.register(OfflineRequestQueue.self) { resolver in
+            let networkMonitor = resolver.resolve(NetworkConnectivityMonitor.self)!
+            return OfflineRequestQueue(networkMonitor: networkMonitor)
+        }.inObjectScope(.container)
+        
+        // Background Refresh Manager
+        container.register(BackgroundRefreshManager.self) { resolver in
+            let cache = resolver.resolve(NetworkCacheProtocol.self)!
+            let dispatcher = resolver.resolve(NetworkDispatcher.self)!
+            return BackgroundRefreshManager(cache: cache, networkDispatcher: dispatcher)
+        }.inObjectScope(.container)
+        
         // Network Dispatcher (Primary and Only Network Interface)
         container.register(NetworkDispatcherProtocol.self) { resolver in
             let sessionProvider = resolver.resolve(URLSessionProviderProtocol.self)!
             let tokenManager = resolver.resolve(TokenManager.self)!
-            return NetworkDispatcher(sessionProvider: sessionProvider, tokenManager: tokenManager)
+            let dispatcher = NetworkDispatcher(sessionProvider: sessionProvider, tokenManager: tokenManager)
+            
+            return dispatcher
         }.inObjectScope(.container)
         
+        // Convenience accessor for NetworkDispatcher
+        container.register(NetworkDispatcher.self) { resolver in
+            return resolver.resolve(NetworkDispatcherProtocol.self) as! NetworkDispatcher
+        }.inObjectScope(.container)
         
-        Logger.info("🔧 NetworkAssembly: All network dependencies registered with centralized configuration")
+        Logger.info("🔧 NetworkAssembly: Enhanced network layer with all optimizations registered")
     }
 }
