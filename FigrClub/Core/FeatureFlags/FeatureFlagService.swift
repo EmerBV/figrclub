@@ -253,68 +253,58 @@ final class FeatureFlagService: FeatureFlagServiceProtocol, @unchecked Sendable 
     }
 }
 
-// MARK: - Feature Flag Storage Protocol
-protocol FeatureFlagStorageProtocol: Sendable {
-    func store(_ flags: [FeatureFlag]) async throws
-    func loadFlags() async throws -> [FeatureFlag]
-    func clearFlags() async throws
-}
-
-// MARK: - Feature Flag Storage Implementation
-final class FeatureFlagStorage: FeatureFlagStorageProtocol, @unchecked Sendable {
+#if DEBUG
+/// Mock Feature Flag Service for testing
+final class MockFeatureFlagService: FeatureFlagServiceProtocol, @unchecked Sendable {
+    private var mockFlags: [String: FeatureFlag] = [:]
     
-    private let userDefaults: UserDefaults
-    private let storageKey = "feature_flags_storage"
-    private let queue = DispatchQueue(label: "com.figrclub.featureflags.storage", qos: .utility)
+    // MARK: - FeatureFlagServiceProtocol Implementation
     
-    init(userDefaults: UserDefaults = .standard) {
-        self.userDefaults = userDefaults
+    func fetchRemoteFlags() async throws -> [FeatureFlag] {
+        return Array(mockFlags.values)
     }
     
-    func store(_ flags: [FeatureFlag]) async throws {
-        return try await withCheckedThrowingContinuation { continuation in
-            queue.async { [weak self] in
-                do {
-                    let encoder = JSONEncoder()
-                    encoder.dateEncodingStrategy = .iso8601
-                    let data = try encoder.encode(flags)
-                    
-                    self?.userDefaults.set(data, forKey: self?.storageKey ?? "")
-                    continuation.resume()
-                } catch {
-                    continuation.resume(throwing: FeatureFlagError.storageError(error.localizedDescription))
-                }
-            }
-        }
+    func isFeatureEnabled(_ key: FeatureFlagKey) async -> Bool {
+        return mockFlags[key.rawValue]?.isEnabled ?? false
     }
     
-    func loadFlags() async throws -> [FeatureFlag] {
-        return try await withCheckedThrowingContinuation { continuation in
-            queue.async { [weak self] in
-                guard let self = self,
-                      let data = self.userDefaults.data(forKey: self.storageKey) else {
-                    continuation.resume(returning: [])
-                    return
-                }
-                
-                do {
-                    let decoder = JSONDecoder()
-                    decoder.dateDecodingStrategy = .iso8601
-                    let flags = try decoder.decode([FeatureFlag].self, from: data)
-                    continuation.resume(returning: flags)
-                } catch {
-                    continuation.resume(throwing: FeatureFlagError.storageError(error.localizedDescription))
-                }
-            }
-        }
+    func getFeatureValue(_ key: FeatureFlagKey) async -> Int {
+        return mockFlags[key.rawValue]?.value ?? key.defaultValue
     }
     
-    func clearFlags() async throws {
-        return await withCheckedContinuation { continuation in
-            queue.async { [weak self] in
-                self?.userDefaults.removeObject(forKey: self?.storageKey ?? "")
-                continuation.resume()
-            }
-        }
+    func getAllFlags() async -> [FeatureFlag] {
+        return Array(mockFlags.values)
+    }
+    
+    func refreshFlags() async throws {
+        // Mock implementation - simulate successful refresh
+        // In real implementation this would fetch and update flags
+    }
+    
+    func setupPeriodicRefresh() {
+        // Mock implementation - do nothing
+    }
+    
+    func stopPeriodicRefresh() {
+        // Mock implementation - do nothing
+    }
+    
+    // MARK: - Mock-specific methods
+    
+    func setMockFlag(_ key: FeatureFlagKey, value: Int) {
+        mockFlags[key.rawValue] = FeatureFlag(id: key.rawValue, value: value)
+    }
+    
+    func enableMockFlag(_ key: FeatureFlagKey) {
+        setMockFlag(key, value: 1)
+    }
+    
+    func disableMockFlag(_ key: FeatureFlagKey) {
+        setMockFlag(key, value: 0)
+    }
+    
+    func clearMockFlags() {
+        mockFlags.removeAll()
     }
 }
+#endif

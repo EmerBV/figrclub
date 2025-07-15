@@ -269,3 +269,32 @@ extension FeatureFlagManager {
     }
 }
 #endif
+
+// MARK: - Feature Flag Testing Support
+#if DEBUG
+extension FeatureFlagManager {
+    
+    /// Test helper for feature flags
+    struct FeatureFlagTestHelper {
+        static let shared = FeatureFlagTestHelper()
+        
+        private init() {}
+        
+        /// Create test configuration
+        func createTestConfiguration() -> FeatureFlagConfiguration {
+            return FeatureFlagConfiguration(
+                remoteURL: "https://raw.githubusercontent.com/EmerBV/figrclub-feature-flags/main/test/flags.json",
+                fallbackFlags: Dictionary(uniqueKeysWithValues: FeatureFlagKey.allCases.map { ($0, 1) }),
+                refreshInterval: 10,
+                enableLocalStorage: false,
+                enableBackgroundRefresh: false
+            )
+        }
+        
+        /// Create mock service
+        func createMockService() -> MockFeatureFlagService {
+            return MockFeatureFlagService()
+        }
+    }
+}
+#endif

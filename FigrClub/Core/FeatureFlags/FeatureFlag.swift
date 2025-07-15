@@ -109,7 +109,7 @@ enum FeatureFlagKey: String, CaseIterable {
     case searchHistory = "search_history"
     case searchSuggestions = "search_suggestions"
     
-    // Analytics Features
+    // System Features
     case analytics = "analytics"
     case crashReporting = "crash_reporting"
     case performanceMonitoring = "performance_monitoring"
@@ -118,32 +118,64 @@ enum FeatureFlagKey: String, CaseIterable {
     case darkMode = "dark_mode"
     case customThemes = "custom_themes"
     case newDesign = "new_design"
+    
+    // Beta Features
+    case betaFeature1 = "beta_feature_1"
+    case betaFeature2 = "beta_feature_2"
+    case experimentalUI = "experimental_ui"
+    
+    // Payment Features
+    case paypalPayment = "paypal_payment"
+    
+    // Branding
     case appLogo = "app_logo"
     
-    // Experimental Features
-    case beta_feature_1 = "beta_feature_1"
-    case beta_feature_2 = "beta_feature_2"
-    case experimental_ui = "experimental_ui"
-    
+    /// Default value para cada feature flag
     var defaultValue: Int {
         switch self {
-            // Features enabled by default
-        case .comments, .likes, .follows, .notifications, .postCreation:
+            // Features críticas siempre habilitadas por defecto
+        case .emailVerification, .crashReporting, .analytics, .performanceMonitoring:
             return 1
-            // Features disabled by default
-        default:
+            
+            // Features básicas habilitadas por defecto
+        case .infiniteScrollFeed, .stories, .marketplace, .comments, .likes, .follows:
+            return 1
+            
+        case .notifications, .profileCustomization, .privacySettings, .postCreation:
+            return 1
+            
+        case .multipleImageUpload, .searchHistory, .searchSuggestions, .darkMode:
+            return 1
+            
+            // Features experimentales deshabilitadas por defecto
+        case .betaFeature1, .betaFeature2, .experimentalUI, .newDesign:
+            return 0
+            
+            // Features premium/pagadas deshabilitadas por defecto
+        case .paypalPayment, .customThemes, .liveStreaming, .videoUpload:
+            return 0
+            
+            // Features opcionales
+        case .socialLogin, .biometricAuth, .videoPlayback, .inAppPurchases:
+            return 0
+            
+        case .paymentIntegration, .shippingCalculator, .directMessages, .profileVerification:
+            return 0
+            
+        case .imageFilters, .advancedSearch, .appLogo:
             return 0
         }
     }
     
+    /// Descripción legible de la feature flag
     var description: String {
         switch self {
         case .biometricAuth:
-            return "Autenticación biométrica (Touch ID/Face ID)"
+            return "Autenticación biométrica (Face ID/Touch ID)"
         case .socialLogin:
-            return "Login con redes sociales"
+            return "Inicio de sesión con redes sociales"
         case .emailVerification:
-            return "Verificación por email"
+            return "Verificación de email obligatoria"
         case .infiniteScrollFeed:
             return "Scroll infinito en el feed"
         case .videoPlayback:
@@ -151,9 +183,9 @@ enum FeatureFlagKey: String, CaseIterable {
         case .liveStreaming:
             return "Transmisiones en vivo"
         case .stories:
-            return "Historias (Stories)"
+            return "Historias temporales"
         case .marketplace:
-            return "Marketplace de figuras"
+            return "Marketplace de productos"
         case .inAppPurchases:
             return "Compras dentro de la app"
         case .paymentIntegration:
@@ -165,13 +197,13 @@ enum FeatureFlagKey: String, CaseIterable {
         case .likes:
             return "Sistema de likes"
         case .follows:
-            return "Sistema de follows"
+            return "Sistema de seguimiento"
         case .directMessages:
             return "Mensajes directos"
         case .notifications:
             return "Notificaciones push"
         case .profileVerification:
-            return "Verificación de perfil"
+            return "Verificación de perfiles"
         case .profileCustomization:
             return "Personalización de perfil"
         case .privacySettings:
@@ -179,7 +211,7 @@ enum FeatureFlagKey: String, CaseIterable {
         case .postCreation:
             return "Creación de posts"
         case .imageFilters:
-            return "Filtros de imagen"
+            return "Filtros de imágenes"
         case .multipleImageUpload:
             return "Subida múltiple de imágenes"
         case .videoUpload:
@@ -187,13 +219,13 @@ enum FeatureFlagKey: String, CaseIterable {
         case .advancedSearch:
             return "Búsqueda avanzada"
         case .searchHistory:
-            return "Historial de búsqueda"
+            return "Historial de búsquedas"
         case .searchSuggestions:
             return "Sugerencias de búsqueda"
         case .analytics:
-            return "Analytics"
+            return "Analytics y métricas"
         case .crashReporting:
-            return "Reportes de crashes"
+            return "Reporte de crashes"
         case .performanceMonitoring:
             return "Monitoreo de rendimiento"
         case .darkMode:
@@ -201,15 +233,91 @@ enum FeatureFlagKey: String, CaseIterable {
         case .customThemes:
             return "Temas personalizados"
         case .newDesign:
-            return "Nuevo diseño"
-        case .appLogo:
-            return "Logo de la app"
-        case .beta_feature_1:
+            return "Nuevo diseño de UI"
+        case .betaFeature1:
             return "Feature Beta 1"
-        case .beta_feature_2:
+        case .betaFeature2:
             return "Feature Beta 2"
-        case .experimental_ui:
-            return "UI Experimental"
+        case .experimentalUI:
+            return "UI experimental"
+        case .paypalPayment:
+            return "Pagos con PayPal"
+        case .appLogo:
+            return "Logo personalizado de la app"
+        }
+    }
+    
+    /// Categoría de la feature flag
+    var category: FeatureFlagCategory {
+        switch self {
+        case .biometricAuth, .socialLogin, .emailVerification:
+            return .authentication
+        case .infiniteScrollFeed, .videoPlayback, .liveStreaming, .stories:
+            return .feed
+        case .marketplace, .inAppPurchases, .paymentIntegration, .shippingCalculator, .paypalPayment:
+            return .marketplace
+        case .comments, .likes, .follows, .directMessages:
+            return .social
+        case .notifications:
+            return .notifications
+        case .profileVerification, .profileCustomization, .privacySettings:
+            return .profile
+        case .postCreation, .imageFilters, .multipleImageUpload, .videoUpload:
+            return .creation
+        case .advancedSearch, .searchHistory, .searchSuggestions:
+            return .search
+        case .analytics, .crashReporting, .performanceMonitoring:
+            return .system
+        case .darkMode, .customThemes, .newDesign, .appLogo:
+            return .ui
+        case .betaFeature1, .betaFeature2, .experimentalUI:
+            return .experimental
+        }
+    }
+}
+
+// MARK: - Feature Flag Categories
+enum FeatureFlagCategory: String, CaseIterable {
+    case authentication = "Authentication"
+    case feed = "Feed"
+    case marketplace = "Marketplace"
+    case social = "Social"
+    case notifications = "Notifications"
+    case profile = "Profile"
+    case creation = "Creation"
+    case search = "Search"
+    case system = "System"
+    case ui = "UI"
+    case experimental = "Experimental"
+    
+    var displayName: String {
+        return rawValue
+    }
+    
+    var icon: String {
+        switch self {
+        case .authentication:
+            return "person.badge.key"
+        case .feed:
+            return "list.dash"
+        case .marketplace:
+            return "storefront"
+        case .social:
+            return "person.2"
+        case .notifications:
+            return "bell"
+        case .profile:
+            return "person.circle"
+        case .creation:
+            return "plus.app"
+        case .search:
+            return "magnifyingglass"
+        case .system:
+            return "gear"
+        case .ui:
+            return "paintbrush"
+        case .experimental:
+            return "flask"
         }
     }
 }
@@ -236,37 +344,4 @@ enum FeatureFlagError: Error, LocalizedError {
             return "Error de almacenamiento: \(message)"
         }
     }
-}
-
-// MARK: - Feature Flag Configuration
-struct FeatureFlagConfiguration {
-    let remoteURL: String
-    let fallbackFlags: [FeatureFlagKey: Int]
-    let refreshInterval: TimeInterval
-    let enableLocalStorage: Bool
-    let enableBackgroundRefresh: Bool
-    
-    static let `default` = FeatureFlagConfiguration(
-        remoteURL: "https://github.com/EmerBV/figrclub-feature-flags/blob/main/main/flags.json",
-        fallbackFlags: Dictionary(uniqueKeysWithValues: FeatureFlagKey.allCases.map { ($0, $0.defaultValue) }),
-        refreshInterval: 300, // 5 minutos
-        enableLocalStorage: true,
-        enableBackgroundRefresh: true
-    )
-    
-    static let development = FeatureFlagConfiguration(
-        remoteURL: "https://github.com/EmerBV/figrclub-feature-flags/blob/main/develop/flags.json",
-        fallbackFlags: Dictionary(uniqueKeysWithValues: FeatureFlagKey.allCases.map { ($0, $0.defaultValue) }),
-        refreshInterval: 60, // 1 minuto para desarrollo
-        enableLocalStorage: true,
-        enableBackgroundRefresh: true
-    )
-    
-    static let testing = FeatureFlagConfiguration(
-        remoteURL: "https://github.com/EmerBV/figrclub-feature-flags/blob/main/staging/flags.json",
-        fallbackFlags: Dictionary(uniqueKeysWithValues: FeatureFlagKey.allCases.map { ($0, 1) }), // Todas activadas para testing
-        refreshInterval: 30,
-        enableLocalStorage: false,
-        enableBackgroundRefresh: false
-    )
 }
