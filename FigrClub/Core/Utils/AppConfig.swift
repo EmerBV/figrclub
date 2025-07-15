@@ -309,49 +309,7 @@ extension AppConfig {
     }
 }
 
-// MARK: - Static Access (Legacy Compatibility)
-extension AppConfig {
-    
-    /// Legacy API enum for backward compatibility
-    enum API {
-        static var baseURL: String { AppConfig.shared.apiBaseURL }
-        static var timeout: TimeInterval { AppConfig.shared.apiTimeout }
-        static var imageBaseURL: String { AppConfig.shared.imageBaseURL }
-    }
-    
-    /// Legacy UI enum for backward compatibility
-    enum UI {
-        static let cornerRadius: CGFloat = 12
-        static let animationDuration: Double = 0.3
-        static let shadowRadius: CGFloat = 8
-        static let borderWidth: CGFloat = 1
-    }
-    
-    /// Legacy AppInfo enum for backward compatibility
-    enum AppInfo {
-        static var version: String { AppConfig.shared.appVersion }
-        static var buildNumber: String { AppConfig.shared.buildNumber }
-        static var name: String { AppConfig.shared.appName }
-        static var bundleIdentifier: String { AppConfig.shared.bundleIdentifier }
-    }
-    
-    /// Legacy Auth enum for backward compatibility
-    enum Auth {
-        static let tokenKey = "auth_token"
-        static let userKey = "current_user"
-        static let refreshTokenKey = "refresh_token"
-        static let biometricTokenKey = "biometric_token"
-    }
-    
-    /// FigrClub specific settings
-    enum FigrClub {
-        static var maxPhotosPerPost: Int { AppConfig.shared.maxPhotosPerPost }
-        static var maxVideoLength: TimeInterval { AppConfig.shared.maxVideoLength }
-        static var supportedImageFormats: [String] { AppConfig.shared.supportedImageFormats }
-        static var supportedVideoFormats: [String] { AppConfig.shared.supportedVideoFormats }
-        static var maxFileSize: Int { AppConfig.shared.maxFileSize }
-    }
-}
+// MARK: - Legacy enums removed - use AppConfig.shared directly
 
 // MARK: - Debug Information
 #if DEBUG

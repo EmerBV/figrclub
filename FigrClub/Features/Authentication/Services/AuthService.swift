@@ -111,7 +111,7 @@ final class AuthService: AuthServiceProtocol {
         do {
             let responseDTO: UserResponseDTO = try await networkDispatcher.dispatch(endpoint)
             
-            let response = UserMappers.toUserResponse(from: responseDTO)
+            let response = UserMappers.toDomainModel(from: responseDTO)
             
             Logger.info("✅ AuthService: Got current user successfully for userId: \(userId)")
             return response

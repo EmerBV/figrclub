@@ -9,7 +9,7 @@ import SwiftUI
 
 struct LoginFormView: View {
     @ObservedObject var viewModel: AuthViewModel
-    @ObservedObject var errorHandler: ErrorHandler
+    @ObservedObject var errorHandler: GlobalErrorHandler
     
     @EnvironmentObject private var featureFlagManager: FeatureFlagManager
     

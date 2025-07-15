@@ -9,7 +9,7 @@ import SwiftUI
 
 struct RegisterFormView: View {
     @ObservedObject var viewModel: AuthViewModel
-    @ObservedObject var errorHandler: ErrorHandler
+    @ObservedObject var errorHandler: GlobalErrorHandler
     
     var body: some View {
         ScrollView {

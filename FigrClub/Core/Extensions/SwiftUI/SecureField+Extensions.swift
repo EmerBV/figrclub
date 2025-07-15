@@ -13,11 +13,11 @@ extension SecureField {
         self.padding(.horizontal, 16)
             .padding(.vertical, 14)
             .background(
-                RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
+                RoundedRectangle(cornerRadius: 12)
                     .fill(Color(.systemGray6))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
+                RoundedRectangle(cornerRadius: 12)
                     .stroke(Color(.systemGray4), lineWidth: 0.5)
             )
             .font(.system(size: 16, weight: .regular))

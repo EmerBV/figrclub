@@ -164,16 +164,16 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
     
     // MARK: - Private Methods
     private func saveUser(_ user: User) throws {
-        try secureStorage.save(user, forKey: AppConfig.Auth.userKey)
+                    try secureStorage.save(user, forKey: "current_user")
         Logger.debug("💾 AuthRepository: User data saved to secure storage")
     }
     
     private func getCachedUser() -> User? {
-        return try? secureStorage.get(User.self, forKey: AppConfig.Auth.userKey)
+        return try? secureStorage.get(User.self, forKey: "current_user")
     }
     
     private func clearUser() throws {
-        try secureStorage.remove(forKey: AppConfig.Auth.userKey)
+        try secureStorage.remove(forKey: "current_user")
         Logger.debug("🗑️ AuthRepository: User data cleared from secure storage")
     }
     

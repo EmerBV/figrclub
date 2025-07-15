@@ -32,13 +32,7 @@ final class ViewModelAssembly: Assembly {
             }
         }.inObjectScope(.container)
         
-        // Legacy Error Handler (for backward compatibility) - MainActor
-        container.register(ErrorHandler.self) { _ in
-            // Create on MainActor
-            return MainActor.assumeIsolated {
-                ErrorHandler()
-            }
-        }.inObjectScope(.transient)
+        // Legacy Error Handler removed - use GlobalErrorHandler instead
         
         // MARK: - ViewModels
         
@@ -63,34 +57,8 @@ final class ViewModelAssembly: Assembly {
             }
         }.inObjectScope(.transient)
         
-        // MARK: - Coordinators (Future ViewModels)
-        
-        // Note: Coordinators will be registered here when we create specific ViewModels
-        // for each feature (Feed, Marketplace, etc.)
-        
-        // Feed ViewModel (when implemented)
-        // container.register(FeedViewModel.self) { resolver in
-        //     let postService = resolver.resolve(PostServiceProtocol.self)!
-        //     let appStateManager = resolver.resolve(AppStateManager.self)!
-        //     let errorHandler = resolver.resolve(GlobalErrorHandler.self)!
-        //     return FeedViewModel(
-        //         postService: postService,
-        //         appStateManager: appStateManager,
-        //         errorHandler: errorHandler
-        //     )
-        // }.inObjectScope(.transient)
-        
-        // Profile ViewModel (when implemented)
-        // container.register(ProfileViewModel.self) { resolver in
-        //     let userService = resolver.resolve(UserServiceProtocol.self)!
-        //     let appStateManager = resolver.resolve(AppStateManager.self)!
-        //     let errorHandler = resolver.resolve(GlobalErrorHandler.self)!
-        //     return ProfileViewModel(
-        //         userService: userService,
-        //         appStateManager: appStateManager,
-        //         errorHandler: errorHandler
-        //     )
-        // }.inObjectScope(.transient)
+        // MARK: - Future ViewModels
+        // ViewModels for specific features will be registered here when implemented
         
         Logger.debug("✅ ViewModelAssembly: All ViewModels and state managers registered")
     }

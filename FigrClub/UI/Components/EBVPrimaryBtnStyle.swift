@@ -25,7 +25,7 @@ struct EBVPrimaryBtnStyle: ButtonStyle {
             .background(
                 isEnabled ? Color.blue : Color.gray
             )
-            .cornerRadius(AppConfig.UI.cornerRadius)
+            .cornerRadius(12)
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
             .disabled(!isEnabled || isLoading)

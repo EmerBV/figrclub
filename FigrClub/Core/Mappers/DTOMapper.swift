@@ -66,10 +66,7 @@ struct UserMappers: Mappable {
         fatalError("Not implemented - typically not needed for API responses")
     }
     
-    // MARK: - Convenience Method for AuthService compatibility
-    static func toUserResponse(from dto: UserResponseDTO) -> UserResponse {
-        return toDomainModel(from: dto)
-    }
+    // Use toDomainModel() instead - wrapper method removed
     
     // MARK: - Private Mapping Methods
     

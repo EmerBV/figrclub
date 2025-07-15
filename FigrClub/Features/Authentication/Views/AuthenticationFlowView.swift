@@ -9,7 +9,7 @@ import SwiftUI
 
 struct AuthenticationFlowView: View {
     @StateObject private var authViewModel = DependencyInjector.shared.resolve(AuthViewModel.self)
-    @StateObject private var errorHandler = ErrorHandler()
+    @StateObject private var errorHandler = DependencyInjector.shared.resolve(GlobalErrorHandler.self)
     
     var body: some View {
         NavigationStack {
@@ -40,9 +40,7 @@ struct AuthenticationFlowView: View {
         .onAppear {
             Logger.info("✅ AuthenticationFlowView: Appeared with login state: \(authViewModel.isShowingLogin)")
         }
-        .errorAlert(errorHandler: errorHandler) {
-            await retryAuthAction()
-        }
+        .errorAlert(errorHandler: errorHandler)
         .onChange(of: authViewModel.isShowingLogin) { oldValue, newValue in
             Logger.info("🔄 AuthenticationFlowView: Screen changed from \(oldValue) to \(newValue)")
         }
@@ -62,15 +60,13 @@ struct AuthenticationFlowView: View {
 }
 
 // MARK: - Preview
-/*
- #if DEBUG
- struct AuthenticationFlowView_Previews: PreviewProvider {
- static var previews: some View {
- AuthenticationFlowView()
- .environmentObject(DependencyInjector.shared.resolve(AuthStateManager.self))
- }
- }
- #endif
- */
+#if DEBUG
+struct AuthenticationFlowView_Previews: PreviewProvider {
+    static var previews: some View {
+        AuthenticationFlowView()
+            .environmentObject(DependencyInjector.shared.resolve(AuthStateManager.self))
+    }
+}
+#endif
 
 

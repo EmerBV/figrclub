@@ -84,8 +84,8 @@ private extension FigrClubApp {
 #if DEBUG
         Logger.info("📱 Environment: Development")
         Logger.info("🌍 Bundle ID: \(Bundle.main.bundleIdentifier ?? "Unknown")")
-        Logger.info("📦 App Version: \(AppConfig.AppInfo.version)")
-        Logger.info("🔢 Build Number: \(AppConfig.AppInfo.buildNumber)")
+        Logger.info("📦 App Version: \(AppConfig.shared.appVersion)")
+        Logger.info("🔢 Build Number: \(AppConfig.shared.buildNumber)")
 #else
         Logger.info("📱 Environment: Production")
 #endif
