@@ -78,14 +78,14 @@ final class ImageCacheService: ImageCacheServiceProtocol {
     }
     
     func getCacheSize() async -> (disk: UInt, memory: Int) {
-        let diskSize = await cache.diskStorageSize
-        let memorySize = cache.memoryStorage.totalCost
-        return (disk: diskSize, memory: memorySize)
+        let diskSize = try? await cache.diskStorageSize
+        let memorySize = cache.memoryStorage.config.countLimit > 0 ? cache.memoryStorage.config.countLimit : 0
+        return (disk: diskSize ?? 0, memory: memorySize)
     }
     
     func clearAllCache() async {
         cache.clearMemoryCache()
-        cache.clearDiskCache()
+        await cache.clearDiskCache()
         Logger.info("🗑️ ImageCacheService: All cache cleared")
     }
     
@@ -155,9 +155,7 @@ final class ImageDownloaderService: ImageDownloaderServiceProtocol {
             }
             
             // Store active task for potential cancellation
-            if let task = task {
-                activeTasks[url] = task
-            }
+            activeTasks[url] = task
         }
     }
     

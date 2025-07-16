@@ -1,5 +1,5 @@
 //
-//  KingfisherSwiftUIExtensions.swift
+//  Kingfisher+Extensions.swift
 //  FigrClub
 //
 //  Created by Emerson Balahan Varona on 16/7/25.
@@ -8,7 +8,7 @@
 import SwiftUI
 import Kingfisher
 
-// MARK: - Enhanced KFImage Extensions for FigrClub
+// MARK: - KFImage Extensions for FigrClub
 extension KFImage {
     
     /// Configuración estándar para imágenes de posts en el feed
@@ -315,11 +315,12 @@ struct ImageCacheHelper {
     /// Obtener información del cache
     static func getCacheSize() async -> String {
         let cache = ImageCache.default
-        let diskSize = await cache.diskStorageSize
-        let memorySize = cache.memoryStorage.totalCost
+        let diskSize = try? await cache.diskStorageSize
+        // En Kingfisher 8.x usamos el límite de configuración en lugar de totalCount
+        let memoryConfigLimit = cache.memoryStorage.config.countLimit
         
-        let diskSizeMB = Double(diskSize) / 1024 / 1024
-        let memorySizeMB = Double(memorySize) / 1024 / 1024
+        let diskSizeMB = Double(diskSize ?? 0) / 1024 / 1024
+        let memorySizeMB = Double(memoryConfigLimit) / 1024 / 1024
         
         return String(format: "Disk: %.1fMB, Memory: %.1fMB", diskSizeMB, memorySizeMB)
     }
@@ -548,7 +549,7 @@ extension KFAsyncImage where Content == Image, Placeholder == AnimatedImagePlace
 // MARK: - Smart Image Resizing Modifiers
 struct SmartResizeModifier: ViewModifier {
     let targetSize: CGSize
-    let contentMode: ContentMode
+    let contentMode: SwiftUI.ContentMode
     
     func body(content: Content) -> some View {
         content
@@ -562,7 +563,7 @@ struct SmartResizeModifier: ViewModifier {
 }
 
 extension View {
-    func smartResize(to size: CGSize, contentMode: ContentMode = .fill) -> some View {
+    func smartResize(to size: CGSize, contentMode: SwiftUI.ContentMode = .fill) -> some View {
         modifier(SmartResizeModifier(targetSize: size, contentMode: contentMode))
     }
 }

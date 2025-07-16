@@ -65,26 +65,29 @@ final class KingfisherConfig: KingfisherConfigurable {
         // Configurar tamaño del disco
         cache.diskStorage.config.sizeLimit = cacheConfig.diskCacheSize
         
-        // Configurar expiración del disco
-        cache.diskStorage.config.expiration = .seconds(cacheConfig.diskCacheExpiration)
-        
         // Configurar path personalizado si existe
         if let customPath = cacheConfig.diskCachePath {
-            let customCache = try? DiskStorage.Backend<Data>(
-                config: DiskStorage.Config(
-                    name: customPath,
-                    sizeLimit: cacheConfig.diskCacheSize,
-                    expiration: .seconds(cacheConfig.diskCacheExpiration)
+            do {
+                let customDiskStorage = try DiskStorage.Backend<Data>(
+                    config: DiskStorage.Config(
+                        name: customPath,
+                        sizeLimit: cacheConfig.diskCacheSize
+                    )
                 )
-            )
-            
-            if let customCache = customCache {
-                cache.diskStorage = customCache
+                
+                // Crear un nuevo cache con el storage personalizado
+                let customCache = ImageCache(
+                    memoryStorage: cache.memoryStorage,
+                    diskStorage: customDiskStorage
+                )
+                
                 Logger.debug("💾 KingfisherConfig: Custom disk cache path configured: \(customPath)")
+            } catch {
+                Logger.error("❌ KingfisherConfig: Failed to create custom disk cache: \(error)")
             }
         }
         
-        Logger.debug("💾 KingfisherConfig: Disk cache configured - Size: \(cacheConfig.diskCacheSize / 1024 / 1024)MB, Expiration: \(Int(cacheConfig.diskCacheExpiration / 86400)) days")
+        Logger.debug("💾 KingfisherConfig: Disk cache configured - Size: \(cacheConfig.diskCacheSize / 1024 / 1024)MB")
     }
     
     // MARK: - Memory Cache Configuration
@@ -192,10 +195,12 @@ final class KingfisherConfig: KingfisherConfigurable {
         let cache = ImageCache.default
         
         // Limpiar archivos expirados del disco
-        cache.cleanExpiredDiskCache()
+        await cache.cleanExpiredDiskCache()
         
         // Limpiar memoria si está por encima del 80% de capacidad
-        if await cache.memoryStorage.totalCost > Int(cacheConfig.memoryCacheSize * 0.8) {
+        let memoryCacheThreshold = Int(Double(cacheConfig.memoryCacheSize) * 0.8)
+        
+        if cache.memoryStorage.config.countLimit > memoryCacheThreshold {
             cache.clearMemoryCache()
             Logger.debug("🧹 KingfisherConfig: Memory cache cleared due to high usage")
         }
@@ -210,7 +215,7 @@ final class KingfisherConfig: KingfisherConfigurable {
         cache.clearMemoryCache()
         
         // Limpiar archivos expirados
-        cache.cleanExpiredDiskCache()
+        await cache.cleanExpiredDiskCache()
         
         Logger.debug("🧹 KingfisherConfig: Background cleanup completed")
     }
@@ -226,7 +231,7 @@ final class KingfisherConfig: KingfisherConfigurable {
     
     private func logConfigurationDetails() {
         Logger.info("📋 KingfisherConfig Details:")
-        Logger.info("  💾 Disk Cache: \(cacheConfig.diskCacheSize / 1024 / 1024)MB, \(Int(cacheConfig.diskCacheExpiration / 86400)) days retention")
+        Logger.info("  💾 Disk Cache: \(cacheConfig.diskCacheSize / 1024 / 1024)MB")
         Logger.info("  🧠 Memory Cache: \(cacheConfig.memoryCacheSize / 1024 / 1024)MB, \(Int(cacheConfig.memoryCacheExpiration / 60)) minutes retention")
         Logger.info("  🌐 Network Timeout: \(networkConfig.timeoutInterval)s")
         Logger.info("  🏗️ Environment: \(environment.rawValue)")
@@ -245,7 +250,7 @@ extension KingfisherConfig {
     func clearAllCache() async {
         let cache = ImageCache.default
         cache.clearMemoryCache()
-        cache.clearDiskCache()
+        await cache.clearDiskCache()
         
         Logger.info("🗑️ KingfisherConfig: All cache cleared manually")
     }
@@ -261,42 +266,42 @@ extension KingfisherConfig {
 extension KingfisherConfig {
     
     /// Opciones por defecto para cargar imágenes en SwiftUI
-    static var defaultSwiftUIOptions: KFOptionsSetter {
-        return { options in
-            options.append(.cacheOriginalImage)
-            options.append(.transition(.fade(0.3)))
-            options.append(.retryStrategy(DelayRetryStrategy(maxRetryCount: 3, retryInterval: .accumulated(1.5))))
-            options.append(.keepCurrentImageWhileLoading)
-        }
+    static func defaultSwiftUIOptions() -> KingfisherOptionsInfo {
+        return [
+            .cacheOriginalImage,
+            .transition(.fade(0.3)),
+            .retryStrategy(DelayRetryStrategy(maxRetryCount: 3, retryInterval: .accumulated(1.5))),
+            .keepCurrentImageWhileLoading
+        ]
     }
     
     /// Opciones para imágenes de perfil (circulares, menor resolución)
-    static var profileImageOptions: KFOptionsSetter {
-        return { options in
-            options.append(.processor(DownsamplingImageProcessor(size: CGSize(width: 200, height: 200))))
-            options.append(.processor(RoundCornerImageProcessor(cornerRadius: 100)))
-            options.append(.cacheOriginalImage)
-            options.append(.transition(.fade(0.2)))
-        }
+    static func profileImageOptions() -> KingfisherOptionsInfo {
+        return [
+            .processor(DownsamplingImageProcessor(size: CGSize(width: 200, height: 200))),
+            .processor(RoundCornerImageProcessor(cornerRadius: 100)),
+            .cacheOriginalImage,
+            .transition(.fade(0.2))
+        ]
     }
     
     /// Opciones para imágenes de posts (alta calidad)
-    static var postImageOptions: KFOptionsSetter {
-        return { options in
-            options.append(.processor(DownsamplingImageProcessor(size: CGSize(width: 800, height: 800))))
-            options.append(.cacheOriginalImage)
-            options.append(.transition(.fade(0.4)))
-            options.append(.keepCurrentImageWhileLoading)
-        }
+    static func postImageOptions() -> KingfisherOptionsInfo {
+        return [
+            .processor(DownsamplingImageProcessor(size: CGSize(width: 800, height: 800))),
+            .cacheOriginalImage,
+            .transition(.fade(0.4)),
+            .keepCurrentImageWhileLoading
+        ]
     }
     
     /// Opciones para thumbnails (baja resolución, rápida carga)
-    static var thumbnailOptions: KFOptionsSetter {
-        return { options in
-            options.append(.processor(DownsamplingImageProcessor(size: CGSize(width: 150, height: 150))))
-            options.append(.cacheOriginalImage)
-            options.append(.transition(.none))
-        }
+    static func thumbnailOptions() -> KingfisherOptionsInfo {
+        return [
+            .processor(DownsamplingImageProcessor(size: CGSize(width: 150, height: 150))),
+            .cacheOriginalImage,
+            .transition(.none)
+        ]
     }
 }
 
