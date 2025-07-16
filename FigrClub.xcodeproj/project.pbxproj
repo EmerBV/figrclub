@@ -15,7 +15,6 @@
 		1DA9641B2E0ECC9600C11774 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 1DA9641A2E0ECC9600C11774 /* FirebaseMessaging */; };
 		1DA9641D2E0ECC9600C11774 /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = 1DA9641C2E0ECC9600C11774 /* FirebaseRemoteConfig */; };
 		1DA964202E0ECFA700C11774 /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = 1DA9641F2E0ECFA700C11774 /* KeychainAccess */; };
-		1DA964232E0ED0A100C11774 /* SwinjectAutoregistration in Frameworks */ = {isa = PBXBuildFile; productRef = 1DA964222E0ED0A100C11774 /* SwinjectAutoregistration */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -82,7 +81,6 @@
 				1DA964122E0ECAC100C11774 /* Swinject in Frameworks */,
 				1DA9641D2E0ECC9600C11774 /* FirebaseRemoteConfig in Frameworks */,
 				1DA964202E0ECFA700C11774 /* KeychainAccess in Frameworks */,
-				1DA964232E0ED0A100C11774 /* SwinjectAutoregistration in Frameworks */,
 				1DA964192E0ECC9600C11774 /* FirebaseCrashlytics in Frameworks */,
 				1DA964172E0ECC9600C11774 /* FirebaseCore in Frameworks */,
 				1DA964152E0ECC9600C11774 /* FirebaseAnalytics in Frameworks */,
@@ -154,7 +152,6 @@
 				1DA9641A2E0ECC9600C11774 /* FirebaseMessaging */,
 				1DA9641C2E0ECC9600C11774 /* FirebaseRemoteConfig */,
 				1DA9641F2E0ECFA700C11774 /* KeychainAccess */,
-				1DA964222E0ED0A100C11774 /* SwinjectAutoregistration */,
 			);
 			productName = FigrClub;
 			productReference = 1DA963C72E01751900C11774 /* FigrClub.app */;
@@ -243,7 +240,6 @@
 				1DA964102E0ECAC100C11774 /* XCRemoteSwiftPackageReference "Swinject" */,
 				1DA964132E0ECC9600C11774 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				1DA9641E2E0ECFA700C11774 /* XCRemoteSwiftPackageReference "KeychainAccess" */,
-				1DA964212E0ED0A100C11774 /* XCRemoteSwiftPackageReference "SwinjectAutoregistration" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1DA963C82E01751900C11774 /* Products */;
@@ -648,14 +644,6 @@
 				kind = branch;
 			};
 		};
-		1DA964212E0ED0A100C11774 /* XCRemoteSwiftPackageReference "SwinjectAutoregistration" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/Swinject/SwinjectAutoregistration.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.9.1;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -698,11 +686,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 1DA9641E2E0ECFA700C11774 /* XCRemoteSwiftPackageReference "KeychainAccess" */;
 			productName = KeychainAccess;
-		};
-		1DA964222E0ED0A100C11774 /* SwinjectAutoregistration */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 1DA964212E0ED0A100C11774 /* XCRemoteSwiftPackageReference "SwinjectAutoregistration" */;
-			productName = SwinjectAutoregistration;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
