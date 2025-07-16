@@ -71,7 +71,6 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
             email: email,
             password: password,
             username: username,
-            userType: "REGULAR",
             legalAcceptances: finalLegalAcceptances,
             consents: finalConsents
         )
@@ -80,8 +79,56 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
         let registerResponse = try await authService.register(request)
         Logger.info("✅ AuthRepository: Registration successful for user: \(registerResponse.data.email)")
         
-        // After successful registration, login to get tokens and full user data
-        return try await login(email: email, password: password)
+        // ✅ FIXED: No hacer login automático después del registro
+        // El usuario debe verificar su email primero
+        // Crear un usuario básico con los datos mínimos necesarios
+        let basicUser = User(
+            id: registerResponse.data.userId,
+            firstName: firstName,
+            lastName: lastName,
+            email: registerResponse.data.email,
+            displayName: registerResponse.data.fullName,
+            fullName: registerResponse.data.fullName,
+            birthDate: nil,
+            city: nil,
+            country: nil,
+            phone: nil,
+            preferredLanguage: nil,
+            active: true,
+            enabled: true,
+            accountNonExpired: true,
+            accountNonLocked: true,
+            credentialsNonExpired: true,
+            emailVerified: registerResponse.data.emailVerified,
+            emailVerifiedAt: nil,
+            isVerified: false,
+            isPrivate: false,
+            isPro: false,
+            canAccessProFeatures: false,
+            proSeller: false,
+            isActiveSellerProfile: false,
+            isSellingActive: false,
+            individualUser: true,
+            admin: false,
+            role: "ROLE_USER",
+            roleDescription: nil,
+            roleId: 1,
+            hasProfileImage: false,
+            hasCoverImage: false,
+            activeImageCount: 0,
+            followersCount: 0,
+            followingCount: 0,
+            postsCount: 0,
+            purchasesCount: 0,
+            createdAt: ISO8601DateFormatter().string(from: Date()),
+            createdBy: nil,
+            lastActivityAt: nil,
+            imageCapabilities: nil,
+            maxProfileImageSizeMB: nil,
+            maxCoverImageSizeMB: nil
+        )
+        
+        return basicUser
     }
     
     func logout() async throws {

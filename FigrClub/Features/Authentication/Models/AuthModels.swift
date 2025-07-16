@@ -35,7 +35,6 @@ struct RegisterRequest {
     let email: String
     let password: String
     let username: String
-    let userType: String
     let legalAcceptances: [LegalAcceptance]
     let consents: [Consent]
 }

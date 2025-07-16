@@ -35,7 +35,6 @@ struct RegisterRequestDTO: BaseDTO {
     let email: String
     let password: String
     let username: String
-    let userType: String
     let legalAcceptances: [LegalAcceptanceDTO]
     let consents: [ConsentDTO]
 }

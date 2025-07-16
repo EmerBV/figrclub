@@ -16,6 +16,8 @@ final class AuthViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var showError = false
+    @Published var showEmailVerification = false
+    @Published var registeredEmail = ""
     
     // Login form
     @Published var loginEmail = ""
@@ -130,7 +132,7 @@ final class AuthViewModel: ObservableObject {
     }
     
     func register() async {
-        await performAuthAction(canPerform: canRegister, action: "register") {
+        await performRegistrationAction(canPerform: canRegister) {
             await authStateManager.register(
                 email: registerEmail,
                 password: registerPassword,
@@ -141,6 +143,10 @@ final class AuthViewModel: ObservableObject {
             )
         } onSuccess: { user in
             Logger.info("✅ AuthViewModel: Registration successful for user: \(user.displayName)")
+            // Guardar email para mostrar en la vista de verificación
+            registeredEmail = registerEmail
+            // Mostrar vista de verificación en lugar de hacer login automático
+            showEmailVerification = true
             clearRegisterForm()
         }
     }
@@ -164,6 +170,13 @@ final class AuthViewModel: ObservableObject {
         showError = false
     }
     
+    func continueFromEmailVerification() {
+        Logger.info("🔄 AuthViewModel: Continuing from email verification to login")
+        showEmailVerification = false
+        registeredEmail = ""
+        isShowingLogin = true
+    }
+    
     // MARK: - Error Handling Methods
     
     func loginWithErrorHandling() async -> NetworkError? {
@@ -183,7 +196,7 @@ final class AuthViewModel: ObservableObject {
             return createValidationError("Por favor completa todos los campos correctamente y acepta los términos")
         }
         
-        return await performAuthActionWithErrorHandling(action: "register") {
+        return await performRegistrationActionWithErrorHandling {
             await authStateManager.register(
                 email: registerEmail,
                 password: registerPassword,
@@ -193,6 +206,10 @@ final class AuthViewModel: ObservableObject {
                 consents: createConsents()
             )
         } onSuccess: {
+            // Guardar email para mostrar en la vista de verificación
+            registeredEmail = registerEmail
+            // Mostrar vista de verificación en lugar de hacer login automático
+            showEmailVerification = true
             clearRegisterForm()
         }
     }
@@ -211,6 +228,8 @@ final class AuthViewModel: ObservableObject {
         clearLoginForm()
         clearRegisterForm()
         hideError()
+        showEmailVerification = false
+        registeredEmail = ""
     }
     
     // MARK: - Consent Methods
@@ -381,6 +400,33 @@ private extension AuthViewModel {
         isLoading = false
     }
     
+    func performRegistrationAction(
+        canPerform: Bool,
+        authCall: () async -> Result<User, Error>,
+        onSuccess: (User) -> Void
+    ) async {
+        guard canPerform else {
+            Logger.warning("⚠️ AuthViewModel: Cannot register - validation failed")
+            return
+        }
+        
+        Logger.info("🔐 AuthViewModel: Starting registration process")
+        isLoading = true
+        hideError()
+        
+        let result = await authCall()
+        
+        switch result {
+        case .success(let user):
+            onSuccess(user)
+        case .failure(let error):
+            Logger.error("❌ AuthViewModel: Registration failed: \(error)")
+            showErrorMessage(error.localizedDescription)
+        }
+        
+        isLoading = false
+    }
+    
     func performAuthActionWithErrorHandling(
         action: String,
         authCall: () async -> Result<User, Error>,
@@ -401,6 +447,29 @@ private extension AuthViewModel {
         case .failure(let error):
             isLoading = false
             Logger.error("❌ \(action.capitalized) failed: \(error)")
+            return NetworkError.from(error)
+        }
+    }
+    
+    func performRegistrationActionWithErrorHandling(
+        authCall: () async -> Result<User, Error>,
+        onSuccess: () -> Void
+    ) async -> NetworkError? {
+        Logger.info("🔐 AuthViewModel: Registration with error handling")
+        isLoading = true
+        hideError()
+        
+        let result = await authCall()
+        
+        switch result {
+        case .success(let user):
+            onSuccess()
+            isLoading = false
+            Logger.info("✅ Registration successful for user: \(user.displayName)")
+            return nil
+        case .failure(let error):
+            isLoading = false
+            Logger.error("❌ Registration failed: \(error)")
             return NetworkError.from(error)
         }
     }
@@ -441,6 +510,7 @@ private extension AuthViewModel {
         termsAcceptedAt = nil
         dataProcessingAcceptedAt = nil
         functionalCookiesAcceptedAt = nil
+        // No limpiar registeredEmail aquí ya que se usa en la vista de verificación
     }
     
     func createLegalAcceptances() -> [LegalAcceptance] {

@@ -60,7 +60,6 @@ final class AuthService: AuthServiceProtocol {
             email: request.email,
             password: request.password,
             username: request.username,
-            userType: request.userType,
             legalAcceptances: request.legalAcceptances.map {
                 LegalAcceptanceDTO(
                     documentId: $0.documentId,

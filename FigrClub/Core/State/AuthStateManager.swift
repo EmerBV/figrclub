@@ -89,8 +89,10 @@ final class AuthStateManager: ObservableObject {
                 legalAcceptances: legalAcceptances,
                 consents: consents
             )
-            await updateAuthenticatedState(with: user)
-            Logger.info("✅ AuthStateManager: Registration successful for user: \(user.displayName)")
+            // ✅ FIXED: No autenticar automáticamente después del registro
+            // El usuario necesita verificar su email primero
+            await updateUnauthenticatedState()
+            Logger.info("✅ AuthStateManager: Registration successful for user: \(user.displayName) - Email verification required")
             return .success(user)
         } catch {
             await updateErrorState(error)

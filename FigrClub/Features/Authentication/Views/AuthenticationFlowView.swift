@@ -19,7 +19,19 @@ struct AuthenticationFlowView: View {
                     .ignoresSafeArea()
                 
                 // Content with explicit transition
-                if authViewModel.isShowingLogin {
+                if authViewModel.showEmailVerification {
+                    EmailVerificationView(
+                        email: authViewModel.registeredEmail,
+                        onContinue: {
+                            authViewModel.continueFromEmailVerification()
+                        }
+                    )
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .bottom).combined(with: .opacity),
+                        removal: .move(edge: .top).combined(with: .opacity)
+                    ))
+                    .zIndex(2)
+                } else if authViewModel.isShowingLogin {
                     LoginFormView(viewModel: authViewModel, errorHandler: errorHandler)
                         .transition(.asymmetric(
                             insertion: .move(edge: .leading).combined(with: .opacity),
@@ -36,13 +48,17 @@ struct AuthenticationFlowView: View {
                 }
             }
             .animation(.easeInOut(duration: 0.4), value: authViewModel.isShowingLogin)
+            .animation(.easeInOut(duration: 0.4), value: authViewModel.showEmailVerification)
         }
         .onAppear {
             Logger.info("✅ AuthenticationFlowView: Appeared with login state: \(authViewModel.isShowingLogin)")
         }
         .errorAlert(errorHandler: errorHandler)
         .onChange(of: authViewModel.isShowingLogin) { oldValue, newValue in
-            Logger.info("🔄 AuthenticationFlowView: Screen changed from \(oldValue) to \(newValue)")
+            Logger.info("🔄 AuthenticationFlowView: Login screen changed from \(oldValue) to \(newValue)")
+        }
+        .onChange(of: authViewModel.showEmailVerification) { oldValue, newValue in
+            Logger.info("🔄 AuthenticationFlowView: Email verification screen changed from \(oldValue) to \(newValue)")
         }
     }
     
