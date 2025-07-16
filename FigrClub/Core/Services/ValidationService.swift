@@ -79,15 +79,37 @@ final class ValidationService: ValidationServiceProtocol {
             return .invalid("La contraseña debe tener al menos 8 caracteres")
         }
         
-        // Check for at least one letter and one number
-        let letterRegex = ".*[A-Za-z]+.*"
-        let numberRegex = ".*[0-9]+.*"
+        guard password.count <= 128 else {
+            return .invalid("La contraseña no puede tener más de 128 caracteres")
+        }
         
+        // Check for at least one letter
+        let letterRegex = ".*[A-Za-z]+.*"
         let hasLetter = NSPredicate(format:"SELF MATCHES %@", letterRegex).evaluate(with: password)
+        
+        guard hasLetter else {
+            return .invalid("La contraseña debe contener al menos una letra")
+        }
+        
+        // Check for at least one number
+        let numberRegex = ".*[0-9]+.*"
         let hasNumber = NSPredicate(format:"SELF MATCHES %@", numberRegex).evaluate(with: password)
         
-        guard hasLetter && hasNumber else {
-            return .invalid("La contraseña debe contener al menos una letra y un número")
+        guard hasNumber else {
+            return .invalid("La contraseña debe contener al menos un número")
+        }
+        
+        // Check for at least one special character (common requirement for secure passwords)
+        let specialCharRegex = ".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]+.*"
+        let hasSpecialChar = NSPredicate(format:"SELF MATCHES %@", specialCharRegex).evaluate(with: password)
+        
+        guard hasSpecialChar else {
+            return .invalid("La contraseña debe contener al menos un carácter especial (!@#$%^&*)")
+        }
+        
+        // Check for no spaces (common security requirement)
+        guard !password.contains(" ") else {
+            return .invalid("La contraseña no puede contener espacios")
         }
         
         return .valid
@@ -145,3 +167,30 @@ final class ValidationService: ValidationServiceProtocol {
         return .valid
     }
 }
+
+// MARK: - Debug Extension (for testing purposes)
+#if DEBUG
+extension ValidationService {
+    static func testPasswordValidation() {
+        let service = ValidationService()
+        let testPasswords = [
+            "12345678", // Solo números, falta letra y carácter especial
+            "password", // Solo letras, falta número y carácter especial  
+            "password123", // Letra y número, falta carácter especial
+            "Password123!", // Válido: letra, número y carácter especial
+            "MyP@ssw0rd", // Válido: letra, número y carácter especial
+            "short!", // Muy corto
+            "password with spaces!", // Con espacios
+            "", // Vacío
+        ]
+        
+        print("🧪 Testing password validation:")
+        for password in testPasswords {
+            let result = service.validatePassword(password)
+            let status = result.isValid ? "✅ VALID" : "❌ INVALID"
+            let message = result.errorMessage ?? "No errors"
+            print("\(status): '\(password)' - \(message)")
+        }
+    }
+}
+#endif

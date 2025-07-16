@@ -51,23 +51,13 @@ struct RegisterDataDTO: BaseDTO {
 typealias RegisterResponseDTO = ApiResponseDTO<RegisterDataDTO>
 
 struct LegalAcceptanceDTO: BaseDTO {
-    let documentType: String
+    let documentId: Int
     let acceptedAt: String
-    
-    enum CodingKeys: String, CodingKey {
-        case documentType = "document_type"
-        case acceptedAt = "accepted_at"
-    }
 }
 
 struct ConsentDTO: BaseDTO {
     let consentType: String
     let isGranted: Bool
-    
-    enum CodingKeys: String, CodingKey {
-        case consentType = "consent_type"
-        case isGranted = "is_granted"
-    }
 }
 
 struct UserDTO: BaseDTO {

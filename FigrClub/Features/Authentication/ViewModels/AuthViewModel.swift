@@ -28,6 +28,11 @@ final class AuthViewModel: ObservableObject {
     @Published var registerFullName = ""
     @Published var registerConfirmPassword = ""
     @Published var acceptTerms = false
+    @Published var acceptDataProcessing = false
+    @Published var acceptFunctionalCookies = false
+    @Published var termsAcceptedAt: Date?
+    @Published var dataProcessingAcceptedAt: Date?
+    @Published var functionalCookiesAcceptedAt: Date?
     
     // MARK: - Validation Management
     private let loginValidationManager: FormValidationManager
@@ -53,6 +58,8 @@ final class AuthViewModel: ObservableObject {
         !registerFullName.isEmpty &&
         registerPassword == registerConfirmPassword &&
         acceptTerms &&
+        acceptDataProcessing &&
+        acceptFunctionalCookies &&
         !isLoading &&
         registerValidationManager.isFormValid
     }
@@ -103,6 +110,11 @@ final class AuthViewModel: ObservableObject {
             self.setupValidation()
             self.setupAuthStateSubscription()
             Logger.info("✅ AuthViewModel: Initialized successfully")
+            
+            #if DEBUG
+            // Test password validation in debug mode
+            ValidationService.testPasswordValidation()
+            #endif
         }
     }
     
@@ -123,7 +135,9 @@ final class AuthViewModel: ObservableObject {
                 email: registerEmail,
                 password: registerPassword,
                 username: registerUsername,
-                fullName: registerFullName.isEmpty ? nil : registerFullName
+                fullName: registerFullName.isEmpty ? nil : registerFullName,
+                legalAcceptances: createLegalAcceptances(),
+                consents: createConsents()
             )
         } onSuccess: { user in
             Logger.info("✅ AuthViewModel: Registration successful for user: \(user.displayName)")
@@ -174,7 +188,9 @@ final class AuthViewModel: ObservableObject {
                 email: registerEmail,
                 password: registerPassword,
                 username: registerUsername,
-                fullName: registerFullName.isEmpty ? nil : registerFullName
+                fullName: registerFullName.isEmpty ? nil : registerFullName,
+                legalAcceptances: createLegalAcceptances(),
+                consents: createConsents()
             )
         } onSuccess: {
             clearRegisterForm()
@@ -195,6 +211,26 @@ final class AuthViewModel: ObservableObject {
         clearLoginForm()
         clearRegisterForm()
         hideError()
+    }
+    
+    // MARK: - Consent Methods
+    
+    func acceptTermsAndConditions() {
+        acceptTerms = true
+        termsAcceptedAt = Date()
+        Logger.info("✅ AuthViewModel: Terms and conditions accepted at: \(Date())")
+    }
+    
+    func acceptDataProcessingConsent() {
+        acceptDataProcessing = true
+        dataProcessingAcceptedAt = Date()
+        Logger.info("✅ AuthViewModel: Data processing consent accepted at: \(Date())")
+    }
+    
+    func acceptFunctionalCookiesConsent() {
+        acceptFunctionalCookies = true
+        functionalCookiesAcceptedAt = Date()
+        Logger.info("✅ AuthViewModel: Functional cookies consent accepted at: \(Date())")
     }
     
     // MARK: - Validation Helpers
@@ -400,8 +436,41 @@ private extension AuthViewModel {
         registerFullName = ""
         registerConfirmPassword = ""
         acceptTerms = false
+        acceptDataProcessing = false
+        acceptFunctionalCookies = false
+        termsAcceptedAt = nil
+        dataProcessingAcceptedAt = nil
+        functionalCookiesAcceptedAt = nil
     }
+    
+    func createLegalAcceptances() -> [LegalAcceptance] {
+        var acceptances: [LegalAcceptance] = []
+        
+        if acceptTerms, let acceptedAt = termsAcceptedAt {
+            acceptances.append(LegalAcceptance(documentId: 1, acceptedAt: acceptedAt))
+            acceptances.append(LegalAcceptance(documentId: 2, acceptedAt: acceptedAt))
+        }
+        
+        return acceptances
+    }
+    
+    func createConsents() -> [Consent] {
+        var consents: [Consent] = []
+        
+        if acceptDataProcessing {
+            consents.append(Consent(consentType: "DATA_PROCESSING", isGranted: true))
+        }
+        
+        if acceptFunctionalCookies {
+            consents.append(Consent(consentType: "FUNCTIONAL_COOKIES", isGranted: true))
+        }
+        
+        return consents
+    }
+    
 }
+
+
 
 // MARK: - Preview Support
 #if DEBUG

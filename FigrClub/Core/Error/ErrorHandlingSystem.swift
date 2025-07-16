@@ -229,15 +229,41 @@ final class GlobalErrorHandler: ErrorHandlerProtocol {
         let isRetryable = networkError.isRetryable
         
         let (severity, title) = networkErrorSeverityAndTitle(networkError)
+        let message = enhanceErrorMessage(networkError)
         
         return AppErrorModel(
             category: category,
             severity: severity,
             title: title,
-            message: networkError.userFriendlyMessage,
+            message: message,
             isRetryable: isRetryable,
             underlyingError: networkError
         )
+    }
+    
+    private func enhanceErrorMessage(_ networkError: NetworkError) -> String {
+        switch networkError {
+        case .badRequest(let apiError):
+            // Check if this is a password validation error
+            if let apiError = apiError,
+               apiError.message.lowercased().contains("validación") &&
+               (apiError.message.lowercased().contains("password") || 
+                apiError.message.lowercased().contains("contraseña")) {
+                return """
+                Tu contraseña no cumple con los requisitos de seguridad.
+                
+                Debe contener:
+                • Al menos 8 caracteres
+                • Al menos una letra
+                • Al menos un número  
+                • Al menos un carácter especial (!@#$%^&*)
+                • Sin espacios
+                """
+            }
+            return apiError?.message ?? "Solicitud incorrecta"
+        default:
+            return networkError.userFriendlyMessage
+        }
     }
     
     private func networkErrorSeverityAndTitle(_ networkError: NetworkError) -> (ErrorSeverity, String) {

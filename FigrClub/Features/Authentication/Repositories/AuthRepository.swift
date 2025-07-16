@@ -9,7 +9,7 @@ import Foundation
 
 protocol AuthRepositoryProtocol: Sendable {
     func login(email: String, password: String) async throws -> User
-    func register(email: String, password: String, username: String, fullName: String?) async throws -> User
+    func register(email: String, password: String, username: String, fullName: String?, legalAcceptances: [LegalAcceptance]?, consents: [Consent]?) async throws -> User
     func logout() async throws
     func refreshToken() async throws -> User
     func getCurrentUser() async throws -> User
@@ -47,11 +47,22 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
         return userResponse.data.user
     }
     
-    func register(email: String, password: String, username: String, fullName: String?) async throws -> User {
+    func register(email: String, password: String, username: String, fullName: String?, legalAcceptances: [LegalAcceptance]?, consents: [Consent]?) async throws -> User {
         // Split fullName into firstName and lastName
         let nameParts = fullName?.components(separatedBy: " ") ?? ["", ""]
         let firstName = nameParts.first ?? ""
         let lastName = nameParts.count > 1 ? nameParts.dropFirst().joined(separator: " ") : ""
+        
+        // Use provided legalAcceptances and consents, or defaults
+        let finalLegalAcceptances = legalAcceptances ?? [
+            LegalAcceptance(documentId: 1, acceptedAt: Date()),
+            LegalAcceptance(documentId: 2, acceptedAt: Date())
+        ]
+        
+        let finalConsents = consents ?? [
+            Consent(consentType: "DATA_PROCESSING", isGranted: true),
+            Consent(consentType: "FUNCTIONAL_COOKIES", isGranted: true)
+        ]
         
         // Create domain model request
         let request = RegisterRequest(
@@ -61,12 +72,8 @@ final class AuthRepository: AuthRepositoryProtocol, Sendable {
             password: password,
             username: username,
             userType: "REGULAR",
-            legalAcceptances: [
-                LegalAcceptance(documentType: "TERMS_OF_SERVICE", acceptedAt: Date())
-            ],
-            consents: [
-                Consent(consentType: "MARKETING_EMAILS", isGranted: false)
-            ]
+            legalAcceptances: finalLegalAcceptances,
+            consents: finalConsents
         )
         
         // Service handles DTO conversion internally

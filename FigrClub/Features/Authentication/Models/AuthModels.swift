@@ -49,7 +49,7 @@ struct RegisterData {
 }
 
 struct LegalAcceptance {
-    let documentType: String
+    let documentId: Int
     let acceptedAt: Date
 }
 

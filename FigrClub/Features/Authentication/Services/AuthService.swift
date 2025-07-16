@@ -63,7 +63,7 @@ final class AuthService: AuthServiceProtocol {
             userType: request.userType,
             legalAcceptances: request.legalAcceptances.map {
                 LegalAcceptanceDTO(
-                    documentType: $0.documentType,
+                    documentId: $0.documentId,
                     acceptedAt: DateFormatter.iso8601.string(from: $0.acceptedAt)
                 )
             },
@@ -77,6 +77,13 @@ final class AuthService: AuthServiceProtocol {
         
         let endpoint = AuthEndpoints.register(request: requestDTO)
         Logger.debug("📝 AuthService: Calling register endpoint for user: \(request.email)")
+        Logger.debug("🔍 AuthService: Password validation - Length: \(request.password.count), HasLetter: \(request.password.rangeOfCharacter(from: .letters) != nil), HasNumber: \(request.password.rangeOfCharacter(from: .decimalDigits) != nil), HasSpecial: \(request.password.rangeOfCharacter(from: CharacterSet(charactersIn: "!@#$%^&*()_+-=[]{}|;:,.<>?")) != nil)")
+        
+        // Debug: Log the request structure
+        if let jsonData = try? JSONEncoder().encode(requestDTO),
+           let jsonString = String(data: jsonData, encoding: .utf8) {
+            Logger.debug("📄 AuthService: Request JSON structure: \(jsonString)")
+        }
         
         do {
             let responseDTO: RegisterResponseDTO = try await networkDispatcher.dispatch(endpoint)

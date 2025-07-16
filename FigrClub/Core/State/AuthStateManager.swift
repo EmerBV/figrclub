@@ -74,7 +74,7 @@ final class AuthStateManager: ObservableObject {
         }
     }
     
-    func register(email: String, password: String, username: String, fullName: String?) async -> Result<User, Error> {
+    func register(email: String, password: String, username: String, fullName: String?, legalAcceptances: [LegalAcceptance]? = nil, consents: [Consent]? = nil) async -> Result<User, Error> {
         // Asegurar que el estado se actualiza en el hilo principal
         await MainActor.run {
             authState = .loading
@@ -85,7 +85,9 @@ final class AuthStateManager: ObservableObject {
                 email: email,
                 password: password,
                 username: username,
-                fullName: fullName
+                fullName: fullName,
+                legalAcceptances: legalAcceptances,
+                consents: consents
             )
             await updateAuthenticatedState(with: user)
             Logger.info("✅ AuthStateManager: Registration successful for user: \(user.displayName)")
