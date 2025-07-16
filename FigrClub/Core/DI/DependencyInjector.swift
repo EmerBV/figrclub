@@ -44,11 +44,13 @@ final class DependencyInjector {
         )
         
         Logger.info("🎯 Networking architecture initialized successfully")
+        Logger.info("🖼️ Image loading architecture initialized with Kingfisher")
         
 #if DEBUG
         // Verify dependencies in debug mode
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             DependencyDebug.verifyAllDependencies()
+            DependencyDebug.performKingfisherHealthCheck()
         }
 #endif
     }
@@ -102,6 +104,18 @@ extension DependencyInjector {
     func getAuthStateManager() -> AuthStateManager {
         return resolve(AuthStateManager.self)
     }
+    
+    func getImageManager() -> ImageManagerProtocol {
+        return resolve(ImageManagerProtocol.self)
+    }
+    
+    func getImageCacheService() -> ImageCacheServiceProtocol {
+        return resolve(ImageCacheServiceProtocol.self)
+    }
+    
+    func getKingfisherConfig() -> KingfisherConfigurable {
+        return resolve(KingfisherConfigurable.self)
+    }
 }
 
 // MARK: - Environment Setup
@@ -148,6 +162,97 @@ extension DependencyInjector {
         return resolvedType
     }
 }
+
+extension DependencyInjector {
+    
+    /// Quick access to image manager for SwiftUI Environment
+    var imageManager: ImageManagerProtocol {
+        return resolve(ImageManagerProtocol.self)
+    }
+    
+    /// Quick access to cache service
+    var imageCacheService: ImageCacheServiceProtocol {
+        return resolve(ImageCacheServiceProtocol.self)
+    }
+    
+    /// Quick access to download service
+    var imageDownloadService: ImageDownloaderServiceProtocol {
+        return resolve(ImageDownloaderServiceProtocol.self)
+    }
+    
+    /// Quick access to processing service
+    var imageProcessingService: ImageProcessingServiceProtocol {
+        return resolve(ImageProcessingServiceProtocol.self)
+    }
+}
+
+/*
+ extension DependencyInjector {
+ 
+ /// Check if all critical dependencies are available
+ var isHealthy: Bool {
+ let criticalTypes: [Any.Type] = [
+ NetworkDispatcherProtocol.self,
+ AuthServiceProtocol.self,
+ ImageManagerProtocol.self,
+ KingfisherConfigurable.self
+ ]
+ 
+ return criticalTypes.allSatisfy { canResolve($0) }
+ }
+ 
+ /// Get container statistics
+ var containerStats: ContainerStats {
+ return ContainerStats(
+ totalRegistrations: getTotalRegistrations(),
+ criticalDependenciesCount: getCriticalDependenciesCount(),
+ kingfisherDependenciesCount: getKingfisherDependenciesCount(),
+ isHealthy: isHealthy
+ )
+ }
+ 
+ private func getTotalRegistrations() -> Int {
+ // This is an approximation since Swinject doesn't expose direct count
+ let testTypes: [Any.Type] = [
+ NetworkDispatcherProtocol.self,
+ AuthServiceProtocol.self,
+ ImageManagerProtocol.self,
+ KingfisherConfigurable.self,
+ TokenManager.self,
+ SecureStorageProtocol.self,
+ UserDefaultsManagerProtocol.self,
+ ImageCacheServiceProtocol.self,
+ ImageDownloaderServiceProtocol.self,
+ ImageProcessingServiceProtocol.self
+ ]
+ 
+ return testTypes.compactMap { resolveOptional($0) }.count
+ }
+ 
+ private func getCriticalDependenciesCount() -> Int {
+ let criticalTypes: [Any.Type] = [
+ NetworkDispatcherProtocol.self,
+ AuthServiceProtocol.self,
+ ImageManagerProtocol.self,
+ KingfisherConfigurable.self
+ ]
+ 
+ return criticalTypes.compactMap { resolveOptional($0) }.count
+ }
+ 
+ private func getKingfisherDependenciesCount() -> Int {
+ let kingfisherTypes: [Any.Type] = [
+ KingfisherConfigurable.self,
+ ImageManagerProtocol.self,
+ ImageCacheServiceProtocol.self,
+ ImageDownloaderServiceProtocol.self,
+ ImageProcessingServiceProtocol.self
+ ]
+ 
+ return kingfisherTypes.compactMap { resolveOptional($0) }.count
+ }
+ }
+ */
 
 // MARK: - Error Types
 enum DependencyInjectionError: Error, LocalizedError {

@@ -32,8 +32,6 @@ final class ViewModelAssembly: Assembly {
             }
         }.inObjectScope(.container)
         
-        // Legacy Error Handler removed - use GlobalErrorHandler instead
-        
         // MARK: - ViewModels
         
         // Auth ViewModel - MainActor
