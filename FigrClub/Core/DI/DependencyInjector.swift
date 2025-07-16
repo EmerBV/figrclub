@@ -27,6 +27,9 @@ final class DependencyInjector {
                 // MARK: - Feature Flags
                 FeatureFlagAssembly(),
                 
+                // MARK: - Image Loading
+                KingfisherAssembly(),
+                
                 // MARK: - Data
                 ServiceAssembly(),
                 RepositoryAssembly(),

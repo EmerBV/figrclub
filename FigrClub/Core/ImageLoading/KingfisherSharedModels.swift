@@ -230,7 +230,6 @@ struct ImageCacheUtilities {
     static func getFormattedCacheSize() async -> String {
         let cache = ImageCache.default
         let diskSize = try? await cache.diskStorageSize
-        // En Kingfisher 8.x usamos una estimación o valor de configuración
         let memoryConfigLimit = cache.memoryStorage.config.countLimit
         
         let diskSizeMB = Double(diskSize ?? 0) / 1024 / 1024
@@ -251,7 +250,6 @@ struct ImageCacheUtilities {
     static func getCacheStatistics() async -> KingfisherCacheInfo {
         let cache = ImageCache.default
         let diskSize = try? await cache.diskStorageSize
-        // En Kingfisher 8.x usamos config en lugar de totalCount
         let memorySize = UInt(cache.memoryStorage.config.countLimit)
         
         // Get limits from cache configuration

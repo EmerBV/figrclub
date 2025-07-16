@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 struct ProfileFlowView: View {
     let user: User
@@ -58,14 +59,52 @@ struct ProfileFlowView: View {
     
     private var profileHeaderView: some View {
         VStack(spacing: Spacing.medium) {
-            Circle()
-                .fill(Color.blue.opacity(0.1))
-                .frame(width: 100, height: 100)
-                .overlay(
-                    Text(user.displayName.prefix(1).uppercased())
-                        .font(.system(size: 36, weight: .bold))
-                        .foregroundColor(.blue)
-                )
+            // Imagen de perfil usando KFImage y las extensiones existentes
+            let imageURL = URL(string: "http://localhost:8080/figrclub/api/v1/images/user/\(user.id)/profile")
+            
+            if user.hasProfileImage {
+                
+                /*
+                OptimizedKFImage.highQuality(url: imageURL) {
+                    ShimmerImagePlaceholder()
+                }
+                 */
+                
+                KFImage(imageURL)
+                    .profileImageStyle(size: 100)
+                    .overlay(
+                        // Badge de verificación superpuesto
+                        user.isVerified ?
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.title3)
+                            .foregroundColor(.blue)
+                            .background(Color.white)
+                            .clipShape(Circle())
+                            .offset(x: 35, y: -35)
+                        : nil
+                    )
+            } else {
+                // Placeholder para usuarios sin imagen de perfil
+                Circle()
+                    .fill(Color.blue.opacity(0.1))
+                    .frame(width: 100, height: 100)
+                    .overlay(
+                        Text(user.displayName.prefix(1).uppercased())
+                            .font(.system(size: 36, weight: .bold))
+                            .foregroundColor(.blue)
+                    )
+                    .overlay(
+                        // Badge de verificación superpuesto
+                        user.isVerified ?
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.title3)
+                            .foregroundColor(.blue)
+                            .background(Color.white)
+                            .clipShape(Circle())
+                            .offset(x: 35, y: -35)
+                        : nil
+                    )
+            }
             
             if user.isVerified {
                 HStack(spacing: Spacing.xSmall) {

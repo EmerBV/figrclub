@@ -18,6 +18,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         FirebaseApp.configure()
         Logger.info("Firebase configured successfully")
         
+        // Configure Kingfisher
+        configureKingfisher()
+        
         // Configure notifications
         configureNotifications(application)
         
@@ -136,5 +139,16 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
             Logger.info("Navigate to user profile: \(userId)")
             // Navigate to user profile
         }
+    }
+    
+    // MARK: - Kingfisher Configuration
+    private func configureKingfisher() {
+        Logger.info("🖼️ AppDelegate: Configuring Kingfisher...")
+        
+        // Configurar Kingfisher usando el servicio del DI
+        let kingfisherConfig = DependencyInjector.shared.resolve(KingfisherConfigurable.self)
+        kingfisherConfig.configure()
+        
+        Logger.info("✅ AppDelegate: Kingfisher configured successfully")
     }
 }

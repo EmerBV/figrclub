@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 struct FeedFlowView: View {
     let user: User
@@ -77,9 +78,20 @@ struct FeedFlowView: View {
     private var headerView: some View {
         VStack(spacing: Spacing.medium) {
             HStack {
-                Image(systemName: "person.3.sequence.fill")
-                    .font(.system(size: 40, weight: .light))
-                    .foregroundColor(.blue)
+                // Avatar del usuario actual usando KFImage
+                if user.hasProfileImage {
+                    KFImage(URL(string: "http://localhost:8080/figrclub/api/v1/images/user/\(user.id)/profile"))
+                        .profileImageStyle(size: 50)
+                } else {
+                    Circle()
+                        .fill(Color.blue.opacity(0.1))
+                        .frame(width: 50, height: 50)
+                        .overlay(
+                            Text(user.displayName.prefix(1).uppercased())
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundColor(.blue)
+                        )
+                }
                 
                 VStack(alignment: .leading) {
                     Text("¡Hola, \(user.displayName)!")
@@ -92,6 +104,15 @@ struct FeedFlowView: View {
                 }
                 
                 Spacer()
+                
+                // Botón de notificaciones
+                Button {
+                    // TODO: Navegar a notificaciones
+                } label: {
+                    Image(systemName: "bell")
+                        .font(.title3)
+                        .foregroundColor(.primary)
+                }
             }
             .padding()
             .background(
@@ -103,6 +124,9 @@ struct FeedFlowView: View {
     
     private var contentView: some View {
         VStack(spacing: Spacing.medium) {
+            // Demo de posts usando Kingfisher
+            samplePostsView
+            
             Text("Tu feed estará aquí pronto")
                 .font(.headline)
                 .foregroundColor(.secondary)
@@ -118,6 +142,159 @@ struct FeedFlowView: View {
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(.tertiarySystemFill))
         )
+    }
+    
+    private var samplePostsView: some View {
+        VStack(spacing: Spacing.medium) {
+            // Post de ejemplo 1
+            VStack(alignment: .leading, spacing: 12) {
+                // Header del post
+                HStack {
+                    KFImage(URL(string: "https://picsum.photos/seed/user1/200/200"))
+                        .profileImageStyle(size: 40)
+                    
+                    VStack(alignment: .leading) {
+                        Text("Ana García")
+                            .font(.caption)
+                            .foregroundColor(.primary)
+                        
+                        Text("Hace 2 horas")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                }
+                
+                // Contenido del post
+                Text("¡Acabo de conseguir esta increíble figura de edición limitada! 🔥")
+                    .font(.body)
+                    .foregroundColor(.primary)
+                
+                // Imagen del post usando las extensiones de Kingfisher
+                KFImage(URL(string: "https://picsum.photos/seed/figure1/400/400"))
+                    .postImageStyle()
+                    .frame(height: 200)
+                
+                // Acciones del post
+                HStack(spacing: 20) {
+                    Button {
+                        Logger.info("❤️ Like tapped")
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "heart")
+                                .foregroundColor(.red)
+                            Text("42")
+                                .font(.caption)
+                        }
+                    }
+                    
+                    Button {
+                        Logger.info("💬 Comment tapped")
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "message")
+                                .foregroundColor(.primary)
+                            Text("8")
+                                .font(.caption)
+                        }
+                    }
+                    
+                    Button {
+                        Logger.info("📤 Share tapped")
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                            .foregroundColor(.primary)
+                    }
+                    
+                    Spacer()
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding()
+            .background(Color(.systemBackground))
+            .cornerRadius(12)
+            .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+            
+            // Post de ejemplo 2 - Solo avatar
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    KFImage(URL(string: "https://picsum.photos/seed/user2/200/200"))
+                        .profileImageStyle(size: 40)
+                    
+                    VStack(alignment: .leading) {
+                        Text("Carlos López")
+                            .font(.caption)
+                            .foregroundColor(.primary)
+                        
+                        Text("Hace 4 horas")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                }
+                
+                Text("¿Qué opinan de mi nueva colección de figuras de anime? 🎌")
+                    .font(.body)
+                    .foregroundColor(.primary)
+                
+                // Grid de thumbnails
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
+                    let url = URL(string: "https://picsum.photos/seed/anime0/200/200")
+                    
+                    ForEach(0..<6) { index in
+                        OptimizedImageGridCell(
+                            url: url,
+                            size: 80,
+                            onTap: {
+                                Logger.info("📱 Thumbnail \(index) tapped")
+                            }
+                        )
+                        
+                        /*
+                        KFImage(URL(string: "https://picsum.photos/seed/anime\(index)/200/200"))
+                            .thumbnailStyle(size: 80)
+                            .onTapGesture {
+                                Logger.info("📱 Thumbnail \(index) tapped")
+                            }
+                         */
+                    }
+                }
+                
+                
+                HStack(spacing: 20) {
+                    Button {
+                        Logger.info("❤️ Like tapped")
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "heart.fill")
+                                .foregroundColor(.red)
+                            Text("127")
+                                .font(.caption)
+                        }
+                    }
+                    
+                    Button {
+                        Logger.info("💬 Comment tapped")
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "message")
+                                .foregroundColor(.primary)
+                            Text("23")
+                                .font(.caption)
+                        }
+                    }
+                    
+                    Spacer()
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding()
+            .background(Color(.systemBackground))
+            .cornerRadius(12)
+            .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+        }
     }
     
     private var actionsView: some View {
