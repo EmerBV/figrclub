@@ -43,6 +43,7 @@ final class AuthViewModel: ObservableObject {
     // MARK: - Dependencies
     private nonisolated let authStateManager: AuthStateManager
     private nonisolated let validationService: ValidationServiceProtocol
+    private nonisolated let localizationManager: LocalizationManagerProtocol
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Computed Properties
@@ -96,9 +97,10 @@ final class AuthViewModel: ObservableObject {
     }
     
     // MARK: - Initializer
-    nonisolated init(authStateManager: AuthStateManager, validationService: ValidationServiceProtocol) {
+    nonisolated init(authStateManager: AuthStateManager, validationService: ValidationServiceProtocol, localizationManager: LocalizationManagerProtocol) {
         self.authStateManager = authStateManager
         self.validationService = validationService
+        self.localizationManager = localizationManager
         
         // Create validation managers on MainActor
         self.loginValidationManager = MainActor.assumeIsolated {
@@ -332,7 +334,8 @@ private extension AuthViewModel {
         // Confirm password validation
         let confirmPasswordValidation = ValidationHelper.createPasswordConfirmationPublisher(
             password: $registerPassword.eraseToAnyPublisher(),
-            confirmPassword: $registerConfirmPassword.eraseToAnyPublisher()
+            confirmPassword: $registerConfirmPassword.eraseToAnyPublisher(),
+            localizationManager: localizationManager
         )
         registerValidationManager.addValidation(for: "confirmPassword", publisher: confirmPasswordValidation)
     }

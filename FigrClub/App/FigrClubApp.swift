@@ -15,6 +15,7 @@ struct FigrClubApp: App {
     // MARK: - Properties
     @StateObject private var authStateManager: AuthStateManager
     @StateObject private var featureFlagManager: FeatureFlagManager
+    @StateObject private var localizationManager: LocalizationManager
     
     // MARK: - Initialization
     init() {
@@ -28,9 +29,13 @@ struct FigrClubApp: App {
         let flagManager = MainActor.assumeIsolated {
             DependencyInjector.shared.resolve(FeatureFlagManager.self)
         }
+        let locManager = MainActor.assumeIsolated {
+            DependencyInjector.shared.resolve(LocalizationManager.self)
+        }
         
         self._authStateManager = StateObject(wrappedValue: authManager)
         self._featureFlagManager = StateObject(wrappedValue: flagManager)
+        self._localizationManager = StateObject(wrappedValue: locManager)
         
         // Setup logging after all stored properties are initialized
         setupLogging()
@@ -47,11 +52,13 @@ struct FigrClubApp: App {
             ContentView()
                 .environmentObject(authStateManager)
                 .environmentObject(featureFlagManager)
+                .localizationManager(localizationManager)
                 .onAppear {
                     Task {
                         await setupFeatureFlags()
                     }
                     Logger.info("🚀 FigrClub app launched successfully")
+                    Logger.info("🌍 App initialized with language: \(localizationManager.currentLanguage.displayName)")
                 }
         }
     }

@@ -22,8 +22,9 @@ final class ServiceAssembly: Assembly {
         // MARK: - Validation Services
         
         // Validation Service
-        container.register(ValidationServiceProtocol.self) { _ in
-            return ValidationService()
+        container.register(ValidationServiceProtocol.self) { resolver in
+            let localizationManager = resolver.resolve(LocalizationManagerProtocol.self)!
+            return ValidationService(localizationManager: localizationManager)
         }.inObjectScope(.container)
         
         // MARK: - User Services

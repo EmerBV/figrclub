@@ -22,8 +22,9 @@ final class AuthAssembly: Assembly {
         container.register(AuthViewModel.self) { resolver in
             let authStateManager = resolver.resolve(AuthStateManager.self)!
             let validationService = resolver.resolve(ValidationServiceProtocol.self)!
+            let localizationManager = resolver.resolve(LocalizationManagerProtocol.self)!
             
-            return AuthViewModel(authStateManager: authStateManager, validationService: validationService)
+            return AuthViewModel(authStateManager: authStateManager, validationService: validationService, localizationManager: localizationManager)
         }.inObjectScope(.transient)
     }
 }

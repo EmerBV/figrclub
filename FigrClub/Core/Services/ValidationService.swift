@@ -53,18 +53,24 @@ protocol ValidationServiceProtocol: Sendable {
 
 final class ValidationService: ValidationServiceProtocol {
     
+    private nonisolated let localizationManager: LocalizationManagerProtocol
+    
+    init(localizationManager: LocalizationManagerProtocol) {
+        self.localizationManager = localizationManager
+    }
+    
     func validateEmail(_ email: String) -> ValidationResult {
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         
         guard !trimmedEmail.isEmpty else {
-            return .invalid("El email no puede estar vacío")
+            return .invalid(localizationManager.localizedString(for: .emailRequired))
         }
         
         let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
         let emailPredicate = NSPredicate(format:"SELF MATCHES %@", emailRegex)
         
         guard emailPredicate.evaluate(with: trimmedEmail) else {
-            return .invalid("Formato de email inválido")
+            return .invalid(localizationManager.localizedString(for: .emailInvalid))
         }
         
         return .valid
@@ -72,15 +78,15 @@ final class ValidationService: ValidationServiceProtocol {
     
     func validatePassword(_ password: String) -> ValidationResult {
         guard !password.isEmpty else {
-            return .invalid("La contraseña no puede estar vacía")
+            return .invalid(localizationManager.localizedString(for: .passwordRequired))
         }
         
         guard password.count >= 8 else {
-            return .invalid("La contraseña debe tener al menos 8 caracteres")
+            return .invalid(localizationManager.localizedString(for: .passwordTooShort))
         }
         
         guard password.count <= 128 else {
-            return .invalid("La contraseña no puede tener más de 128 caracteres")
+            return .invalid(localizationManager.localizedString(for: .passwordTooLong))
         }
         
         // Check for at least one letter
@@ -88,7 +94,7 @@ final class ValidationService: ValidationServiceProtocol {
         let hasLetter = NSPredicate(format:"SELF MATCHES %@", letterRegex).evaluate(with: password)
         
         guard hasLetter else {
-            return .invalid("La contraseña debe contener al menos una letra")
+            return .invalid(localizationManager.localizedString(for: .passwordMustContainLetter))
         }
         
         // Check for at least one number
@@ -96,7 +102,7 @@ final class ValidationService: ValidationServiceProtocol {
         let hasNumber = NSPredicate(format:"SELF MATCHES %@", numberRegex).evaluate(with: password)
         
         guard hasNumber else {
-            return .invalid("La contraseña debe contener al menos un número")
+            return .invalid(localizationManager.localizedString(for: .passwordMustContainNumber))
         }
         
         // Check for at least one special character (common requirement for secure passwords)
@@ -104,12 +110,12 @@ final class ValidationService: ValidationServiceProtocol {
         let hasSpecialChar = NSPredicate(format:"SELF MATCHES %@", specialCharRegex).evaluate(with: password)
         
         guard hasSpecialChar else {
-            return .invalid("La contraseña debe contener al menos un carácter especial (!@#$%^&*)")
+            return .invalid(localizationManager.localizedString(for: .passwordMustContainSpecialChar))
         }
         
         // Check for no spaces (common security requirement)
         guard !password.contains(" ") else {
-            return .invalid("La contraseña no puede contener espacios")
+            return .invalid(localizationManager.localizedString(for: .passwordNoSpaces))
         }
         
         return .valid
@@ -119,15 +125,15 @@ final class ValidationService: ValidationServiceProtocol {
         let trimmedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
         
         guard !trimmedUsername.isEmpty else {
-            return .invalid("El nombre de usuario no puede estar vacío")
+            return .invalid(localizationManager.localizedString(for: .usernameRequired))
         }
         
         guard trimmedUsername.count >= 3 else {
-            return .invalid("El nombre de usuario debe tener al menos 3 caracteres")
+            return .invalid(localizationManager.localizedString(for: .usernameTooShort))
         }
         
         guard trimmedUsername.count <= 20 else {
-            return .invalid("El nombre de usuario no puede tener más de 20 caracteres")
+            return .invalid(localizationManager.localizedString(for: .usernameTooLong))
         }
         
         // Only allow alphanumeric characters and underscores
@@ -135,7 +141,7 @@ final class ValidationService: ValidationServiceProtocol {
         let usernamePredicate = NSPredicate(format:"SELF MATCHES %@", usernameRegex)
         
         guard usernamePredicate.evaluate(with: trimmedUsername) else {
-            return .invalid("El nombre de usuario solo puede contener letras, números y guiones bajos")
+            return .invalid(localizationManager.localizedString(for: .usernameInvalidChars))
         }
         
         return .valid
@@ -145,15 +151,15 @@ final class ValidationService: ValidationServiceProtocol {
         let trimmedName = fullName.trimmingCharacters(in: .whitespacesAndNewlines)
         
         guard !trimmedName.isEmpty else {
-            return .invalid("El nombre completo no puede estar vacío")
+            return .invalid(localizationManager.localizedString(for: .fullNameRequired))
         }
         
         guard trimmedName.count >= 2 else {
-            return .invalid("El nombre completo debe tener al menos 2 caracteres")
+            return .invalid(localizationManager.localizedString(for: .fullNameTooShort))
         }
         
         guard trimmedName.count <= 50 else {
-            return .invalid("El nombre completo no puede tener más de 50 caracteres")
+            return .invalid(localizationManager.localizedString(for: .fullNameTooLong))
         }
         
         // Allow letters, spaces, and some special characters for international names
@@ -161,7 +167,7 @@ final class ValidationService: ValidationServiceProtocol {
         let namePredicate = NSPredicate(format:"SELF MATCHES %@", nameRegex)
         
         guard namePredicate.evaluate(with: trimmedName) else {
-            return .invalid("El nombre contiene caracteres no válidos")
+            return .invalid(localizationManager.localizedString(for: .fullNameInvalidChars))
         }
         
         return .valid
@@ -172,7 +178,11 @@ final class ValidationService: ValidationServiceProtocol {
 #if DEBUG
 extension ValidationService {
     static func testPasswordValidation() {
-        let service = ValidationService()
+        // Create a mock localization manager for testing
+        let mockLocalizationManager = MainActor.assumeIsolated {
+            LocalizationManager()
+        }
+        let service = ValidationService(localizationManager: mockLocalizationManager)
         let testPasswords = [
             "12345678", // Solo números, falta letra y carácter especial
             "password", // Solo letras, falta número y carácter especial  

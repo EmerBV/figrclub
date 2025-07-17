@@ -1,0 +1,149 @@
+/* 
+  Localizable.strings (Spanish)
+  FigrClub
+
+  Created by Emerson Balahan Varona on 16/7/25.
+*/
+
+// MARK: - General
+"app_name" = "FigrClub";
+"cancel" = "Cancelar";
+"confirm" = "Confirmar";
+"ok" = "OK";
+"error" = "Error";
+"loading" = "Cargando...";
+"retry" = "Reintentar";
+"close" = "Cerrar";
+"save" = "Guardar";
+"edit" = "Editar";
+"delete" = "Eliminar";
+"done" = "Hecho";
+"next" = "Siguiente";
+"previous" = "Anterior";
+"continue" = "Continuar";
+"skip" = "Omitir";
+
+// MARK: - Authentication
+"login" = "Iniciar sesión";
+"register" = "Registrarse";
+"logout" = "Cerrar sesión";
+"login_title" = "Inicia sesión en FigrClub";
+"register_title" = "Crear cuenta en FigrClub";
+"create_account" = "Crear Cuenta";
+"welcome_back" = "¡Bienvenido de vuelta!";
+"welcome_back_subtitle" = "Inicia sesión para continuar";
+"join_community" = "Únete a nuestra comunidad";
+"create_account_subtitle" = "Crea tu cuenta para empezar";
+"already_have_account" = "¿Ya tienes cuenta? Inicia sesión";
+"dont_have_account" = "¿No tienes cuenta? Regístrate";
+"forgot_password" = "¿Olvidaste tu contraseña?";
+
+// MARK: - Form Fields
+"email" = "Correo";
+"password" = "Contraseña";
+"confirm_password" = "Confirmar contraseña";
+"username" = "Nombre de usuario";
+"full_name" = "Nombre completo";
+"first_name" = "Nombre";
+"last_name" = "Apellido";
+"email_placeholder" = "your@email.com";
+"password_placeholder" = "Crea una contraseña";
+"confirm_password_placeholder" = "Confirma tu contraseña";
+"username_placeholder" = "nombreusuario";
+"full_name_placeholder" = "Tu nombre completo";
+
+// MARK: - Validation Messages
+"email_required" = "El email no puede estar vacío";
+"email_invalid" = "Formato de email inválido";
+"password_required" = "La contraseña no puede estar vacía";
+"password_too_short" = "La contraseña debe tener al menos 8 caracteres";
+"password_too_long" = "La contraseña no puede tener más de 128 caracteres";
+"password_must_contain_letter" = "La contraseña debe contener al menos una letra";
+"password_must_contain_number" = "La contraseña debe contener al menos un número";
+"password_must_contain_special_char" = "La contraseña debe contener al menos un carácter especial (!@#$%^&*)";
+"password_no_spaces" = "La contraseña no puede contener espacios";
+"passwords_dont_match" = "Las contraseñas no coinciden";
+"username_required" = "El nombre de usuario no puede estar vacío";
+"username_too_short" = "El nombre de usuario debe tener al menos 3 caracteres";
+"username_too_long" = "El nombre de usuario no puede tener más de 20 caracteres";
+"username_invalid_chars" = "El nombre de usuario solo puede contener letras, números y guiones bajos";
+"full_name_required" = "El nombre completo no puede estar vacío";
+"full_name_too_short" = "El nombre completo debe tener al menos 2 caracteres";
+"full_name_too_long" = "El nombre completo no puede tener más de 50 caracteres";
+"full_name_invalid_chars" = "El nombre contiene caracteres no válidos";
+
+// MARK: - Password Requirements
+"password_requirements" = "Requisitos de contraseña:";
+"password_min_length" = "Al menos 8 caracteres";
+"password_must_have_letter" = "Al menos una letra";
+"password_must_have_number" = "Al menos un número";
+"password_must_have_special" = "Al menos un carácter especial (!@#$%^&*)";
+
+// MARK: - Terms and Conditions
+"accept_terms" = "Acepto los términos y condiciones y la política de privacidad";
+"terms_and_conditions" = "términos y condiciones";
+"privacy_policy" = "política de privacidad";
+"accepted_at" = "Aceptado el: %@";
+
+// MARK: - Consents
+"consents" = "Consentimientos";
+"data_processing" = "Procesamiento de datos";
+"data_processing_description" = "Acepto el procesamiento de mis datos personales según la política de privacidad.";
+"functional_cookies" = "Cookies funcionales";
+"functional_cookies_description" = "Acepto el uso de cookies funcionales para mejorar la experiencia de usuario.";
+
+// MARK: - Email Verification
+"email_verification" = "Verificación de email";
+"verify_email" = "Verifica tu email";
+"email_sent" = "Email enviado";
+"email_sent_message" = "Te hemos enviado un email de verificación a:";
+"email_sent_instructions" = "Por favor, revisa tu bandeja de entrada y haz clic en el enlace de verificación para completar tu registro.";
+"didnt_receive_email" = "¿No recibiste el email?";
+"resend_email" = "Reenviar";
+
+// MARK: - Loading States
+"logging_in" = "Iniciando sesión...";
+"creating_account" = "Creando cuenta...";
+"signing_out" = "Cerrando sesión...";
+"verifying" = "Verificando...";
+"processing" = "Procesando...";
+
+// MARK: - Error Messages
+"network_error" = "Error de conexión. Verifica tu internet.";
+"auth_error" = "Error de autenticación";
+"validation_error" = "Por favor completa todos los campos correctamente";
+"unknown_error" = "Ha ocurrido un error inesperado";
+"server_error" = "Error del servidor. Inténtalo más tarde.";
+"connection_error" = "No hay conexión a internet";
+"timeout_error" = "Tiempo de espera agotado";
+"invalid_credentials" = "Email o contraseña incorrectos";
+"user_already_exists" = "El usuario ya existe";
+"weak_password" = "La contraseña es muy débil";
+"email_already_in_use" = "Este email ya está en uso";
+"user_not_found" = "Usuario no encontrado";
+"too_many_requests" = "Demasiados intentos. Inténtalo más tarde.";
+
+// MARK: - Success Messages
+"login_successful" = "¡Sesión iniciada con éxito!";
+"registration_successful" = "¡Cuenta creada con éxito!";
+"email_verified" = "Email verificado correctamente";
+"password_changed" = "Contraseña cambiada con éxito";
+"profile_updated" = "Perfil actualizado con éxito";
+
+// MARK: - Language Settings
+"language" = "Idioma";
+"change_language" = "Cambiar idioma";
+"spanish" = "Español";
+"english" = "English";
+"system_language" = "Idioma del sistema";
+"language_changed" = "Idioma cambiado a %@";
+
+// MARK: - Navigation
+"home" = "Inicio";
+"feed" = "Feed";
+"search" = "Buscar";
+"create" = "Crear";
+"marketplace" = "Marketplace";
+"notifications" = "Notificaciones";
+"profile" = "Perfil";
+"settings" = "Configuración"; 

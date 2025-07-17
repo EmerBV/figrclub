@@ -24,6 +24,9 @@ final class DependencyInjector {
                 NetworkAssembly(),
                 StorageAssembly(),
                 
+                // MARK: - Localization
+                LocalizationAssembly(),
+                
                 // MARK: - Feature Flags
                 FeatureFlagAssembly(),
                 

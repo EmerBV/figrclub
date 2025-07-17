@@ -10,6 +10,7 @@ import SwiftUI
 struct EmailVerificationView: View {
     let email: String
     let onContinue: () -> Void
+    @Environment(\.localizationManager) private var localizationManager
     
     var body: some View {
         VStack(spacing: 32) {
@@ -21,7 +22,7 @@ struct EmailVerificationView: View {
                     .foregroundStyle(.tint)
                 
                 // Title
-                Text("Verifica tu email")
+                Text(localizationManager.localizedString(for: .verifyEmail))
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .multilineTextAlignment(.center)
@@ -29,7 +30,7 @@ struct EmailVerificationView: View {
             
             // Message
             VStack(spacing: 16) {
-                Text("Te hemos enviado un email de verificación a:")
+                Text(localizationManager.localizedString(for: .emailSentMessage))
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -45,7 +46,7 @@ struct EmailVerificationView: View {
                             .fill(Color(.systemGray6))
                     )
                 
-                Text("Por favor, revisa tu bandeja de entrada y haz clic en el enlace de verificación para completar tu registro.")
+                Text(localizationManager.localizedString(for: .emailSentInstructions))
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -56,7 +57,7 @@ struct EmailVerificationView: View {
             
             // Continue Button
             Button(action: onContinue) {
-                Text("Continuar")
+                Text(localizationManager.localizedString(for: .continueButton))
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)

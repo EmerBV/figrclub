@@ -31,13 +31,15 @@ final class ValidationHelper {
     /// Crear un publisher para validación de confirmación de contraseña
     static func createPasswordConfirmationPublisher(
         password: AnyPublisher<String, Never>,
-        confirmPassword: AnyPublisher<String, Never>
+        confirmPassword: AnyPublisher<String, Never>,
+        localizationManager: LocalizationManagerProtocol? = nil
     ) -> AnyPublisher<ValidationResult, Never> {
         return Publishers.CombineLatest(password, confirmPassword)
             .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
             .map { password, confirmPassword in
                 guard !confirmPassword.isEmpty else { return ValidationResult.valid }
-                return password == confirmPassword ? .valid : .invalid("Las contraseñas no coinciden")
+                let errorMessage = localizationManager?.localizedString(for: .passwordsDontMatch) ?? "Las contraseñas no coinciden"
+                return password == confirmPassword ? .valid : .invalid(errorMessage)
             }
             .eraseToAnyPublisher()
     }

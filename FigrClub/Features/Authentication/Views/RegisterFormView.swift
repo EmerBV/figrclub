@@ -10,6 +10,7 @@ import SwiftUI
 struct RegisterFormView: View {
     @ObservedObject var viewModel: AuthViewModel
     @ObservedObject var errorHandler: GlobalErrorHandler
+    @Environment(\.localizationManager) private var localizationManager
     
     var body: some View {
         ScrollView {
@@ -44,12 +45,12 @@ struct RegisterFormView: View {
             
             // Welcome Title
             VStack(spacing: 8) {
-                Text("Crear cuenta en FigrClub")
+                Text(localizationManager.localizedString(for: .registerTitle))
                     .font(.system(size: 24, weight: .bold, design: .default))
                     .foregroundColor(.primary)
                     .multilineTextAlignment(.center)
                 
-                Text("Únete a nuestra comunidad")
+                Text(localizationManager.localizedString(for: .joinCommunity))
                     .font(.system(size: 16, weight: .regular))
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -61,11 +62,11 @@ struct RegisterFormView: View {
         VStack(spacing: 24) {
             // Email Field
             VStack(alignment: .leading, spacing: 8) {
-                Text("Correo")
+                Text(localizationManager.localizedString(for: .email))
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.primary)
                 
-                TextField("your@email.com", text: $viewModel.registerEmail)
+                TextField(localizationManager.localizedString(for: .emailPlaceholder), text: $viewModel.registerEmail)
                     .textFieldStyle(EBVTextFieldStyle(
                         isValid: getValidationState(viewModel.registerEmailValidation) != .invalid
                     ))
@@ -77,11 +78,11 @@ struct RegisterFormView: View {
             
             // Username Field
             VStack(alignment: .leading, spacing: 8) {
-                Text("Nombre de usuario")
+                Text(localizationManager.localizedString(for: .username))
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.primary)
                 
-                TextField("nombreusuario", text: $viewModel.registerUsername)
+                TextField(localizationManager.localizedString(for: .usernamePlaceholder), text: $viewModel.registerUsername)
                     .textFieldStyle(EBVTextFieldStyle(
                         isValid: getValidationState(viewModel.usernameValidation) != .invalid
                     ))
@@ -92,11 +93,11 @@ struct RegisterFormView: View {
             
             // Full Name Field
             VStack(alignment: .leading, spacing: 8) {
-                Text("Nombre completo")
+                Text(localizationManager.localizedString(for: .fullName))
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.primary)
                 
-                TextField("Tu nombre completo", text: $viewModel.registerFullName)
+                TextField(localizationManager.localizedString(for: .fullNamePlaceholder), text: $viewModel.registerFullName)
                     .textFieldStyle(EBVTextFieldStyle(
                         isValid: getValidationState(viewModel.fullNameValidation) != .invalid
                     ))
@@ -106,11 +107,11 @@ struct RegisterFormView: View {
             
             // Password Field
             VStack(alignment: .leading, spacing: 8) {
-                Text("Contraseña")
+                Text(localizationManager.localizedString(for: .password))
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.primary)
                 
-                SecureField("Crea una contraseña", text: $viewModel.registerPassword)
+                SecureField(localizationManager.localizedString(for: .passwordPlaceholder), text: $viewModel.registerPassword)
                     .textFieldStyle(EBVTextFieldStyle(
                         isValid: getValidationState(viewModel.registerPasswordValidation) != .invalid
                     ))
@@ -124,11 +125,11 @@ struct RegisterFormView: View {
             
             // Confirm Password Field
             VStack(alignment: .leading, spacing: 8) {
-                Text("Confirmar contraseña")
+                Text(localizationManager.localizedString(for: .confirmPassword))
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.primary)
                 
-                SecureField("Confirma tu contraseña", text: $viewModel.registerConfirmPassword)
+                SecureField(localizationManager.localizedString(for: .confirmPasswordPlaceholder), text: $viewModel.registerConfirmPassword)
                     .textFieldStyle(EBVTextFieldStyle(
                         isValid: getValidationState(viewModel.confirmPasswordValidation) != .invalid
                     ))
@@ -164,7 +165,7 @@ struct RegisterFormView: View {
                     .font(.system(size: 14))
                     .foregroundColor(.secondary)
                 +
-                Text("términos y condiciones")
+                Text(localizationManager.localizedString(for: .termsAndConditions))
                     .font(.system(size: 14))
                     .foregroundColor(.blue)
                     .underline()
@@ -173,13 +174,13 @@ struct RegisterFormView: View {
                     .font(.system(size: 14))
                     .foregroundColor(.secondary)
                 +
-                Text("política de privacidad")
+                Text(localizationManager.localizedString(for: .privacyPolicy))
                     .font(.system(size: 14))
                     .foregroundColor(.blue)
                     .underline()
                 
                 if let acceptedAt = viewModel.termsAcceptedAt {
-                    Text("Aceptado el: \(DateFormatter.localizedString(from: acceptedAt, dateStyle: .short, timeStyle: .short))")
+                    Text(localizationManager.localizedString(for: .acceptedAt, arguments: DateFormatter.localizedString(from: acceptedAt, dateStyle: .short, timeStyle: .short)))
                         .font(.system(size: 10))
                         .foregroundColor(.green)
                         .padding(.top, 2)
@@ -204,9 +205,9 @@ struct RegisterFormView: View {
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             .scaleEffect(0.8)
-                        Text("Creando cuenta...")
+                        Text(localizationManager.localizedString(for: .creatingAccount))
                     } else {
-                        Text("Crear Cuenta")
+                        Text(localizationManager.localizedString(for: .createAccount))
                             .font(.system(size: 16, weight: .semibold))
                     }
                 }
@@ -236,7 +237,7 @@ struct RegisterFormView: View {
             }
             
             // Login Button
-            Button("¿Ya tienes cuenta? Inicia sesión") {
+            Button(localizationManager.localizedString(for: .alreadyHaveAccount)) {
                 Logger.info("🔄 RegisterFormView: User tapped 'Ya tienes cuenta'")
                 viewModel.switchToLogin()
             }
@@ -273,7 +274,7 @@ struct RegisterFormView: View {
                 Image(systemName: passwordMeetsLength ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(passwordMeetsLength ? .green : .gray)
                     .font(.system(size: 12))
-                Text("Al menos 8 caracteres")
+                Text(localizationManager.localizedString(for: .passwordMinLength))
                     .font(.system(size: 12))
                     .foregroundColor(passwordMeetsLength ? .green : .gray)
             }
@@ -282,7 +283,7 @@ struct RegisterFormView: View {
                 Image(systemName: passwordHasLetter ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(passwordHasLetter ? .green : .gray)
                     .font(.system(size: 12))
-                Text("Al menos una letra")
+                Text(localizationManager.localizedString(for: .passwordMustHaveLetter))
                     .font(.system(size: 12))
                     .foregroundColor(passwordHasLetter ? .green : .gray)
             }
@@ -291,7 +292,7 @@ struct RegisterFormView: View {
                 Image(systemName: passwordHasNumber ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(passwordHasNumber ? .green : .gray)
                     .font(.system(size: 12))
-                Text("Al menos un número")
+                Text(localizationManager.localizedString(for: .passwordMustHaveNumber))
                     .font(.system(size: 12))
                     .foregroundColor(passwordHasNumber ? .green : .gray)
             }
@@ -300,7 +301,7 @@ struct RegisterFormView: View {
                 Image(systemName: passwordHasSpecialChar ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(passwordHasSpecialChar ? .green : .gray)
                     .font(.system(size: 12))
-                Text("Al menos un carácter especial (!@#$%^&*)")
+                Text(localizationManager.localizedString(for: .passwordMustHaveSpecial))
                     .font(.system(size: 12))
                     .foregroundColor(passwordHasSpecialChar ? .green : .gray)
             }
@@ -327,14 +328,14 @@ struct RegisterFormView: View {
     
     private var consentsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Consentimientos")
+            Text(localizationManager.localizedString(for: .consents))
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.primary)
             
             // Data Processing Consent
             consentView(
-                title: "Procesamiento de datos",
-                description: "Acepto el procesamiento de mis datos personales según la política de privacidad.",
+                title: localizationManager.localizedString(for: .dataProcessing),
+                description: localizationManager.localizedString(for: .dataProcessingDescription),
                 isAccepted: viewModel.acceptDataProcessing,
                 acceptedAt: viewModel.dataProcessingAcceptedAt,
                 onToggle: {
@@ -349,8 +350,8 @@ struct RegisterFormView: View {
             
             // Functional Cookies Consent
             consentView(
-                title: "Cookies funcionales",
-                description: "Acepto el uso de cookies funcionales para mejorar la experiencia de usuario.",
+                title: localizationManager.localizedString(for: .functionalCookies),
+                description: localizationManager.localizedString(for: .functionalCookiesDescription),
                 isAccepted: viewModel.acceptFunctionalCookies,
                 acceptedAt: viewModel.functionalCookiesAcceptedAt,
                 onToggle: {
@@ -393,7 +394,7 @@ struct RegisterFormView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 
                 if let acceptedAt = acceptedAt {
-                    Text("Aceptado el: \(DateFormatter.localizedString(from: acceptedAt, dateStyle: .short, timeStyle: .short))")
+                    Text(localizationManager.localizedString(for: .acceptedAt, arguments: DateFormatter.localizedString(from: acceptedAt, dateStyle: .short, timeStyle: .short)))
                         .font(.system(size: 10))
                         .foregroundColor(.green)
                 }
