@@ -38,11 +38,10 @@ final class ViewModelAssembly: Assembly {
         container.register(AuthViewModel.self) { resolver in
             let authStateManager = resolver.resolve(AuthStateManager.self)!
             let validationService = resolver.resolve(ValidationServiceProtocol.self)!
-            let localizationManager = resolver.resolve(LocalizationManagerProtocol.self)!
             
             // Create on MainActor
             return MainActor.assumeIsolated {
-                AuthViewModel(authStateManager: authStateManager, validationService: validationService, localizationManager: localizationManager)
+                AuthViewModel(authStateManager: authStateManager, validationService: validationService)
             }
         }.inObjectScope(.transient)
         

@@ -178,11 +178,7 @@ final class ValidationService: ValidationServiceProtocol {
 #if DEBUG
 extension ValidationService {
     static func testPasswordValidation() {
-        // Create a mock localization manager for testing
-        let mockLocalizationManager = MainActor.assumeIsolated {
-            LocalizationManager()
-        }
-        let service = ValidationService(localizationManager: mockLocalizationManager)
+        let service = ValidationService()
         let testPasswords = [
             "12345678", // Solo números, falta letra y carácter especial
             "password", // Solo letras, falta número y carácter especial  

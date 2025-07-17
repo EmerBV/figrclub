@@ -203,9 +203,7 @@ extension Notification.Name {
 
 // MARK: - Environment Key for SwiftUI
 struct LocalizationManagerKey: EnvironmentKey {
-    static let defaultValue: LocalizationManager = MainActor.assumeIsolated {
-        LocalizationManager()
-    }
+    static let defaultValue: LocalizationManager = LocalizationManager()
 }
 
 extension EnvironmentValues {
@@ -226,9 +224,8 @@ extension View {
 #if DEBUG
 extension LocalizationManager {
     static func preview() -> LocalizationManager {
-        return MainActor.assumeIsolated {
-            LocalizationManager()
-        }
+        let manager = LocalizationManager()
+        return manager
     }
     
     func debugLanguageInfo() {
