@@ -386,6 +386,38 @@ struct MarketplaceItem {
     let imageUrls: [String]
 }
 
+// MARK: - Legal Document Mappers
+struct LegalDocumentMappers {
+    
+    static func toLegalDocumentResponse(from dto: LegalDocumentResponseDTO) -> LegalDocumentResponse {
+        return GenericResponseMapper.mapResponse(from: dto) { legalDocumentDataDTO in
+            LegalDocument(
+                id: legalDocumentDataDTO.id,
+                documentType: EnumMapper.mapToEnum(rawValue: legalDocumentDataDTO.documentType, defaultValue: .termsOfService),
+                title: legalDocumentDataDTO.title,
+                slug: legalDocumentDataDTO.slug,
+                content: legalDocumentDataDTO.content,
+                summary: legalDocumentDataDTO.summary,
+                version: legalDocumentDataDTO.version,
+                effectiveDate: legalDocumentDataDTO.effectiveDate,
+                publishedAt: legalDocumentDataDTO.publishedAt,
+                language: legalDocumentDataDTO.language,
+                country: legalDocumentDataDTO.country,
+                requiresAcceptance: legalDocumentDataDTO.requiresAcceptance,
+                displayOrder: legalDocumentDataDTO.displayOrder,
+                documentUrl: legalDocumentDataDTO.documentUrl
+            )
+        }
+    }
+    
+    static func toLegalDocumentRequestDTO(from request: LegalDocumentRequest) -> LegalDocumentRequestDTO {
+        return LegalDocumentRequestDTO(
+            documentType: request.documentType.rawValue,
+            countryCode: request.countryCode
+        )
+    }
+}
+
 enum ItemCondition: String {
     case new = "NEW"
     case likeNew = "LIKE_NEW"

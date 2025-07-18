@@ -10,17 +10,17 @@ import Foundation
 // MARK: - Legal Document Endpoints
 enum LegalDocumentEndpoints: APIEndpoint {
     case getLegalDocument(request: LegalDocumentRequestDTO)
-    case getTermsOfService(request: LegalDocumentRequestDTO)
-    case getPrivacyPolicy(request: LegalDocumentRequestDTO)
+    case getTermsOfService(countryCode: String)
+    case getPrivacyPolicy(countryCode: String)
     
     var path: String {
         switch self {
-        case .getLegalDocument(request: let request):
-            return request.endpoint
-        case .getTermsOfService(request: let request):
-            return request.endpoint
-        case .getPrivacyPolicy(request: let request):
-            return request.endpoint
+        case .getLegalDocument(let request):
+            return "/legal/international/documents/\(request.documentType)/country/\(request.countryCode)"
+        case .getTermsOfService(let countryCode):
+            return "/legal/international/documents/TERMS_OF_SERVICE/country/\(countryCode)"
+        case .getPrivacyPolicy(let countryCode):
+            return "/legal/international/documents/PRIVACY_POLICY/country/\(countryCode)"
         }
     }
     
@@ -33,44 +33,15 @@ enum LegalDocumentEndpoints: APIEndpoint {
     
     var body: [String: Any]? {
         switch self {
-        case .getLegalDocument(let request):
-            return try? request.toDictionary()
-        case .getTermsOfService(let request):
-            return try? request.toDictionary()
-        case .getPrivacyPolicy(let request):
-            return try? request.toDictionary()
+        case .getLegalDocument, .getTermsOfService, .getPrivacyPolicy:
+            return nil
         }
     }
     
-    /*
-    /// Get legal document by type and country
-    static func getLegalDocument(request: LegalDocumentRequest) -> APIEndpoint {
-        return APIEndpoint(
-            path: request.endpoint,
-            method: .GET,
-            headers: [
-                "Accept": "application/json",
-                "Content-Type": "application/json"
-            ],
-            queryItems: nil,
-            body: nil,
-            requiresAuth: false,
-            cachePolicy: .useProtocolCachePolicy,
-            timeout: 30.0,
-            retryPolicy: .default
-        )
+    var requiresAuth: Bool {
+        switch self {
+        case .getLegalDocument, .getTermsOfService, .getPrivacyPolicy:
+            return false
+        }
     }
-    
-    /// Get Terms of Service
-    static func getTermsOfService(countryCode: String) -> APIEndpoint {
-        let request = LegalDocumentRequest.termsOfService(for: countryCode)
-        return getLegalDocument(request: request)
-    }
-    
-    /// Get Privacy Policy
-    static func getPrivacyPolicy(countryCode: String) -> APIEndpoint {
-        let request = LegalDocumentRequest.privacyPolicy(for: countryCode)
-        return getLegalDocument(request: request)
-    }
-     */
 }

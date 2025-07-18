@@ -153,6 +153,11 @@ enum LocalizedStringKey: String, CaseIterable {
     case profile = "profile"
     case settings = "settings"
     
+    // MARK: - Legal Documents
+    case loadingDocument = "loading_document"
+    case noDocumentAvailable = "no_document_available"
+    case version = "version"
+    
     // MARK: - Computed Properties
     
     var fallbackValue: String {
@@ -299,6 +304,11 @@ enum LocalizedStringKey: String, CaseIterable {
         case .notifications: return "Notificaciones"
         case .profile: return "Perfil"
         case .settings: return "Configuración"
+        
+        // Legal Documents
+        case .loadingDocument: return "Cargando documento..."
+        case .noDocumentAvailable: return "Documento no disponible"
+        case .version: return "Versión"
         }
     }
     

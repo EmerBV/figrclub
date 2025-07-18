@@ -23,12 +23,20 @@ final class ServiceAssembly: Assembly {
         
         // Validation Service
         container.register(ValidationServiceProtocol.self) { resolver in
-            let localizationManager = resolver.resolve(LocalizationManagerProtocol.self)!
+            let localizationManager = resolver.resolve(LocalizationManager.self)!
             
             // Create on MainActor since ValidationService is @MainActor
             return MainActor.assumeIsolated {
                 ValidationService(localizationManager: localizationManager)
             }
+        }.inObjectScope(.container)
+        
+        // MARK: - Legal Document Services
+        
+        // Legal Document Service
+        container.register(LegalDocumentServiceProtocol.self) { resolver in
+            let networkDispatcher = resolver.resolve(NetworkDispatcherProtocol.self)!
+            return LegalDocumentService(networkDispatcher: networkDispatcher)
         }.inObjectScope(.container)
         
         // MARK: - User Services

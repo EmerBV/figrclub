@@ -12,6 +12,10 @@ struct RegisterFormView: View {
     @ObservedObject var errorHandler: GlobalErrorHandler
     @Environment(\.localizationManager) private var localizationManager
     
+    // MARK: - Legal Documents State
+    @State private var showingTermsOfService = false
+    @State private var showingPrivacyPolicy = false
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 32) {
@@ -27,6 +31,12 @@ struct RegisterFormView: View {
             .padding(.horizontal, 32)
             .padding(.top, 60)
             .padding(.bottom, 40)
+        }
+        .sheet(isPresented: $showingTermsOfService) {
+            LegalDocumentView.termsOfService(errorHandler: errorHandler)
+        }
+        .sheet(isPresented: $showingPrivacyPolicy) {
+            LegalDocumentView.privacyPolicy(errorHandler: errorHandler)
         }
     }
     
@@ -161,23 +171,33 @@ struct RegisterFormView: View {
             .disabled(viewModel.isLoading)
             
             VStack(alignment: .leading, spacing: 4) {
-                Text("Acepto los ")
-                    .font(.system(size: 14))
-                    .foregroundColor(.secondary)
-                +
-                Text(localizationManager.localizedString(for: .termsAndConditions))
-                    .font(.system(size: 14))
-                    .foregroundColor(.blue)
-                    .underline()
-                +
-                Text(" y la ")
-                    .font(.system(size: 14))
-                    .foregroundColor(.secondary)
-                +
-                Text(localizationManager.localizedString(for: .privacyPolicy))
-                    .font(.system(size: 14))
-                    .foregroundColor(.blue)
-                    .underline()
+                HStack(spacing: 0) {
+                    Text("Acepto los ")
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                    
+                    Button(action: {
+                        showingTermsOfService = true
+                    }) {
+                        Text(localizationManager.localizedString(for: .termsAndConditions))
+                            .font(.system(size: 14))
+                            .foregroundColor(.blue)
+                            .underline()
+                    }
+                    
+                    Text(" y la ")
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                    
+                    Button(action: {
+                        showingPrivacyPolicy = true
+                    }) {
+                        Text(localizationManager.localizedString(for: .privacyPolicy))
+                            .font(.system(size: 14))
+                            .foregroundColor(.blue)
+                            .underline()
+                    }
+                }
                 
                 if let acceptedAt = viewModel.termsAcceptedAt {
                     Text(localizationManager.localizedString(for: .acceptedAt, arguments: DateFormatter.localizedString(from: acceptedAt, dateStyle: .short, timeStyle: .short)))
@@ -185,9 +205,6 @@ struct RegisterFormView: View {
                         .foregroundColor(.green)
                         .padding(.top, 2)
                 }
-            }
-            .onTapGesture {
-                handleTermsTapped()
             }
         }
     }
@@ -255,9 +272,7 @@ struct RegisterFormView: View {
         }
     }
     
-    private func handleTermsTapped() {
-        Logger.info("🔗 Terms and conditions tapped")
-    }
+
     
     private func getValidationState(_ validation: ValidationResult) -> ValidationState {
         switch validation {

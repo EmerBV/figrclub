@@ -6,7 +6,6 @@
 //
 
 import Foundation
-
 import Combine
 
 // MARK: - Legal Document View Model
@@ -19,7 +18,7 @@ final class LegalDocumentViewModel: ObservableObject {
     @Published private(set) var errorMessage: String?
     
     // MARK: - Properties
-    private let documentType: LegalDocumentType
+    let documentType: LegalDocumentType
     private let countryCode: String
     private let service: LegalDocumentServiceProtocol
     private var cancellables = Set<AnyCancellable>()
@@ -36,8 +35,8 @@ final class LegalDocumentViewModel: ObservableObject {
     // MARK: - Public Methods
     
     func loadDocument() async {
-        await performWithLoading {
-            try await loadDocumentFromService()
+        await self.performWithLoading {
+            try await self.loadDocumentFromService()
         }
     }
     
@@ -106,12 +105,19 @@ private extension LegalDocumentViewModel {
 extension LegalDocumentViewModel {
     
     /// Get country code from current locale
-    static func getCurrentCountryCode() -> String {
-        return Locale.current.region?.identifier ?? "ES"
+    nonisolated static func getCurrentCountryCode() -> String {
+        // Get country code from current locale, fallback to ES for Spanish or US for English
+        if let regionCode = Locale.current.region?.identifier {
+            return regionCode
+        }
+        
+        // Fallback based on language
+        let languageCode = Locale.current.language.languageCode?.identifier ?? "es"
+        return languageCode == "en" ? "US" : "ES"
     }
     
     /// Get language code from current locale
-    static func getCurrentLanguageCode() -> String {
+    nonisolated static func getCurrentLanguageCode() -> String {
         return Locale.current.language.languageCode?.identifier ?? "es"
     }
 }

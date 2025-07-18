@@ -146,4 +146,9 @@
 "marketplace" = "Marketplace";
 "notifications" = "Notifications";
 "profile" = "Profile";
-"settings" = "Settings"; 
+"settings" = "Settings";
+
+// MARK: - Legal Documents
+"loading_document" = "Loading document...";
+"no_document_available" = "Document not available";
+"version" = "Version"; 

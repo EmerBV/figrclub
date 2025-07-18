@@ -26,31 +26,24 @@ enum LegalDocumentType: String, CaseIterable, Codable {
     }
 }
 
-// MARK: - Legal Document DTO
-struct LegalDocumentDataDTO: BaseDTO {
-    let id: Int
-    let documentType: String
-    let title: String
-    let slug: String
-    let content: String
-    let summary: String
-    let version: String
-    let effectiveDate: String
-    let publishedAt: String
-    let language: String
-    let country: String
-    let requiresAcceptance: Bool
-    let displayOrder: Int
-    let documentUrl: String
+// MARK: - Legal Document Request (Domain Model)
+struct LegalDocumentRequest {
+    let documentType: LegalDocumentType
+    let countryCode: String
     
-    enum CodingKeys: String, CodingKey {
-        case id, documentType, title, slug, content, summary, version
-        case effectiveDate, publishedAt, language, country
-        case requiresAcceptance, displayOrder, documentUrl
+    var endpoint: String {
+        return "\(documentType.endpoint)/\(countryCode)"
+    }
+    
+    // MARK: - Factory Methods
+    static func termsOfService(for countryCode: String) -> LegalDocumentRequest {
+        return LegalDocumentRequest(documentType: .termsOfService, countryCode: countryCode)
+    }
+    
+    static func privacyPolicy(for countryCode: String) -> LegalDocumentRequest {
+        return LegalDocumentRequest(documentType: .privacyPolicy, countryCode: countryCode)
     }
 }
-
-typealias LegalDocumentResponseDTO = ApiResponseDTO<LegalDocumentDataDTO>
 
 // MARK: - Legal Document Domain Model
 struct LegalDocument {
@@ -88,10 +81,9 @@ struct LegalDocument {
     }
 }
 
-// MARK: - Legal Document Response
+// MARK: - Legal Document Response Type Aliases
 typealias LegalDocumentResponse = ApiResponse<LegalDocument>
 
-/*
 // MARK: - Legal Document Error
 enum LegalDocumentError: Error, LocalizedError {
     case documentNotFound
@@ -117,44 +109,4 @@ enum LegalDocumentError: Error, LocalizedError {
             return "Error al procesar el documento: \(message)"
         }
     }
-}
- 
-
-// MARK: - Legal Document Request
-struct LegalDocumentRequest {
-    let documentType: LegalDocumentType
-    let countryCode: String
-    
-    var endpoint: String {
-        return "\(documentType.endpoint)/\(countryCode)"
-    }
-    
-    // MARK: - Factory Methods
-    static func termsOfService(for countryCode: String) -> LegalDocumentRequest {
-        return LegalDocumentRequest(documentType: .termsOfService, countryCode: countryCode)
-    }
-    
-    static func privacyPolicy(for countryCode: String) -> LegalDocumentRequest {
-        return LegalDocumentRequest(documentType: .privacyPolicy, countryCode: countryCode)
-    }
-}
- */
-
-struct LegalDocumentRequestDTO: BaseDTO {
-    let documentType: LegalDocumentType
-    let countryCode: String
-    
-    var endpoint: String {
-        return "\(documentType.endpoint)/\(countryCode)"
-    }
-    
-    // MARK: - Factory Methods
-    static func termsOfService(for countryCode: String) -> LegalDocumentRequestDTO {
-        return LegalDocumentRequestDTO(documentType: .termsOfService, countryCode: countryCode)
-    }
-    
-    static func privacyPolicy(for countryCode: String) -> LegalDocumentRequestDTO {
-        return LegalDocumentRequestDTO(documentType: .privacyPolicy, countryCode: countryCode)
-    }
-
 }

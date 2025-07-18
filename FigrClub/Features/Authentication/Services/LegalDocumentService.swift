@@ -40,14 +40,14 @@ final class LegalDocumentService: LegalDocumentServiceProtocol {
         
         Logger.info("📄 LegalDocumentService: Fetching \(request.documentType.displayName) for country: \(request.countryCode)")
         
-        
-        
         do {
-            let endpoint = LegalDocumentEndpoints.getLegalDocument(request: request)
+            // Convert domain model to DTO
+            let requestDTO = LegalDocumentMappers.toLegalDocumentRequestDTO(from: request)
+            let endpoint = LegalDocumentEndpoints.getLegalDocument(request: requestDTO)
             let responseDTO: LegalDocumentResponseDTO = try await networkDispatcher.dispatch(endpoint)
             
             // Map DTO to domain model using mappers
-            let response = LegalDocumentMappers.toDomainModel(from: responseDTO)
+            let response = LegalDocumentMappers.toLegalDocumentResponse(from: responseDTO)
             
             Logger.info("✅ LegalDocumentService: Successfully fetched \(request.documentType.displayName)")
             
@@ -57,7 +57,7 @@ final class LegalDocumentService: LegalDocumentServiceProtocol {
             return response
             
         } catch {
-            Logger.error("❌ LegalDocumentService: Unexpected error: \(error)")
+            Logger.error("❌ LegalDocumentService: Failed to fetch \(request.documentType.displayName) - Error: \(error)")
             throw LegalDocumentError.networkError(error.localizedDescription)
         }
     }
@@ -72,8 +72,6 @@ final class LegalDocumentService: LegalDocumentServiceProtocol {
         return try await fetchLegalDocument(request)
     }
 }
-
-
 
 // MARK: - Legal Document Cache
 private final class LegalDocumentCache {

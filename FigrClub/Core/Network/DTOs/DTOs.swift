@@ -282,6 +282,48 @@ struct NotificationListDataDTO: BaseDTO {
 
 typealias NotificationListResponseDTO = ApiResponseDTO<NotificationListDataDTO>
 
+// MARK: - Legal Document DTOs
+struct LegalDocumentRequestDTO: BaseDTO {
+    let documentType: String
+    let countryCode: String
+    
+    enum CodingKeys: String, CodingKey {
+        case documentType = "document_type"
+        case countryCode = "country_code"
+    }
+}
+
+struct LegalDocumentDataDTO: BaseDTO {
+    let id: Int
+    let documentType: String
+    let title: String
+    let slug: String
+    let content: String
+    let summary: String
+    let version: String
+    let effectiveDate: String
+    let publishedAt: String
+    let language: String
+    let country: String
+    let requiresAcceptance: Bool
+    let displayOrder: Int
+    let documentUrl: String
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case documentType = "document_type"
+        case title, slug, content, summary, version
+        case effectiveDate = "effective_date"
+        case publishedAt = "published_at"
+        case language, country
+        case requiresAcceptance = "requires_acceptance"
+        case displayOrder = "display_order"
+        case documentUrl = "document_url"
+    }
+}
+
+typealias LegalDocumentResponseDTO = ApiResponseDTO<LegalDocumentDataDTO>
+
 extension BaseDTO {
     func toDictionary() throws -> [String: Any] {
         let data = try JSONEncoder().encode(self)
