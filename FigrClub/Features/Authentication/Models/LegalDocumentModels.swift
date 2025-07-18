@@ -81,8 +81,7 @@ struct LegalDocumentData {
     }
 }
 
-// MARK: - Legal Document Response Type Aliases
-//typealias LegalDocumentResponse = ApiResponse<LegalDocument>
+typealias LegalDocumentResponse = ApiResponse<LegalDocumentData>
 
 // MARK: - Legal Document Error
 enum LegalDocumentError: Error, LocalizedError {

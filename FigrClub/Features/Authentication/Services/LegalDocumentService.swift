@@ -29,8 +29,13 @@ final class LegalDocumentService: LegalDocumentServiceProtocol {
     }
     
     // MARK: - LegalDocumentServiceProtocol Implementation
-    
     func fetchLegalDocument(_ request: LegalDocumentRequest) async throws -> LegalDocumentResponse {
+        // Convert domain model to DTO
+        let requestDTO = LegalDocumentRequestDTO(
+            documentType: request.documentType.rawValue,
+            countryCode: request.countryCode
+        )
+        
         // Check cache first
         let cacheKey = "\(request.documentType.rawValue)_\(request.countryCode)"
         if let cachedResponse = cache.getDocument(for: cacheKey) {
@@ -38,24 +43,17 @@ final class LegalDocumentService: LegalDocumentServiceProtocol {
             return cachedResponse
         }
         
+        let endpoint = LegalDocumentEndpoints.getLegalDocument(request: requestDTO)
         Logger.info("📄 LegalDocumentService: Fetching \(request.documentType.displayName) for country: \(request.countryCode)")
         
         do {
-            // Convert domain model to DTO
-            let requestDTO = LegalDocumentMappers.toLegalDocumentRequestDTO(from: request)
-            let endpoint = LegalDocumentEndpoints.getLegalDocument(request: requestDTO)
             let responseDTO: LegalDocumentResponseDTO = try await networkDispatcher.dispatch(endpoint)
             
-            // Map DTO to domain model using mappers
             let response = LegalDocumentMappers.toLegalDocumentResponse(from: responseDTO)
             
             Logger.info("✅ LegalDocumentService: Successfully fetched \(request.documentType.displayName)")
-            
-            // Cache the response
             cache.setDocument(response, for: cacheKey)
-            
             return response
-            
         } catch {
             Logger.error("❌ LegalDocumentService: Failed to fetch \(request.documentType.displayName) - Error: \(error)")
             throw LegalDocumentError.networkError(error.localizedDescription)

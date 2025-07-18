@@ -7,7 +7,7 @@
 
 import Foundation
 
-// MARK: - Auth Mappers (Simplified with Generic Mapper)
+// MARK: - Auth Mappers
 struct AuthMappers {
     
     static func toAuthResponse(from dto: AuthResponseDTO) -> AuthResponse {

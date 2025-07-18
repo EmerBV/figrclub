@@ -19,6 +19,8 @@ struct AuthData {
     let email: String
 }
 
+typealias AuthResponse = ApiResponse<AuthData>
+
 // MARK: - Auth Token
 struct AuthToken: Codable, Equatable {
     let id: Int
@@ -47,6 +49,8 @@ struct RegisterData {
     let emailSent: Bool
 }
 
+typealias RegisterResponse = ApiResponse<RegisterData>
+
 struct LegalAcceptance {
     let documentId: Int
     let acceptedAt: Date
@@ -61,6 +65,8 @@ struct UserResponseData {
     let roleInfo: RoleInfo
     let user: User
 }
+
+typealias UserResponse = ApiResponse<UserResponseData>
 
 struct RoleInfo {
     let isAdmin: Bool

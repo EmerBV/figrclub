@@ -23,6 +23,9 @@ struct MarketplaceItem {
     let imageUrls: [String]
 }
 
+typealias MarketplaceItemResponse = ApiResponse<MarketplaceItem>
+typealias MarketplaceItemListResponse = ApiResponse<PaginatedData<MarketplaceItem>>
+
 enum ItemCondition: String {
     case new = "NEW"
     case likeNew = "LIKE_NEW"

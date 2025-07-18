@@ -28,6 +28,9 @@ struct Post {
     let mediaUrls: [String]
 }
 
+typealias PostResponse = ApiResponse<Post>
+typealias PostListResponse = ApiResponse<PaginatedData<Post>>
+
 enum PostVisibility: String {
     case publicPost = "PUBLIC"
     case privatePost = "PRIVATE"
@@ -48,6 +51,8 @@ struct Location {
     let detected: Bool
 }
 
+typealias LocationResponse = ApiResponse<Location>
+
 enum LocationAccuracy: String {
     case street = "STREET"
     case city = "CITY"
@@ -67,6 +72,9 @@ struct NotificationData {
     let actionUrl: String?
     let metadata: [String: String]?
 }
+
+typealias NotificationResponse = ApiResponse<NotificationData>
+typealias NotificationListResponse = ApiResponse<PaginatedData<NotificationData>>
 
 enum NotificationType: String {
     case like = "LIKE"

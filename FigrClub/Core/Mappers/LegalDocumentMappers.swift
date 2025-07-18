@@ -30,22 +30,4 @@ struct LegalDocumentMappers {
             )
         }
     }
-    
-    static func toLegalDocumentRequestDTO(from request: LegalDocumentRequest) -> LegalDocumentRequestDTO {
-        return LegalDocumentRequestDTO(
-            documentType: request.documentType.rawValue,
-            countryCode: request.countryCode
-        )
-    }
-}
-
-extension LegalDocumentMappers {
-    
-    static func toDomainModel(from dto: LegalDocumentResponseDTO) -> LegalDocumentResponse {
-        return toLegalDocumentResponse(from: dto)
-    }
-    
-    static func toDTO(from domainModel: LegalDocumentResponse) -> LegalDocumentResponseDTO {
-        fatalError("Not implemented - reverse mapping not needed for legal documents")
-    }
 }
