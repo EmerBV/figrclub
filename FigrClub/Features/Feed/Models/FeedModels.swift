@@ -7,7 +7,7 @@
 
 import Foundation
 
-// MARK: - Domain Models (Using PaginatedData generic type)
+// MARK: - Post Domain Models (Using PaginatedData generic type)
 struct Post {
     let id: Int
     let title: String
@@ -37,7 +37,7 @@ enum PostVisibility: String {
     case friendsPost = "FRIENDS"
 }
 
-struct Location {
+struct LocationData {
     let latitude: Double
     let longitude: Double
     let country: String
@@ -51,7 +51,7 @@ struct Location {
     let detected: Bool
 }
 
-typealias LocationResponse = ApiResponse<Location>
+typealias LocationResponse = ApiResponse<LocationData>
 
 enum LocationAccuracy: String {
     case street = "STREET"

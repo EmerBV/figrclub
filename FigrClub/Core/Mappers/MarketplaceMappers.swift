@@ -7,17 +7,11 @@
 
 import Foundation
 
-// MARK: - Marketplace Mappers (Using new pattern)
-struct MarketplaceMappers: Mappable {
-    typealias DTO = MarketplaceItemResponseDTO
-    typealias DomainModel = MarketplaceItemResponse
+// MARK: - Marketplace Mappers
+struct MarketplaceMappers {
     
-    static func toDomainModel(from dto: MarketplaceItemResponseDTO) -> MarketplaceItemResponse {
+    static func toMarketplaceResponse(from dto: MarketplaceItemResponseDTO) -> MarketplaceItemResponse {
         return GenericResponseMapper.mapResponse(from: dto, dataMapper: mapMarketplaceItem)
-    }
-    
-    static func toDTO(from domainModel: MarketplaceItemResponse) -> MarketplaceItemResponseDTO {
-        fatalError("Not implemented - reverse mapping not needed")
     }
     
     static func toMarketplaceItemListResponse(from dto: MarketplaceItemListResponseDTO) -> MarketplaceItemListResponse {

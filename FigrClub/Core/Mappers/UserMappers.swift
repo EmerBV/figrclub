@@ -7,12 +7,10 @@
 
 import Foundation
 
-// MARK: - User Mappers (Simplified)
-struct UserMappers: Mappable {
-    typealias DTO = UserResponseDTO
-    typealias DomainModel = UserResponse
+// MARK: - User Mappers
+struct UserMappers {
     
-    static func toDomainModel(from dto: UserResponseDTO) -> UserResponse {
+    static func toUserResponse(from dto: UserResponseDTO) -> UserResponse {
         return GenericResponseMapper.mapResponse(from: dto) { userResponseDTO in
             UserResponseData(
                 roleInfo: mapRoleInfo(userResponseDTO.roleInfo),
@@ -20,15 +18,6 @@ struct UserMappers: Mappable {
             )
         }
     }
-    
-    static func toDTO(from domainModel: UserResponse) -> UserResponseDTO {
-        // Implementation for reverse mapping if needed
-        fatalError("Not implemented - typically not needed for API responses")
-    }
-    
-    // Use toDomainModel() instead - wrapper method removed
-    
-    // MARK: - Private Mapping Methods
     
     private static func mapRoleInfo(_ dto: RoleInfoDTO) -> RoleInfo {
         return RoleInfo(

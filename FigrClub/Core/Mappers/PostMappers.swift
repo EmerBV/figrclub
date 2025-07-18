@@ -7,7 +7,7 @@
 
 import Foundation
 
-// MARK: - Post Mappers (Using Generic Paginated Mapper)
+// MARK: - Post Mappers
 struct PostMappers {
     
     static func toPostResponse(from dto: PostResponseDTO) -> PostResponse {

@@ -7,17 +7,11 @@
 
 import Foundation
 
-// MARK: - Notification Mappers (Using new pattern)
-struct NotificationMappers: Mappable {
-    typealias DTO = NotificationResponseDTO
-    typealias DomainModel = NotificationResponse
+// MARK: - Notification Mappers
+struct NotificationMappers {
     
-    static func toDomainModel(from dto: NotificationResponseDTO) -> NotificationResponse {
+    static func toNotificationResponse(from dto: NotificationResponseDTO) -> NotificationResponse {
         return GenericResponseMapper.mapResponse(from: dto, dataMapper: mapNotification)
-    }
-    
-    static func toDTO(from domainModel: NotificationResponse) -> NotificationResponseDTO {
-        fatalError("Not implemented - reverse mapping not needed")
     }
     
     static func toNotificationListResponse(from dto: NotificationListResponseDTO) -> NotificationListResponse {

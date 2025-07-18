@@ -12,7 +12,7 @@ struct LocationMappers {
     
     static func toLocationResponse(from dto: LocationResponseDTO) -> LocationResponse {
         return GenericResponseMapper.mapResponse(from: dto) { locationDataDTO in
-            Location(
+            LocationData(
                 latitude: locationDataDTO.latitude,
                 longitude: locationDataDTO.longitude,
                 country: locationDataDTO.country,
