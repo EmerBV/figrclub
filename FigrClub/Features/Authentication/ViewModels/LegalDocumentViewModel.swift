@@ -13,7 +13,7 @@ import Combine
 final class LegalDocumentViewModel: ObservableObject {
     
     // MARK: - Published Properties
-    @Published private(set) var document: LegalDocument?
+    @Published private(set) var document: LegalDocumentData?
     @Published private(set) var isLoading = false
     @Published private(set) var errorMessage: String?
     
@@ -59,6 +59,8 @@ private extension LegalDocumentViewModel {
         errorMessage = nil
         
         Logger.info("✅ LegalDocumentViewModel: Successfully loaded \(documentType.displayName)")
+        Logger.debug("📄 LegalDocumentViewModel: Document title: \(response.data.title)")
+        Logger.debug("📄 LegalDocumentViewModel: Content length: \(response.data.content.count) characters")
     }
     
     func performWithLoading<T>(_ operation: @escaping () async throws -> T) async {

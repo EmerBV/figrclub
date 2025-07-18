@@ -84,52 +84,22 @@ struct LegalDocumentView: View {
     }
     
     // MARK: - Document Content View
-    private func documentContentView(_ document: LegalDocument) -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                // Document Header
-                documentHeaderView(document)
-                
-                // Document Content (HTML)
-                HTMLContentView(htmlContent: document.htmlContent)
-                    .padding(.horizontal, 16)
-            }
-        }
-    }
-    
-    // MARK: - Document Header
-    private func documentHeaderView(_ document: LegalDocument) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(document.title)
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.primary)
+    private func documentContentView(_ document: LegalDocumentData) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Document Content (HTML)
+            SelfSizingWebView(htmlContent: document.htmlContent)
+                .frame(height: 800) // Fixed height for now
             
-            if !document.summary.isEmpty {
-                Text(document.summary)
-                    .font(.system(size: 16))
-                    .foregroundColor(.secondary)
-            }
+            // Debug: Show raw content if needed
+#if DEBUG
+            Text("Debug: Content length: \(document.htmlContent.count) chars")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.top, 8)
+#endif
             
-            HStack {
-                Text(localizationManager.localizedString(for: .version))
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.secondary)
-                
-                Text(document.version)
-                    .font(.system(size: 14))
-                    .foregroundColor(.primary)
-                
-                Spacer()
-                
-                if let effectiveDate = document.formattedEffectiveDate {
-                    Text(DateFormatter.localizedString(from: effectiveDate, dateStyle: .medium, timeStyle: .none))
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
-                }
-            }
         }
         .padding(.horizontal, 16)
-        .padding(.top, 8)
     }
     
     // MARK: - Empty View
@@ -168,77 +138,146 @@ struct LegalDocumentView: View {
     }
 }
 
-// MARK: - HTML Content View
-struct HTMLContentView: UIViewRepresentable {
+// MARK: - Self-Sizing Web View
+struct SelfSizingWebView: UIViewRepresentable {
     let htmlContent: String
+    @State private var webViewHeight: CGFloat = 400
     
     func makeUIView(context: Context) -> WKWebView {
-        let webView = WKWebView()
+        let configuration = WKWebViewConfiguration()
+        configuration.dataDetectorTypes = []
+        
+        let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
-        webView.scrollView.isScrollEnabled = false
+        webView.scrollView.isScrollEnabled = true
+        webView.scrollView.bounces = true
+        webView.scrollView.showsVerticalScrollIndicator = false
+        webView.scrollView.showsHorizontalScrollIndicator = false
         webView.isOpaque = false
         webView.backgroundColor = UIColor.clear
+        webView.scrollView.backgroundColor = UIColor.clear
         
-        // Configure for better text rendering
-        let configuration = webView.configuration
-        configuration.dataDetectorTypes = []
+        // Enable debugging
+        if #available(iOS 16.4, *) {
+            webView.isInspectable = true
+        }
         
         return webView
     }
     
     func updateUIView(_ webView: WKWebView, context: Context) {
+        // Add logging to debug
+        Logger.debug("📄 HTMLContentView: Loading HTML content with \(htmlContent.count) characters")
+        
         let styledHTML = """
+        <!DOCTYPE html>
         <html>
         <head>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
             <style>
                 body {
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
                     font-size: 16px;
                     line-height: 1.6;
-                    color: #333;
+                    color: #333333;
                     margin: 0;
                     padding: 16px;
                     background-color: transparent;
+                    word-wrap: break-word;
+                    overflow-wrap: break-word;
                 }
-                h1, h2, h3 {
+                h1, h2, h3, h4, h5, h6 {
                     color: #1a1a1a;
                     margin-top: 24px;
                     margin-bottom: 12px;
+                    font-weight: 600;
                 }
                 h1 { font-size: 24px; }
                 h2 { font-size: 20px; }
                 h3 { font-size: 18px; }
                 p {
                     margin-bottom: 12px;
+                    margin-top: 0;
+                }
+                ul, ol {
+                    margin: 12px 0;
+                    padding-left: 24px;
+                }
+                li {
+                    margin-bottom: 6px;
                 }
                 @media (prefers-color-scheme: dark) {
-                    body { color: #ffffff; }
-                    h1, h2, h3 { color: #ffffff; }
+                    body { 
+                        color: #ffffff; 
+                        background-color: transparent;
+                    }
+                    h1, h2, h3, h4, h5, h6 { 
+                        color: #ffffff; 
+                    }
                 }
             </style>
         </head>
         <body>
             \(htmlContent)
+            <script>
+                // Notify when content is loaded
+                document.addEventListener('DOMContentLoaded', function() {
+                    console.log('HTML content loaded successfully');
+                });
+            </script>
         </body>
         </html>
         """
         
         webView.loadHTMLString(styledHTML, baseURL: nil)
+        Logger.debug("📄 HTMLContentView: HTML string loaded into WebView")
     }
     
     func makeCoordinator() -> Coordinator {
-        Coordinator()
+        Coordinator(self)
     }
     
     class Coordinator: NSObject, WKNavigationDelegate {
+        var parent: SelfSizingWebView
+        
+        init(_ parent: SelfSizingWebView) {
+            self.parent = parent
+        }
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
             // Only allow the initial load
             if navigationAction.navigationType == .other {
+                Logger.debug("📄 WebView: Allowing navigation for initial load")
                 decisionHandler(.allow)
             } else {
+                Logger.debug("📄 WebView: Cancelling navigation of type: \(navigationAction.navigationType.rawValue)")
                 decisionHandler(.cancel)
             }
+        }
+        
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            Logger.debug("📄 WebView: Finished loading navigation")
+            
+            // Calculate content height and update parent
+            webView.evaluateJavaScript("document.body.scrollHeight") { result, error in
+                DispatchQueue.main.async {
+                    if let height = result as? CGFloat {
+                        Logger.debug("📄 WebView: Content height calculated: \(height)")
+                        self.parent.webViewHeight = max(height, 400) // Minimum 400px
+                    } else if let error = error {
+                        Logger.error("📄 WebView: Error calculating height: \(error.localizedDescription)")
+                        self.parent.webViewHeight = 400 // Fallback height
+                    }
+                }
+            }
+        }
+        
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            Logger.error("📄 WebView: Failed loading with error: \(error.localizedDescription)")
+        }
+        
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            Logger.error("📄 WebView: Failed provisional navigation with error: \(error.localizedDescription)")
         }
     }
 }

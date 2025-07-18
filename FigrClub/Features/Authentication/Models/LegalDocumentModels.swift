@@ -46,7 +46,7 @@ struct LegalDocumentRequest {
 }
 
 // MARK: - Legal Document Domain Model
-struct LegalDocument {
+struct LegalDocumentData {
     let id: Int
     let documentType: LegalDocumentType
     let title: String
@@ -82,7 +82,7 @@ struct LegalDocument {
 }
 
 // MARK: - Legal Document Response Type Aliases
-typealias LegalDocumentResponse = ApiResponse<LegalDocument>
+//typealias LegalDocumentResponse = ApiResponse<LegalDocument>
 
 // MARK: - Legal Document Error
 enum LegalDocumentError: Error, LocalizedError {
