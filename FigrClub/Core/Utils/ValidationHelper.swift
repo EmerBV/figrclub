@@ -32,13 +32,23 @@ final class ValidationHelper {
     static func createPasswordConfirmationPublisher(
         password: AnyPublisher<String, Never>,
         confirmPassword: AnyPublisher<String, Never>,
-        localizationManager: LocalizationManagerProtocol? = nil
+        localizationManager: (any LocalizationManagerProtocol)? = nil
     ) -> AnyPublisher<ValidationResult, Never> {
         return Publishers.CombineLatest(password, confirmPassword)
             .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
             .map { password, confirmPassword in
                 guard !confirmPassword.isEmpty else { return ValidationResult.valid }
-                let errorMessage = localizationManager?.localizedString(for: .passwordsDontMatch) ?? "Las contraseñas no coinciden"
+                
+                // Get localized message safely
+                let errorMessage: String
+                if let localizationManager = localizationManager {
+                    errorMessage = MainActor.assumeIsolated {
+                        localizationManager.localizedString(for: .passwordsDontMatch)
+                    }
+                } else {
+                    errorMessage = "Las contraseñas no coinciden"
+                }
+                
                 return password == confirmPassword ? .valid : .invalid(errorMessage)
             }
             .eraseToAnyPublisher()

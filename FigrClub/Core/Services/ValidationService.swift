@@ -44,16 +44,18 @@ enum FieldState: Equatable {
 }
 
 // MARK: - Validation Service
-protocol ValidationServiceProtocol: Sendable {
+@MainActor
+protocol ValidationServiceProtocol {
     func validateEmail(_ email: String) -> ValidationResult
     func validatePassword(_ password: String) -> ValidationResult
     func validateUsername(_ username: String) -> ValidationResult
     func validateFullName(_ fullName: String) -> ValidationResult
 }
 
+@MainActor
 final class ValidationService: ValidationServiceProtocol {
     
-    private nonisolated let localizationManager: LocalizationManagerProtocol
+    private let localizationManager: LocalizationManagerProtocol
     
     init(localizationManager: LocalizationManagerProtocol) {
         self.localizationManager = localizationManager
@@ -177,8 +179,10 @@ final class ValidationService: ValidationServiceProtocol {
 // MARK: - Debug Extension (for testing purposes)
 #if DEBUG
 extension ValidationService {
+    @MainActor
     static func testPasswordValidation() {
-        let service = ValidationService()
+        let localizationManager = LocalizationManager()
+        let service = ValidationService(localizationManager: localizationManager)
         let testPasswords = [
             "12345678", // Solo números, falta letra y carácter especial
             "password", // Solo letras, falta número y carácter especial  

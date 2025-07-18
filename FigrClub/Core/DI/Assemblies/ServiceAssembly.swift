@@ -24,7 +24,11 @@ final class ServiceAssembly: Assembly {
         // Validation Service
         container.register(ValidationServiceProtocol.self) { resolver in
             let localizationManager = resolver.resolve(LocalizationManagerProtocol.self)!
-            return ValidationService(localizationManager: localizationManager)
+            
+            // Create on MainActor since ValidationService is @MainActor
+            return MainActor.assumeIsolated {
+                ValidationService(localizationManager: localizationManager)
+            }
         }.inObjectScope(.container)
         
         // MARK: - User Services

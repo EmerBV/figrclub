@@ -41,8 +41,8 @@ final class AuthViewModel: ObservableObject {
     private let registerValidationManager: FormValidationManager
     
     // MARK: - Dependencies
-    private nonisolated let authStateManager: AuthStateManager
-    private nonisolated let validationService: ValidationServiceProtocol
+    private let authStateManager: AuthStateManager
+    private let validationService: ValidationServiceProtocol
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Computed Properties
@@ -96,28 +96,24 @@ final class AuthViewModel: ObservableObject {
     }
     
     // MARK: - Initializer
-    nonisolated init(authStateManager: AuthStateManager, validationService: ValidationServiceProtocol) {
+    init(authStateManager: AuthStateManager, validationService: ValidationServiceProtocol) {
         self.authStateManager = authStateManager
         self.validationService = validationService
         
-        // Create validation managers on MainActor
-        self.loginValidationManager = MainActor.assumeIsolated {
-            FormValidationManager()
-        }
-        self.registerValidationManager = MainActor.assumeIsolated {
-            FormValidationManager()
-        }
+        // Create validation managers
+        self.loginValidationManager = FormValidationManager()
+        self.registerValidationManager = FormValidationManager()
         
+        self.setupValidation()
+        self.setupAuthStateSubscription()
+        Logger.info("✅ AuthViewModel: Initialized successfully")
+        
+        #if DEBUG
+        // Test password validation in debug mode
         Task { @MainActor in
-            self.setupValidation()
-            self.setupAuthStateSubscription()
-            Logger.info("✅ AuthViewModel: Initialized successfully")
-            
-            #if DEBUG
-            // Test password validation in debug mode
             ValidationService.testPasswordValidation()
-            #endif
         }
+        #endif
     }
     
     // MARK: - Public Methods

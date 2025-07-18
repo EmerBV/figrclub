@@ -47,6 +47,7 @@ enum SupportedLanguage: String, CaseIterable {
 }
 
 // MARK: - Localization Manager Protocol
+@MainActor
 protocol LocalizationManagerProtocol: ObservableObject {
     var currentLanguage: SupportedLanguage { get }
     var isSystemLanguageDetected: Bool { get }
@@ -203,7 +204,11 @@ extension Notification.Name {
 
 // MARK: - Environment Key for SwiftUI
 struct LocalizationManagerKey: EnvironmentKey {
-    static let defaultValue: LocalizationManager = LocalizationManager()
+    static var defaultValue: LocalizationManager {
+        return MainActor.assumeIsolated {
+            LocalizationManager()
+        }
+    }
 }
 
 extension EnvironmentValues {

@@ -23,7 +23,10 @@ final class AuthAssembly: Assembly {
             let authStateManager = resolver.resolve(AuthStateManager.self)!
             let validationService = resolver.resolve(ValidationServiceProtocol.self)!
             
-            return AuthViewModel(authStateManager: authStateManager, validationService: validationService)
+            // Create on MainActor since AuthViewModel is @MainActor
+            return MainActor.assumeIsolated {
+                AuthViewModel(authStateManager: authStateManager, validationService: validationService)
+            }
         }.inObjectScope(.transient)
     }
 }
