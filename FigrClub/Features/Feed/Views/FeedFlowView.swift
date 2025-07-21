@@ -397,7 +397,7 @@ struct PostView: View {
     private var postContent: some View {
         VStack(alignment: .leading, spacing: 4) {
             // Número de likes
-            if post.likesCount > 0 {
+            if post.likesCount < 10 {
                 Text("\(post.likesCount) me gusta")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.primary)
