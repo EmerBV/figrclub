@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 struct MainTabView: View {
     let user: User
@@ -20,7 +21,7 @@ struct MainTabView: View {
     var body: some View {
         Group {
             if authStateManager.isAuthenticated {
-                tabContent
+                customTabView
             } else {
                 EBVLoadingView.appLaunch
                     .onAppear {
@@ -34,49 +35,29 @@ struct MainTabView: View {
         }
     }
     
-    // MARK: - Tab Content
+    // MARK: - Custom Tab View
     
-    private var tabContent: some View {
-        TabView(selection: $selectedTab) {
-            // Feed Tab
-            FeedFlowView(user: user)
-                .tabItem {
-                    Image(systemName: MainTab.feed.icon)
-                    Text(MainTab.feed.title)
+    private var customTabView: some View {
+        VStack(spacing: 0) {
+            // Content Area
+            Group {
+                switch selectedTab {
+                case .feed:
+                    FeedFlowView(user: user)
+                case .marketplace:
+                    MarketplaceFlowView(user: user)
+                case .create:
+                    CreateFlowView(user: user)
+                case .notifications:
+                    NotificationsFlowView(user: user)
+                case .profile:
+                    ProfileFlowView(user: user)
                 }
-                .tag(MainTab.feed)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             
-            // Marketplace Tab
-            MarketplaceFlowView(user: user)
-                .tabItem {
-                    Image(systemName: MainTab.marketplace.icon)
-                    Text(MainTab.marketplace.title)
-                }
-                .tag(MainTab.marketplace)
-            
-            // Create Tab
-            CreateFlowView(user: user)
-                .tabItem {
-                    Image(systemName: MainTab.create.icon)
-                    Text(MainTab.create.title)
-                }
-                .tag(MainTab.create)
-            
-            // Notifications Tab
-            NotificationsFlowView(user: user)
-                .tabItem {
-                    Image(systemName: MainTab.notifications.icon)
-                    Text(MainTab.notifications.title)
-                }
-                .tag(MainTab.notifications)
-            
-            // Profile Tab
-            ProfileFlowView(user: user)
-                .tabItem {
-                    Image(systemName: MainTab.profile.icon)
-                    Text(MainTab.profile.title)
-                }
-                .tag(MainTab.profile)
+            // Custom Tab Bar
+            customTabBar
         }
         .environmentObject(navigationCoordinator)
         .onAppear {
@@ -98,6 +79,114 @@ struct MainTabView: View {
         }
     }
     
+    // MARK: - Custom Tab Bar
+    
+    private var customTabBar: some View {
+        HStack {
+            ForEach(MainTab.allCases, id: \.id) { tab in
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        selectedTab = tab
+                    }
+                }) {
+                    VStack(spacing: 4) {
+                        // Tab Icon
+                        if tab == .profile {
+                            profileTabIcon
+                        } else {
+                            regularTabIcon(for: tab)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(
+            Color(.systemBackground)
+                .shadow(color: .black.opacity(0.1), radius: 1, x: 0, y: -1)
+        )
+        .overlay(
+            // Top border
+            Rectangle()
+                .fill(Color(.separator))
+                .frame(height: 0.5)
+            , alignment: .top
+        )
+    }
+    
+    // MARK: - Tab Icons
+    
+    @ViewBuilder
+    private func regularTabIcon(for tab: MainTab) -> some View {
+        let isSelected = selectedTab == tab
+        let iconName = isSelected ? tab.selectedIcon : tab.icon
+        
+        Image(systemName: iconName)
+            .font(.system(size: 22, weight: isSelected ? .semibold : .regular))
+            .foregroundColor(isSelected ? .accentColor : .secondary)
+            .scaleEffect(isSelected ? 1.1 : 1.0)
+            .animation(.easeInOut(duration: 0.2), value: isSelected)
+    }
+    
+    // MARK: - Profile Tab Icon
+    
+    @ViewBuilder
+    private var profileTabIcon: some View {
+        let isSelected = selectedTab == .profile
+        let iconSize: CGFloat = 26
+        
+        Group {
+            if user.hasProfileImage {
+                // Imagen de perfil del servidor
+                KFImage(URL(string: "http://localhost:8080/figrclub/api/v1/images/user/\(user.id)/profile"))
+                    .setProcessor(
+                        RoundCornerImageProcessor(cornerRadius: iconSize / 2)
+                        |> DownsamplingImageProcessor(size: CGSize(width: iconSize * 2, height: iconSize * 2))
+                    )
+                    .placeholder {
+                        // Placeholder mientras carga
+                        Circle()
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(width: iconSize, height: iconSize)
+                            .overlay(
+                                ProgressView()
+                                    .scaleEffect(0.5)
+                            )
+                    }
+                    .onFailure { error in
+                        Logger.warning("⚠️ Profile tab icon failed to load: \(error.localizedDescription)")
+                    }
+                    .frame(width: iconSize, height: iconSize)
+                    .clipShape(Circle())
+            } else {
+                // Placeholder con iniciales del usuario
+                Circle()
+                    .fill(Color.blue.opacity(0.2))
+                    .frame(width: iconSize, height: iconSize)
+                    .overlay(
+                        Text(user.displayName.prefix(1).uppercased())
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.blue)
+                    )
+            }
+        }
+        .overlay(
+            // Border de selección
+            Circle()
+                .stroke(
+                    isSelected ? Color.accentColor : Color.clear,
+                    lineWidth: 2
+                )
+                .frame(width: iconSize + 4, height: iconSize + 4)
+        )
+        .scaleEffect(isSelected ? 1.1 : 1.0)
+        .animation(.easeInOut(duration: 0.2), value: isSelected)
+    }
+    
     // MARK: - Private Methods
     
     private func setupDeepLinkManager() {
@@ -108,31 +197,4 @@ struct MainTabView: View {
         Logger.debug("✅ MainTabView: DeepLinkManager setup completed")
     }
 }
-
-/*
- // MARK: - Preview
- #if DEBUG
- struct MainTabView_Previews: PreviewProvider {
- static var previews: some View {
- let sampleUser = User(
- id: 1,
- firstName: "John",
- lastName: "Doe",
- email: "john@example.com",
- username: "johndoe",
- userType: "REGULAR",
- subscriptionType: "FREE",
- isVerified: true,
- profileImageUrl: nil,
- bio: "Sample user bio",
- createdAt: Date(),
- updatedAt: Date()
- )
- 
- MainTabView(user: sampleUser)
- .environmentObject(DependencyInjector.shared.resolve(AuthStateManager.self))
- }
- }
- #endif
- */
 
