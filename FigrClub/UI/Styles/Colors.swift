@@ -8,56 +8,111 @@
 import SwiftUI
 
 extension Color {
-    // MARK: - Primary Colors
-    static let figrPrimary = Color.blue
-    static let figrSecondary = Color.purple
-    static let figrAccent = Color.orange
+    // MARK: - Primary Brand Colors
+    static let figrPrimary = Color(red: 0.2, green: 0.3, blue: 0.5) // Azul profundo profesional #334D80
+    static let figrSecondary = Color(red: 0.85, green: 0.65, blue: 0.2) // Dorado premium #D9A533
+    static let figrAccent = Color(red: 0.85, green: 0.65, blue: 0.2) // Mismo que secondary para coherencia
     
-    // MARK: - Background Colors
-    static let figrBackground = Color(.systemBackground)
-    static let figrSurface = Color(.secondarySystemBackground)
-    static let figrCard = Color(.tertiarySystemBackground)
+    // MARK: - Background Colors (Light Mode)
+    static let figrBackground = Color(red: 0.97, green: 0.97, blue: 0.98) // Gris muy claro #F7F7FA
+    static let figrSurface = Color(red: 0.95, green: 0.95, blue: 0.97) // Gris superficie #F2F2F7
+    static let figrCard = Color.white // Blanco puro para tarjetas
+    
+    // MARK: - Dark Mode Backgrounds
+    static let figrDarkBackground = Color(red: 0.08, green: 0.08, blue: 0.1) // #141419
+    static let figrDarkSurface = Color(red: 0.10, green: 0.10, blue: 0.12) // #1A1A1F
+    static let figrDarkCard = Color(red: 0.12, green: 0.12, blue: 0.15) // #1F1F26
     
     // MARK: - Text Colors
-    static let figrTextPrimary = Color(.label)
-    static let figrTextSecondary = Color(.secondaryLabel)
-    static let figrTextTertiary = Color(.tertiaryLabel)
+    static let figrTextPrimary = Color(red: 0.15, green: 0.15, blue: 0.15) // Gris oscuro #262626
+    static let figrTextSecondary = Color(red: 0.45, green: 0.45, blue: 0.45) // Gris medio #737373
+    static let figrTextTertiary = Color(red: 0.65, green: 0.65, blue: 0.65) // Gris claro #A6A6A6
+    
+    // MARK: - Dark Mode Text Colors
+    static let figrDarkTextPrimary = Color(red: 0.95, green: 0.95, blue: 0.95) // Blanco suave
+    static let figrDarkTextSecondary = Color(red: 0.75, green: 0.75, blue: 0.75) // Gris claro
+    static let figrDarkTextTertiary = Color(red: 0.55, green: 0.55, blue: 0.55) // Gris medio
     
     // MARK: - Border Colors
-    static let figrBorder = Color(.separator)
-    static let figrDivider = Color(.opaqueSeparator)
+    static let figrBorder = Color(red: 0.90, green: 0.90, blue: 0.90) // Borde sutil
+    static let figrDivider = Color(red: 0.85, green: 0.85, blue: 0.85) // Divisor más visible
     
     // MARK: - Status Colors
-    static let figrSuccess = Color.green
-    static let figrWarning = Color.orange
-    static let figrError = Color.red
-    static let figrInfo = Color.blue
+    static let figrSuccess = Color(red: 0.2, green: 0.7, blue: 0.4) // Verde confiable #33B366
+    static let figrWarning = Color(red: 0.9, green: 0.6, blue: 0.1) // Ámbar #E69A1A
+    static let figrError = Color(red: 0.8, green: 0.2, blue: 0.2) // Rojo controlado #CC3333
+    static let figrInfo = Color(red: 0.2, green: 0.4, blue: 0.8) // Azul información
     
     // MARK: - Social Colors
-    static let figrLike = Color.red
-    static let figrComment = Color.blue
-    static let figrShare = Color.green
-    static let figrBookmark = Color.orange
+    static let figrLike = Color(red: 0.9, green: 0.3, blue: 0.4) // Rojo like suave
+    static let figrComment = Color(red: 0.3, green: 0.5, blue: 0.8) // Azul comentario
+    static let figrShare = Color(red: 0.2, green: 0.7, blue: 0.4) // Verde compartir
+    static let figrBookmark = Color(red: 0.85, green: 0.65, blue: 0.2) // Dorado bookmark
+    
+    // MARK: - Figure Rarity Colors
+    static let figrFigureCommon = Color(red: 0.55, green: 0.55, blue: 0.55) // Gris común
+    static let figrFigureUncommon = Color(red: 0.3, green: 0.6, blue: 0.3) // Verde poco común
+    static let figrFigureRare = Color(red: 0.2, green: 0.4, blue: 0.8) // Azul raro
+    static let figrFigureEpic = Color(red: 0.6, green: 0.2, blue: 0.8) // Púrpura épico
+    static let figrFigureLegendary = Color(red: 0.9, green: 0.5, blue: 0.1) // Naranja legendario
+    static let figrFigureMythic = Color(red: 0.85, green: 0.65, blue: 0.2) // Dorado mítico
     
     // MARK: - Gradient Colors
-    static let figrGradientStart = Color.blue.opacity(0.8)
-    static let figrGradientEnd = Color.purple.opacity(0.6)
+    static let figrGradientStart = Color.figrPrimary.opacity(0.8)
+    static let figrGradientEnd = Color.figrSecondary.opacity(0.6)
     
-    // MARK: - Custom Colors
-    static let figrFigureRare = Color.gold
-    static let figrFigureCommon = Color.gray
-    static let figrFigureEpic = Color.purple
-    static let figrFigureLegendary = Color.orange
+    // MARK: - Market Colors
+    static let figrPriceUp = Color(red: 0.2, green: 0.7, blue: 0.4) // Verde subida
+    static let figrPriceDown = Color(red: 0.8, green: 0.2, blue: 0.2) // Rojo bajada
+    static let figrPriceNeutral = Color(red: 0.5, green: 0.5, blue: 0.5) // Gris neutral
+    
+    // MARK: - Interactive Colors
+    static let figrButtonPrimary = Color.figrPrimary
+    static let figrButtonSecondary = Color.figrSecondary
+    static let figrButtonDisabled = Color(red: 0.85, green: 0.85, blue: 0.85)
+    static let figrButtonText = Color.white
+    static let figrButtonSecondaryText = Color.figrTextPrimary
 }
 
-// MARK: - Custom Color Extensions
+// MARK: - Adaptive Colors (responden al modo oscuro)
 extension Color {
-    static let gold = Color(red: 1.0, green: 0.84, blue: 0.0)
+    static var adaptiveBackground: Color {
+        Color(.systemBackground)
+    }
     
-    // Dark mode adaptive colors
-    static let adaptiveBackground = Color(.systemBackground)
-    static let adaptiveSecondaryBackground = Color(.secondarySystemBackground)
-    static let adaptiveTertiaryBackground = Color(.tertiarySystemBackground)
+    static var adaptiveCard: Color {
+        Color(
+            .sRGB,
+            red: 1.0, green: 1.0, blue: 1.0,
+            opacity: 1.0
+        )
+        .colorScheme(.light)
+        .overlay(
+            Color(
+                .sRGB,
+                red: 0.12, green: 0.12, blue: 0.15,
+                opacity: 1.0
+            )
+            .colorScheme(.dark)
+        )
+    }
+    
+    static var adaptiveTextPrimary: Color {
+        Color(
+            .sRGB,
+            red: 0.15, green: 0.15, blue: 0.15,
+            opacity: 1.0
+        )
+        .colorScheme(.light)
+        .overlay(
+            Color(
+                .sRGB,
+                red: 0.95, green: 0.95, blue: 0.95,
+                opacity: 1.0
+            )
+            .colorScheme(.dark)
+        )
+    }
 }
 
 // MARK: - Color Utilities
@@ -83,34 +138,37 @@ extension Color {
             .sRGB,
             red: Double(r) / 255,
             green: Double(g) / 255,
-            blue:  Double(b) / 255,
+            blue: Double(b) / 255,
             opacity: Double(a) / 255
         )
     }
     
-    /// Returns a lighter version of the color
-    func lighter(by percentage: CGFloat = 30.0) -> Color {
-        return self.adjustBrightness(by: abs(percentage))
+    /// Returns hex string representation of the color
+    var hexString: String {
+        guard let components = UIColor(self).cgColor.components,
+              components.count >= 3 else { return "#000000" }
+        
+        let r = Float(components[0])
+        let g = Float(components[1])
+        let b = Float(components[2])
+        
+        return String(format: "#%02lX%02lX%02lX",
+                      lroundf(r * 255),
+                      lroundf(g * 255),
+                      lroundf(b * 255))
     }
-    
-    /// Returns a darker version of the color
-    func darker(by percentage: CGFloat = 30.0) -> Color {
-        return self.adjustBrightness(by: -1 * abs(percentage))
-    }
-    
-    private func adjustBrightness(by percentage: CGFloat) -> Color {
+}
+
+// MARK: - Color Accessibility
+extension Color {
+    /// Returns true if the color provides sufficient contrast with white text
+    var needsLightText: Bool {
         let uiColor = UIColor(self)
-        var hue: CGFloat = 0
-        var saturation: CGFloat = 0
-        var brightness: CGFloat = 0
-        var alpha: CGFloat = 0
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        uiColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
         
-        if uiColor.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha) {
-            brightness += (percentage / 100.0)
-            brightness = max(min(brightness, 1.0), 0.0)
-            return Color(UIColor(hue: hue, saturation: saturation, brightness: brightness, alpha: alpha))
-        }
-        
-        return self
+        // Calculate relative luminance
+        let luminance = 0.299 * red + 0.587 * green + 0.114 * blue
+        return luminance < 0.5
     }
 }
