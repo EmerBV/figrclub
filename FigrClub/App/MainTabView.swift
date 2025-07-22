@@ -56,11 +56,16 @@ struct MainTabView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(themeManager.currentBackgroundColor)
             
             // Custom Tab Bar
             customTabBar
         }
-        .background(themeManager.currentBackgroundColor.ignoresSafeArea())
+        .background(
+            // Fondo que se extiende hasta el bottom safe area
+            themeManager.currentBackgroundColor
+                .ignoresSafeArea(.container, edges: .bottom)
+        )
         .environmentObject(navigationCoordinator)
         .onAppear {
             setupDeepLinkManager()
@@ -84,46 +89,46 @@ struct MainTabView: View {
     // MARK: - Custom Tab Bar
     
     private var customTabBar: some View {
-        HStack {
-            ForEach(MainTab.allCases, id: \.id) { tab in
-                Button(action: {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        selectedTab = tab
-                    }
-                }) {
-                    VStack(spacing: 4) {
-                        // Tab Icon
-                        if tab == .profile {
-                            profileTabIcon
-                        } else {
-                            regularTabIcon(for: tab)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(PlainButtonStyle())
-            }
-        }
-        .padding(.horizontal, AppTheme.Spacing.medium)
-        .padding(.vertical, AppTheme.Spacing.small)
-        .background(
-            themeManager.currentCardColor
-                .shadow(
-                    color: themeManager.colorScheme == .dark ?
-                    AppTheme.Shadow.cardShadowColor.opacity(0.3) :
-                        AppTheme.Shadow.cardShadowColor,
-                    radius: AppTheme.Shadow.cardShadow.radius,
-                    x: AppTheme.Shadow.cardShadow.x,
-                    y: AppTheme.Shadow.cardShadow.y
-                )
-        )
-        .overlay(
+        VStack(spacing: 0) {
             // Top border
             Rectangle()
                 .fill(themeManager.colorScheme == .dark ? Color.figrDarkTextTertiary.opacity(0.2) : Color(.separator))
                 .frame(height: 0.5)
-            , alignment: .top
+            
+            // Tab bar content
+            HStack {
+                ForEach(MainTab.allCases, id: \.id) { tab in
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            selectedTab = tab
+                        }
+                    }) {
+                        VStack(spacing: 4) {
+                            // Tab Icon
+                            if tab == .profile {
+                                profileTabIcon
+                            } else {
+                                regularTabIcon(for: tab)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+            .padding(.horizontal, AppTheme.Spacing.medium)
+            .padding(.top, AppTheme.Spacing.small)
+            .padding(.bottom, AppTheme.Spacing.small)
+        }
+        .background(themeManager.currentCardColor)
+        .shadow(
+            color: themeManager.colorScheme == .dark ?
+            AppTheme.Shadow.cardShadowColor.opacity(0.3) :
+                AppTheme.Shadow.cardShadowColor,
+            radius: AppTheme.Shadow.cardShadow.radius,
+            x: AppTheme.Shadow.cardShadow.x,
+            y: AppTheme.Shadow.cardShadow.y
         )
     }
     
