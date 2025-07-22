@@ -371,9 +371,9 @@ struct FigrShimmerView: View {
 // MARK: - View Extensions for Theme
 extension View {
     /*
-    func figrCard() -> some View {
-        self.modifier(AppTheme.cardStyle)
-    }
+     func figrCard() -> some View {
+     self.modifier(AppTheme.cardStyle)
+     }
      */
     
     func figrElevatedCard() -> some View {
@@ -385,9 +385,9 @@ extension View {
     }
     
     /*
-    func figrScreenPadding() -> some View {
-        self.padding(.horizontal, AppTheme.Spacing.screenPadding)
-    }
+     func figrScreenPadding() -> some View {
+     self.padding(.horizontal, AppTheme.Spacing.screenPadding)
+     }
      */
     
     func figrCardPadding() -> some View {

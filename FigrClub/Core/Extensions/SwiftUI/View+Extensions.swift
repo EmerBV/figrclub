@@ -9,24 +9,15 @@ import Foundation
 import SwiftUI
 
 extension View {
-    /// Aplica el tema global a la vista
-    /*
+    /// Aplica el tema global a la vista (implementación auto-suficiente)
     func themed() -> some View {
-        self.modifier(ThemedViewModifier())
-    }
-     */
-    
-    /// Aplica el tema global de forma segura (usa Environment en lugar de EnvironmentObject)
-    func safeThemed() -> some View {
-        self.modifier(SafeThemedViewModifier())
+        self.modifier(ThemedView())
     }
     
     /// Aplica una fuente temática
-    /*
     func themedFont(_ fontType: ThemedFontType) -> some View {
         self.modifier(ThemedFontModifier(fontType: fontType))
     }
-     */
     
     /// Aplica un color de fondo temático
     func themedBackground() -> some View {
@@ -44,28 +35,14 @@ extension View {
     }
 }
 
-// MARK: - Themed View Modifier
-
-struct ThemedViewModifier: ViewModifier {
-    @EnvironmentObject private var themeManager: ThemeManager
+// MARK: - Themed View Modifier (implementación auto-suficiente)
+struct ThemedView: ViewModifier {
+    @StateObject private var themeManager = ThemeManager.shared
     
     func body(content: Content) -> some View {
         content
-            .environment(\.colorScheme, themeManager.colorScheme)
-            .accentColor(themeManager.accentColor)
-            .preferredColorScheme(
-                themeManager.themeMode == .system ? nil :
-                    (themeManager.themeMode == .dark ? .dark : .light)
-            )
-    }
-}
-
-// MARK: - Safe Themed View Modifier (alternativa segura)
-struct SafeThemedViewModifier: ViewModifier {
-    @Environment(\.themeManager) private var themeManager: ThemeManager
-    
-    func body(content: Content) -> some View {
-        content
+            .environmentObject(themeManager)
+            .environment(\.themeManager, themeManager)
             .environment(\.colorScheme, themeManager.colorScheme)
             .accentColor(themeManager.accentColor)
             .preferredColorScheme(
@@ -395,7 +372,7 @@ struct FigrAccessibilityModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .dynamicTypeSize(...DynamicTypeSize.accessibility5)
-            //.environment(\.sizeCategory, themeManager.preferredFontSize.sizeCategory)
+        //.environment(\.sizeCategory, themeManager.preferredFontSize.sizeCategory)
     }
 }
 

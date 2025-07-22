@@ -197,34 +197,6 @@ extension EnvironmentValues {
     }
 }
 
-// MARK: - Theme View Modifier
-struct ThemedView: ViewModifier {
-    @StateObject private var themeManager = ThemeManager.shared
-    
-    func body(content: Content) -> some View {
-        content
-            .environmentObject(themeManager)
-            .environment(\.themeManager, themeManager)
-            .environment(\.colorScheme, themeManager.colorScheme)
-            .accentColor(themeManager.accentColor)
-            .preferredColorScheme(
-                themeManager.themeMode == .system ? nil :
-                    (themeManager.themeMode == .dark ? .dark : .light)
-            )
-    }
-}
-
-extension View {
-    func themed() -> some View {
-        self.modifier(ThemedView())
-    }
-    
-    // Modificadores para fuentes temáticas
-    func themedFont(_ fontType: ThemedFontType) -> some View {
-        self.modifier(ThemedFontModifier(fontType: fontType))
-    }
-}
-
 // MARK: - Themed Font Types
 enum ThemedFontType {
     case displayLarge, displayMedium, displaySmall

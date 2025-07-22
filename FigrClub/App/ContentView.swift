@@ -77,9 +77,9 @@ struct ContentView: View {
             }
             
             // Overlay para debugging en desarrollo
-            #if DEBUG
+#if DEBUG
             debugOverlay
-            #endif
+#endif
             
             // Error timeout overlay
             if initializationTimeout {
@@ -88,8 +88,6 @@ struct ContentView: View {
         }
         .animation(.easeInOut(duration: 0.5), value: appCoordinator.currentScreen)
         .environmentObject(appCoordinator)
-        // Aplicar tema completo a nivel de ContentView
-        //.themed()
         .onAppear {
             Logger.debug("✅ ContentView: Appeared with screen: \(appCoordinator.currentScreen.description)")
             setupAppCoordinator()
@@ -155,7 +153,7 @@ struct ContentView: View {
     
     // MARK: - Debug Overlay
     
-    #if DEBUG
+#if DEBUG
     @ViewBuilder
     private var debugOverlay: some View {
         VStack {
@@ -211,7 +209,7 @@ struct ContentView: View {
             }
         }
     }
-    #endif
+#endif
     
     // MARK: - Timeout Error Overlay
     

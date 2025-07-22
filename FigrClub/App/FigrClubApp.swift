@@ -57,7 +57,6 @@ struct FigrClubApp: App {
             ContentView()
                 .environmentObject(authStateManager)
                 .environmentObject(featureFlagManager)
-                .environmentObject(themeManager)
                 .localizationManager(localizationManager)
                 .themed()
                 .onAppear {
