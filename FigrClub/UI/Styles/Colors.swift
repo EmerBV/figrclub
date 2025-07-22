@@ -80,38 +80,30 @@ extension Color {
         Color(.systemBackground)
     }
     
+    /// Color de tarjeta adaptativo de la marca FigrClub
+    /// Modo claro: Blanco puro, Modo oscuro: Gris oscuro específico de la marca
     static var adaptiveCard: Color {
-        Color(
-            .sRGB,
-            red: 1.0, green: 1.0, blue: 1.0,
-            opacity: 1.0
-        )
-        .colorScheme(.light)
-        .overlay(
-            Color(
-                .sRGB,
-                red: 0.12, green: 0.12, blue: 0.15,
-                opacity: 1.0
-            )
-            .colorScheme(.dark)
-        )
+        Color(UIColor { traitCollection in
+            switch traitCollection.userInterfaceStyle {
+            case .dark:
+                return UIColor(red: 0.12, green: 0.12, blue: 0.15, alpha: 1.0) // #1F1F26 - Color de marca en oscuro
+            default:
+                return UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0) // Blanco puro en claro
+            }
+        })
     }
     
+    /// Color de texto primario adaptativo de la marca FigrClub
+    /// Modo claro: Gris oscuro específico, Modo oscuro: Gris claro específico de la marca
     static var adaptiveTextPrimary: Color {
-        Color(
-            .sRGB,
-            red: 0.15, green: 0.15, blue: 0.15,
-            opacity: 1.0
-        )
-        .colorScheme(.light)
-        .overlay(
-            Color(
-                .sRGB,
-                red: 0.95, green: 0.95, blue: 0.95,
-                opacity: 1.0
-            )
-            .colorScheme(.dark)
-        )
+        Color(UIColor { traitCollection in
+            switch traitCollection.userInterfaceStyle {
+            case .dark:
+                return UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0) // Gris claro de marca en oscuro
+            default:
+                return UIColor(red: 0.15, green: 0.15, blue: 0.15, alpha: 1.0) // Gris oscuro de marca en claro
+            }
+        })
     }
 }
 

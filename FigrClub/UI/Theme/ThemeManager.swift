@@ -242,6 +242,7 @@ struct ThemedFontModifier: ViewModifier {
             .font(getFontForType())
     }
     
+    @MainActor
     private func getFontForType() -> Font {
         let scaleFactor = themeManager.accessibilityTextScaleFactor
         
@@ -288,6 +289,7 @@ struct ThemedFontModifier: ViewModifier {
 
 // MARK: - Accessibility Support
 extension ThemeManager {
+    @MainActor
     var accessibilityTextScaleFactor: CGFloat {
         let dynamicTypeSize = UIApplication.shared.preferredContentSizeCategory
         let baseScale = preferredFontSize.scaleFactor
@@ -346,6 +348,7 @@ extension Font {
 }
 
 // MARK: - Theme-aware Font Helper
+@MainActor
 struct ThemedFont {
     static func displayLarge(themeManager: ThemeManager) -> Font {
         .scaledForTheme(baseSize: 32, weight: .heavy, scaleFactor: themeManager.accessibilityTextScaleFactor)
