@@ -12,6 +12,7 @@ struct MainTabView: View {
     let user: User
     
     @EnvironmentObject private var authStateManager: AuthStateManager
+    @EnvironmentObject private var themeManager: ThemeManager
     @StateObject private var navigationCoordinator = CoordinatorFactory.makeNavigationCoordinator()
     @StateObject private var deepLinkManager = DeepLinkManager.shared
     
@@ -59,6 +60,7 @@ struct MainTabView: View {
             // Custom Tab Bar
             customTabBar
         }
+        .background(themeManager.currentBackgroundColor.ignoresSafeArea())
         .environmentObject(navigationCoordinator)
         .onAppear {
             setupDeepLinkManager()
@@ -103,16 +105,23 @@ struct MainTabView: View {
                 .buttonStyle(PlainButtonStyle())
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.horizontal, AppTheme.Spacing.medium)
+        .padding(.vertical, AppTheme.Spacing.small)
         .background(
-            Color(.systemBackground)
-                .shadow(color: .black.opacity(0.1), radius: 1, x: 0, y: -1)
+            themeManager.currentCardColor
+                .shadow(
+                    color: themeManager.colorScheme == .dark ?
+                    AppTheme.Shadow.cardShadowColor.opacity(0.3) :
+                        AppTheme.Shadow.cardShadowColor,
+                    radius: AppTheme.Shadow.cardShadow.radius,
+                    x: AppTheme.Shadow.cardShadow.x,
+                    y: AppTheme.Shadow.cardShadow.y
+                )
         )
         .overlay(
             // Top border
             Rectangle()
-                .fill(Color(.separator))
+                .fill(themeManager.colorScheme == .dark ? Color.figrDarkTextTertiary.opacity(0.2) : Color(.separator))
                 .frame(height: 0.5)
             , alignment: .top
         )
@@ -127,9 +136,9 @@ struct MainTabView: View {
         
         Image(systemName: iconName)
             .font(.system(size: 22, weight: isSelected ? .semibold : .regular))
-            .foregroundColor(isSelected ? .accentColor : .secondary)
+            .foregroundColor(isSelected ? themeManager.accentColor : themeManager.currentSecondaryTextColor)
             .scaleEffect(isSelected ? 1.1 : 1.0)
-            .animation(.easeInOut(duration: 0.2), value: isSelected)
+            .animation(AppTheme.Animation.quick, value: isSelected)
     }
     
     // MARK: - Profile Tab Icon
@@ -150,11 +159,12 @@ struct MainTabView: View {
                     .placeholder {
                         // Placeholder mientras carga
                         Circle()
-                            .fill(Color.gray.opacity(0.3))
+                            .fill(themeManager.currentSecondaryTextColor.opacity(0.3))
                             .frame(width: iconSize, height: iconSize)
                             .overlay(
                                 ProgressView()
                                     .scaleEffect(0.5)
+                                    .tint(themeManager.accentColor)
                             )
                     }
                     .onFailure { error in
@@ -165,26 +175,26 @@ struct MainTabView: View {
             } else {
                 // Placeholder con iniciales del usuario
                 Circle()
-                    .fill(Color.blue.opacity(0.2))
+                    .fill(themeManager.accentColor.opacity(0.2))
                     .frame(width: iconSize, height: iconSize)
                     .overlay(
                         Text(user.displayName.prefix(1).uppercased())
                             .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.blue)
+                            .foregroundColor(themeManager.accentColor)
                     )
             }
         }
         .overlay(
-            // Border de selección
+            // Border de selección temático
             Circle()
                 .stroke(
-                    isSelected ? Color.accentColor : Color.clear,
+                    isSelected ? themeManager.accentColor : Color.clear,
                     lineWidth: 2
                 )
                 .frame(width: iconSize + 4, height: iconSize + 4)
         )
         .scaleEffect(isSelected ? 1.1 : 1.0)
-        .animation(.easeInOut(duration: 0.2), value: isSelected)
+        .animation(AppTheme.Animation.quick, value: isSelected)
     }
     
     // MARK: - Private Methods

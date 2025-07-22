@@ -10,6 +10,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var appCoordinator: AppCoordinator
     @EnvironmentObject private var authStateManager: AuthStateManager
+    @EnvironmentObject private var themeManager: ThemeManager
     
     // Estado para manejar timeouts y errores de inicialización
     @State private var initializationTimeout = false
@@ -24,6 +25,10 @@ struct ContentView: View {
     
     var body: some View {
         ZStack {
+            // Background temático para toda la app
+            themeManager.currentBackgroundColor
+                .ignoresSafeArea()
+            
             // Contenido principal
             Group {
                 switch appCoordinator.currentScreen {
@@ -59,311 +64,268 @@ struct ContentView: View {
                                 Logger.debug("🔄 ContentView: Waiting for authenticated user in main screen")
                                 Task {
                                     try? await Task.sleep(for: .seconds(5))
-                                    if case .main = appCoordinator.currentScreen,
-                                       !authStateManager.isAuthenticated {
-                                        Logger.warning("⚠️ ContentView: No authenticated user found, returning to auth")
-                                        await MainActor.run {
-                                            appCoordinator.navigate(to: .authentication)
-                                        }
+                                    if case .authenticated = authStateManager.authState {
+                                        // Usuario autenticado, no hacer nada
+                                    } else {
+                                        Logger.warning("⚠️ ContentView: No authenticated user after timeout, navigating to auth")
+                                        appCoordinator.navigate(to: .authentication)
                                     }
                                 }
                             }
                     }
                 }
             }
-            .animation(.easeInOut(duration: 0.5), value: appCoordinator.currentScreen)
             
-            // Overlay para timeout
+            // Overlay para debugging en desarrollo
+            #if DEBUG
+            debugOverlay
+            #endif
+            
+            // Error timeout overlay
             if initializationTimeout {
-                timeoutOverlay
+                timeoutErrorOverlay
             }
-            
-            // Debug overlay
-#if DEBUG
-            if showDebugInfo {
-                debugOverlay
-            }
-#endif
         }
+        .animation(.easeInOut(duration: 0.5), value: appCoordinator.currentScreen)
         .environmentObject(appCoordinator)
-        .task {
-            if !hasInitialized {
-                await performInitialAuthCheck()
-                hasInitialized = true
-            }
+        // Aplicar tema completo a nivel de ContentView
+        //.themed()
+        .onAppear {
+            Logger.debug("✅ ContentView: Appeared with screen: \(appCoordinator.currentScreen.description)")
+            setupAppCoordinator()
         }
-        // Debug tap gesture
-#if DEBUG
-        .onTapGesture(count: 5) {
-            handleDebugTap()
+        .onChange(of: authStateManager.authState) { oldState, newState in
+            handleAuthStateChange(from: oldState, to: newState)
         }
-#endif
-        // ✅ Observar cambios de estado para navegación automática
-        .onReceive(authStateManager.$authState) { authState in
-            Logger.debug("🔄 ContentView: AuthState changed to: \(authState)")
-            handleAuthStateChange(authState)
-        }
-        .onReceive(appCoordinator.$currentScreen) { screen in
-            Logger.debug("🧭 ContentView: Screen changed to: \(screen)")
+        .onChange(of: appCoordinator.currentScreen) { oldScreen, newScreen in
+            Logger.debug("📱 ContentView: Screen changed from \(oldScreen.description) to \(newScreen.description)")
         }
     }
     
-    // MARK: - Private Views
+    // MARK: - Loading View for Current Auth State
     
-    private var timeoutOverlay: some View {
+    @ViewBuilder
+    private var loadingViewForCurrentAuthState: some View {
+        VStack(spacing: Spacing.large) {
+            // Logo o branding
+            Image(systemName: "figure.2.and.child.holdinghands")
+                .font(.system(size: 64, weight: .thin))
+                .foregroundColor(themeManager.accentColor)
+                .scaleEffect(1.2)
+                .animation(
+                    .easeInOut(duration: 1.5).repeatForever(autoreverses: true),
+                    value: UUID()
+                )
+            
+            VStack(spacing: Spacing.medium) {
+                Text("Preparando tu experiencia")
+                    .themedFont(.headlineMedium)
+                    .foregroundColor(themeManager.currentTextColor)
+                    .multilineTextAlignment(.center)
+                
+                Text(getLoadingMessage())
+                    .themedFont(.bodyMedium)
+                    .foregroundColor(themeManager.currentSecondaryTextColor)
+                    .multilineTextAlignment(.center)
+            }
+            
+            ProgressView()
+                .progressViewStyle(CircularProgressViewStyle(tint: themeManager.accentColor))
+                .scaleEffect(1.2)
+        }
+        .padding(.horizontal, Spacing.xLarge)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(themeManager.currentBackgroundColor)
+    }
+    
+    private func getLoadingMessage() -> String {
+        switch authStateManager.authState {
+        case .loading:
+            return "Verificando tu sesión..."
+        case .unauthenticated:
+            return "Configurando autenticación..."
+        case .authenticated:
+            return "Cargando tu perfil..."
+        case .loggingOut:
+            return "Cerrando sesión..."
+        case .error:
+            return "Reintentando conexión..."
+        }
+    }
+    
+    // MARK: - Debug Overlay
+    
+    #if DEBUG
+    @ViewBuilder
+    private var debugOverlay: some View {
+        VStack {
+            Spacer()
+            
+            HStack {
+                Spacer()
+                
+                if showDebugInfo {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("🏗️ Debug Info")
+                            .themedFont(.bodyMedium)
+                            .bold()
+                        Text("Screen: \(appCoordinator.currentScreen.description)")
+                            .themedFont(.bodySmall)
+                        Text("Auth: \(authStateManager.authState.description)")
+                            .themedFont(.bodySmall)
+                        Text("Theme: \(themeManager.themeMode.displayName)")
+                            .themedFont(.bodySmall)
+                        Text("Color: \(themeManager.colorScheme == .dark ? "Dark" : "Light")")
+                            .themedFont(.bodySmall)
+                        
+                        Button("Toggle Theme") {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                themeManager.toggleColorScheme()
+                            }
+                        }
+                        .buttonStyle(EBVPrimaryBtnStyle(isEnabled: true))
+                        .scaleEffect(0.8)
+                    }
+                    .padding(8)
+                    .background(
+                        themeManager.currentCardColor.opacity(0.95)
+                            .cornerRadius(8)
+                    )
+                    .shadow(radius: 4)
+                    .transition(.asymmetric(
+                        insertion: .scale.combined(with: .opacity),
+                        removal: .scale.combined(with: .opacity)
+                    ))
+                }
+            }
+            .padding(.trailing, Spacing.medium)
+            .padding(.bottom, Spacing.medium)
+        }
+        .onTapGesture(count: 3) {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                debugTapCount += 1
+                if debugTapCount >= 3 {
+                    showDebugInfo.toggle()
+                    debugTapCount = 0
+                }
+            }
+        }
+    }
+    #endif
+    
+    // MARK: - Timeout Error Overlay
+    
+    @ViewBuilder
+    private var timeoutErrorOverlay: some View {
         ZStack {
-            Color.black.opacity(0.3)
+            themeManager.currentBackgroundColor.opacity(0.8)
                 .ignoresSafeArea()
             
-            VStack(spacing: 20) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 32))
+            VStack(spacing: Spacing.large) {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 48, weight: .light))
                     .foregroundColor(.orange)
                 
-                VStack(spacing: 8) {
-                    Text("Inicialización lenta")
-                        .font(.headline)
-                        .multilineTextAlignment(.center)
+                VStack(spacing: Spacing.medium) {
+                    Text("Tiempo de espera agotado")
+                        .themedFont(.headlineMedium)
+                        .foregroundColor(themeManager.currentTextColor)
                     
-                    Text("La app está tardando más de lo esperado en cargar")
-                        .font(.callout)
-                        .foregroundColor(.secondary)
+                    Text("La aplicación está tardando más de lo esperado en inicializar. Puedes intentar nuevamente.")
+                        .themedFont(.bodyMedium)
+                        .foregroundColor(themeManager.currentSecondaryTextColor)
                         .multilineTextAlignment(.center)
                 }
                 
-                HStack(spacing: 16) {
+                HStack(spacing: Spacing.medium) {
                     Button("Reintentar") {
-                        retryInitialization()
+                        withAnimation(.easeInOut(duration: 0.5)) {
+                            initializationTimeout = false
+                            appCoordinator.resetToInitialState()
+                        }
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(EBVPrimaryBtnStyle(isEnabled: true))
                     
                     Button("Continuar") {
-                        forceNavigationToAuth()
+                        withAnimation(.easeInOut(duration: 0.5)) {
+                            initializationTimeout = false
+                        }
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(EBVAuthBtnStyle(isEnabled: true))
                 }
             }
-            .padding(24)
-            .background(.regularMaterial)
-            .cornerRadius(16)
+            .padding(.horizontal, Spacing.xLarge)
+            .padding(.vertical, Spacing.large)
+            .background(
+                themeManager.currentCardColor
+                    .cornerRadius(16)
+            )
             .shadow(radius: 10)
-            .padding()
+            .padding(.horizontal, Spacing.xLarge)
         }
-    }
-    
-#if DEBUG
-    private var debugOverlay: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("🐛 FigrClub Debug")
-                .font(.caption.bold())
-                .foregroundColor(.white)
-            
-            Group {
-                Text("Screen: \(appCoordinator.currentScreen)")
-                Text("Auth: \(authStateManager.authState.debugDescription)")
-                Text("User: \(authStateManager.currentUser?.username ?? "nil")")
-                Text("Initialized: \(hasInitialized)")
-                Text("Is Authenticated: \(authStateManager.isAuthenticated)")
-                
-                if let user = authStateManager.currentUser {
-                    Text("User ID: \(user.id)")
-                }
-            }
-            .font(.caption2)
-            .foregroundColor(.white)
-            
-            VStack(spacing: 4) {
-                Button("Force Auth Check") {
-                    Task {
-                        await authStateManager.checkInitialAuthState()
-                    }
-                }
-                
-                Button("Reset App") {
-                    appCoordinator.resetToInitialState()
-                    hasInitialized = false
-                }
-                
-                Button("Go to Auth") {
-                    appCoordinator.debugNavigate(to: .authentication)
-                }
-                
-                Button("Go to Main") {
-                    appCoordinator.debugNavigate(to: .main)
-                }
-                
-                Button("Print States") {
-                    appCoordinator.debugPrintState()
-                    authStateManager.debugCurrentState()
-                }
-                
-                Button("Close Debug") {
-                    showDebugInfo = false
-                }
-            }
-            .font(.caption2)
-            .buttonStyle(.bordered)
-        }
-        .padding(12)
-        .background(.black.opacity(0.8))
-        .cornerRadius(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .position(x: UIScreen.main.bounds.width / 2, y: 150)
-    }
-#endif
-    
-    // MARK: - Private Views
-    
-    private var loadingViewForCurrentAuthState: some View {
-        Group {
-            switch authStateManager.authState {
-            case .loggingOut:
-                EBVLoadingView.logout  // ✅ Muestra "Cerrando sesión..."
-            case .loading:
-                EBVLoadingView.appLaunch  // ✅ Muestra "Cargando FigrClub..."
-            default:
-                EBVLoadingView.appLaunch  // Fallback
-            }
-        }
+        .transition(.asymmetric(
+            insertion: .scale.combined(with: .opacity),
+            removal: .scale.combined(with: .opacity)
+        ))
     }
     
     // MARK: - Private Methods
     
-    private func handleAuthStateChange(_ authState: AuthState) {
-        Task { @MainActor in
-            switch authState {
-            case .authenticated(let user):
-                Logger.info("✅ ContentView: User authenticated: \(user.displayName)")
-                // Solo navegar a main si no estamos ya ahí
-                if appCoordinator.currentScreen != .main {
-                    appCoordinator.navigate(to: .main)
-                }
-                
-            case .unauthenticated:
-                Logger.info("🚪 ContentView: User unauthenticated")
-                // Solo navegar a auth si no estamos ya ahí o en splash
-                if appCoordinator.currentScreen == .main {
-                    appCoordinator.navigate(to: .authentication)
-                }
-                
-            case .error(let errorMessage):
-                Logger.error("❌ ContentView: Auth error: \(errorMessage)")
-                // En caso de error, ir a authentication para que el usuario pueda reintentar
-                if appCoordinator.currentScreen == .main {
-                    appCoordinator.navigate(to: .authentication)
-                }
-                
-            case .loading, .loggingOut:
-                Logger.debug("🔄 ContentView: Auth loading...")
-                // No hacer nada, mantener pantalla actual
-            }
-        }
-    }
-    
-    private func performInitialAuthCheck() async {
-        Logger.info("🚀 ContentView: Starting initial auth check")
-        
-        // Asegurar que comenzamos en splash
-        await MainActor.run {
-            if appCoordinator.currentScreen != .splash {
-                appCoordinator.navigate(to: .splash)
-            }
-        }
-        
-        // Pequeño delay para permitir que la UI se configure
-        try? await Task.sleep(for: .milliseconds(500))
-        
-        await authStateManager.checkInitialAuthState()
-        
-        Logger.info("✅ ContentView: Initial auth check completed")
+    private func setupAppCoordinator() {
+        // El AppCoordinator se inicializa automáticamente en su init
+        // No necesitamos llamar métodos adicionales aquí
     }
     
     private func setupInitializationTimeout() {
-        // Timeout de 15 segundos para la inicialización
         Task {
-            try? await Task.sleep(for: .seconds(15))
-            
-            await MainActor.run {
-                // Solo mostrar timeout si aún estamos en splash
-                if appCoordinator.currentScreen == .splash && hasInitialized {
-                    initializationTimeout = true
+            try? await Task.sleep(for: .seconds(10)) // Timeout de 10 segundos
+            if appCoordinator.currentScreen == .splash {
+                await MainActor.run {
                     Logger.warning("⚠️ ContentView: Initialization timeout reached")
+                    initializationTimeout = true
                 }
             }
         }
     }
     
-    private func retryInitialization() {
-        initializationTimeout = false
-        hasInitialized = false
-        Logger.info("🔄 ContentView: Retrying initialization")
+    private func handleAuthStateChange(from oldState: AuthState, to newState: AuthState) {
+        Logger.debug("🔄 ContentView: Auth state changed from \(oldState.description) to \(newState.description)")
         
-        Task {
-            appCoordinator.resetToInitialState()
-            await performInitialAuthCheck()
-            hasInitialized = true
-        }
-    }
-    
-    private func forceNavigationToAuth() {
-        initializationTimeout = false
-        Logger.warning("🔧 ContentView: Force navigating to authentication")
-        appCoordinator.navigate(to: .authentication)
-    }
-    
-#if DEBUG
-    private func handleDebugTap() {
-        debugTapCount += 1
+        // La navegación automática la maneja el AppCoordinator
+        // Aquí solo manejamos efectos secundarios si es necesario
         
-        if debugTapCount >= 5 {
-            showDebugInfo.toggle()
-            debugTapCount = 0
-            Logger.debug("🧪 ContentView: Debug mode toggled: \(showDebugInfo)")
-        }
-        
-        // Reset counter después de 2 segundos
-        Task {
-            try? await Task.sleep(for: .seconds(2))
-            debugTapCount = 0
-        }
-    }
-#endif
-}
-
-extension ContentView {
-    
-    /// Add Feature Flag Manager to environment
-    var bodyWithFeatureFlags: some View {
-        body
-            .environmentObject(DependencyInjector.shared.getFeatureFlagManager())
-    }
-}
-
-// MARK: - Extensions para Debug
-#if DEBUG
-extension AuthState {
-    var debugDescription: String {
-        switch self {
-        case .loading, .loggingOut:
-            return "Loading"
+        switch newState {
         case .authenticated(let user):
-            return "Auth(\(user.displayName))"
+            Logger.debug("✅ ContentView: User authenticated: \(user.displayName)")
+            
         case .unauthenticated:
-            return "Unauth"
+            Logger.debug("🚪 ContentView: User unauthenticated")
+            
         case .error(let message):
-            return "Error(\(message.prefix(20)))"
+            Logger.error("❌ ContentView: Auth error: \(message)")
+            
+        case .loading, .loggingOut:
+            Logger.debug("🔄 ContentView: Auth loading state")
         }
     }
 }
-#endif
 
-// MARK: - Preview
-#if DEBUG
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-            .environmentObject(DependencyInjector.shared.resolve(AuthStateManager.self))
-    }
-}
-#endif
+// MARK: - AuthState Description Extension
+/*
+ extension AuthState {
+ var description: String {
+ switch self {
+ case .loading:
+ return "Loading"
+ case .loggingOut:
+ return "LoggingOut"
+ case .unauthenticated:
+ return "Unauthenticated"
+ case .authenticated(let user):
+ return "Authenticated(\(user.displayName))"
+ case .error(let message):
+ return "Error(\(message))"
+ }
+ }
+ }
+ */
