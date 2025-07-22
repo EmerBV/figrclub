@@ -10,7 +10,7 @@ import Combine
 
 // MARK: - Theme Manager
 @MainActor
-class ThemeManager: ObservableObject {
+final class ThemeManager: ObservableObject {
     
     // MARK: - Published Properties
     @Published var colorScheme: ColorScheme = .light
@@ -21,9 +21,12 @@ class ThemeManager: ObservableObject {
     // MARK: - Singleton
     static let shared = ThemeManager()
     
-    private init() {
-        loadUserPreferences()
-        setupSystemColorSchemeObserver()
+    // MARK: - Initializer (sin singleton)
+    nonisolated init() {
+        Task { @MainActor in
+            self.loadUserPreferences()
+            self.setupSystemColorSchemeObserver()
+        }
     }
     
     // MARK: - Font Size Preferences
@@ -242,7 +245,6 @@ struct ThemedFontModifier: ViewModifier {
             .font(getFontForType())
     }
     
-    @MainActor
     private func getFontForType() -> Font {
         let scaleFactor = themeManager.accessibilityTextScaleFactor
         
@@ -289,7 +291,6 @@ struct ThemedFontModifier: ViewModifier {
 
 // MARK: - Accessibility Support
 extension ThemeManager {
-    @MainActor
     var accessibilityTextScaleFactor: CGFloat {
         let dynamicTypeSize = UIApplication.shared.preferredContentSizeCategory
         let baseScale = preferredFontSize.scaleFactor
@@ -372,69 +373,72 @@ struct ThemedFont {
 }
 
 // MARK: - Theme Preview Helper
-#if DEBUG
-struct ThemePreview: View {
-    @StateObject private var themeManager = ThemeManager.shared
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            Text("FigrClub Theme Preview")
-                .themedFont(.displayMedium)
-                .foregroundColor(themeManager.currentTextColor)
-            
-            HStack(spacing: 16) {
-                ForEach(ThemeManager.ThemeMode.allCases, id: \.self) { mode in
-                    Button(action: {
-                        themeManager.setThemeMode(mode)
-                    }) {
-                        VStack {
-                            Image(systemName: mode.icon)
-                                .figrIcon()
-                            Text(mode.displayName)
-                                .font(.figrCaptionMedium)
-                        }
-                    }
-                    .buttonStyle(.secondary)
-                }
-            }
-            
-            // Ejemplo de componentes con tema
-            VStack(spacing: 12) {
-                FigrPriceTag(price: "$299.99", originalPrice: "$399.99", size: .medium)
-                
-                FigrRarityBadge(rarity: .legendary, size: .medium)
-                
-                Button("Primary Button") {}
-                    .buttonStyle(.primary)
-                
-                Button("Secondary Button") {}
-                    .buttonStyle(.secondary)
-            }
-            .figrCard()
-            .figrCardPadding()
-            
-            Spacer()
-        }
-        .padding(.horizontal, AppTheme.Spacing.screenPadding)
-        .background(
-            (themeManager.colorScheme == .dark ? Color.figrDarkBackground : Color.figrBackground)
-                .ignoresSafeArea()
-        )
-        .themed()
-    }
-}
-
-struct ThemePreview_Previews: PreviewProvider {
-    static var previews: some View {
-        Group {
-            ThemePreview()
-                .preferredColorScheme(.light)
-                .previewDisplayName("Light Mode")
-            
-            ThemePreview()
-                .preferredColorScheme(.dark)
-                .previewDisplayName("Dark Mode")
-        }
-    }
-}
-#endif
+/*
+ #if DEBUG
+ struct ThemePreview: View {
+ // Crear instancia local para preview
+ @StateObject private var themeManager = ThemeManager()
+ 
+ var body: some View {
+ VStack(spacing: 20) {
+ Text("FigrClub Theme Preview")
+ .themedFont(.displayMedium)
+ .foregroundColor(themeManager.currentTextColor)
+ 
+ HStack(spacing: 16) {
+ ForEach(ThemeManager.ThemeMode.allCases, id: \.self) { mode in
+ Button(action: {
+ themeManager.setThemeMode(mode)
+ }) {
+ VStack {
+ Image(systemName: mode.icon)
+ .figrIcon()
+ Text(mode.displayName)
+ .font(.figrCaptionMedium)
+ }
+ }
+ .buttonStyle(.secondary)
+ }
+ }
+ 
+ // Ejemplo de componentes con tema
+ VStack(spacing: 12) {
+ FigrPriceTag(price: "$299.99", originalPrice: "$399.99", size: .medium)
+ 
+ FigrRarityBadge(rarity: .legendary, size: .medium)
+ 
+ Button("Primary Button") {}
+ .buttonStyle(.primary)
+ 
+ Button("Secondary Button") {}
+ .buttonStyle(.secondary)
+ }
+ .figrCard()
+ .figrCardPadding()
+ 
+ Spacer()
+ }
+ .padding(.horizontal, AppTheme.Spacing.screenPadding)
+ .background(
+ (themeManager.colorScheme == .dark ? Color.figrDarkBackground : Color.figrBackground)
+ .ignoresSafeArea()
+ )
+ .environmentObject(themeManager) // Inyectamos para el preview
+ }
+ }
+ 
+ struct ThemePreview_Previews: PreviewProvider {
+ static var previews: some View {
+ Group {
+ ThemePreview()
+ .preferredColorScheme(.light)
+ .previewDisplayName("Light Mode")
+ 
+ ThemePreview()
+ .preferredColorScheme(.dark)
+ .previewDisplayName("Dark Mode")
+ }
+ }
+ }
+ #endif
+ */

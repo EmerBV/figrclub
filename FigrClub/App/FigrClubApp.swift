@@ -16,6 +16,7 @@ struct FigrClubApp: App {
     @StateObject private var authStateManager: AuthStateManager
     @StateObject private var featureFlagManager: FeatureFlagManager
     @StateObject private var localizationManager: LocalizationManager
+    @StateObject private var themeManager: ThemeManager
     
     // MARK: - Initialization
     init() {
@@ -32,10 +33,14 @@ struct FigrClubApp: App {
         let locManager = MainActor.assumeIsolated {
             DependencyInjector.shared.resolve(LocalizationManager.self)
         }
+        let themeManager = MainActor.assumeIsolated {
+            DependencyInjector.shared.resolve(ThemeManager.self)
+        }
         
         self._authStateManager = StateObject(wrappedValue: authManager)
         self._featureFlagManager = StateObject(wrappedValue: flagManager)
         self._localizationManager = StateObject(wrappedValue: locManager)
+        self._themeManager = StateObject(wrappedValue: themeManager)
         
         // Setup logging after all stored properties are initialized
         setupLogging()
@@ -52,12 +57,15 @@ struct FigrClubApp: App {
             ContentView()
                 .environmentObject(authStateManager)
                 .environmentObject(featureFlagManager)
+                .environmentObject(themeManager)
                 .localizationManager(localizationManager)
+                .themed()
                 .onAppear {
                     Task {
                         await setupFeatureFlags()
                     }
                     Logger.info("🚀 FigrClub app launched successfully")
+                    Logger.info("🎨 Theme system initialized")
                     Logger.info("🌍 App initialized with language: \(localizationManager.currentLanguage.displayName)")
                 }
         }
@@ -114,7 +122,8 @@ private extension FigrClubApp {
             ("ValidationService", DependencyInjector.shared.resolveOptional(ValidationServiceProtocol.self) != nil),
             ("SecureStorage", DependencyInjector.shared.resolveOptional(SecureStorageProtocol.self) != nil),
             ("NetworkLogger", DependencyInjector.shared.resolveOptional(NetworkLoggerProtocol.self) != nil),
-            ("APIConfiguration", DependencyInjector.shared.resolveOptional(APIConfigurationProtocol.self) != nil)
+            ("APIConfiguration", DependencyInjector.shared.resolveOptional(APIConfigurationProtocol.self) != nil),
+            ("ThemeManager", DependencyInjector.shared.resolveOptional(ThemeManager.self) != nil)
         ]
         
         let healthScore = criticalServices.filter { $0.1 }.count
@@ -142,6 +151,9 @@ private extension FigrClubApp {
         Logger.info("  📝 Validation Layer: ValidationService")
         Logger.info("  🏗️ DI Container: Swinject")
         Logger.info("  📊 Logging: Unified Logger with os.Logger")
+        Logger.info("  🎨 Theme System: Professional Collector Theme with Dark Mode")
+        Logger.info("  🔤 Typography: SF Pro Display/Text with SF Mono for prices")
+        Logger.info("  🌈 Color Palette: Professional Blue (#334D80) + Premium Gold (#D9A533)")
     }
     
     func logMissingServices(_ missingServices: [String]) {
@@ -167,5 +179,22 @@ extension FigrClubApp {
     @MainActor
     func getFeatureValue(_ key: FeatureFlagKey) -> Int {
         return featureFlagManager.getFeatureValueSync(key)
+    }
+}
+
+// MARK: - Theme App Extensions
+extension FigrClubApp {
+    
+    /// Get current theme state at app level
+    @MainActor
+    var currentTheme: ThemeManager.ThemeMode {
+        return themeManager.themeMode
+    }
+    
+    /// Toggle theme programmatically at app level
+    @MainActor
+    func toggleAppTheme() {
+        themeManager.toggleColorScheme()
+        Logger.info("🎨 App theme toggled to: \(themeManager.themeMode.displayName)")
     }
 }

@@ -27,6 +27,9 @@ final class DependencyInjector {
                 // MARK: - Localization
                 LocalizationAssembly(),
                 
+                // MARK: - Theme
+                ThemeAssembly(),
+                
                 // MARK: - Feature Flags
                 FeatureFlagAssembly(),
                 
