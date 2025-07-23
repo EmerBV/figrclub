@@ -172,23 +172,75 @@ extension View {
     }
 }
 
-struct FigrPrimaryButtonModifier: ViewModifier {
+// MARK: - Custom Themed Text Field Modifier
+
+struct ThemedTextFieldModifier: ViewModifier {
     @EnvironmentObject private var themeManager: ThemeManager
+    let isValid: Bool
+    
+    init(isValid: Bool = true) {
+        self.isValid = isValid
+    }
     
     func body(content: Content) -> some View {
         content
-            .themedFont(.buttonMedium)
+            .themedFont(.bodyMedium)
+            .padding(.horizontal, AppTheme.Spacing.medium)
+            .padding(.vertical, AppTheme.Spacing.buttonPadding)
+            .background(
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.input)
+                    .fill(themeManager.currentCardColor)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.input)
+                    .stroke(borderColor, lineWidth: borderWidth)
+            )
+    }
+    
+    private var borderColor: Color {
+        if !isValid {
+            return .figrError
+        }
+        return themeManager.colorScheme == .dark ?
+        Color.figrDarkBorder : Color.figrBorder
+    }
+    
+    private var borderWidth: CGFloat {
+        !isValid ? 1.5 : 0.5
+    }
+}
+
+struct FigrPrimaryButtonModifier: ViewModifier {
+    @EnvironmentObject private var themeManager: ThemeManager
+    let isEnabled: Bool
+    let isLoading: Bool
+    
+    init(isEnabled: Bool = true, isLoading: Bool = false) {
+        self.isEnabled = isEnabled
+        self.isLoading = isLoading
+    }
+    
+    func body(content: Content) -> some View {
+        content
             .foregroundColor(.white)
-            .padding(.horizontal, AppTheme.Spacing.large)
-            .padding(.vertical, AppTheme.Spacing.medium)
-            .background(themeManager.accentColor)
-            .cornerRadius(AppTheme.CornerRadius.button)
+            .background(
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
+                    .fill(buttonColor)
+            )
             .shadow(
                 color: AppTheme.Shadow.buttonShadowColor,
                 radius: AppTheme.Shadow.buttonShadow.radius,
                 x: AppTheme.Shadow.buttonShadow.x,
                 y: AppTheme.Shadow.buttonShadow.y
             )
+            .disabled(!isEnabled || isLoading)
+    }
+    
+    private var buttonColor: Color {
+        if !isEnabled || isLoading {
+            return themeManager.currentSecondaryTextColor.opacity(0.6)
+        }
+        return themeManager.accentColor
     }
 }
 

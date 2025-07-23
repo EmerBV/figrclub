@@ -71,6 +71,7 @@ struct AppTheme {
         static let medium: CGFloat = 20
         static let large: CGFloat = 24
         static let xlarge: CGFloat = 32
+        static let xxlarge: CGFloat = 80
         
         // Specific use cases
         static let tabBar: CGFloat = 22
