@@ -31,13 +31,14 @@ struct LegalDocumentView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cerrar") {
+                    Button(localizationManager.localizedString(for: .close)) {
                         dismiss()
                     }
                     .foregroundColor(.primary)
                 }
             }
         }
+        .themedBackground()
         .task {
             await loadDocumentIfNeeded()
         }
