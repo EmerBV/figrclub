@@ -11,6 +11,7 @@ import Kingfisher
 struct MarketplaceFlowView: View {
     let user: User
     @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
+    @EnvironmentObject private var themeManager: ThemeManager
     
     // Estado local
     @State private var searchText = ""
@@ -22,14 +23,10 @@ struct MarketplaceFlowView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Header fijo
                 headerView
-                
-                // Categorías fijas
                 categoriesView
                 
-                // Contenido con scroll
-                ScrollView {
+                ScrollView(.vertical, showsIndicators: false) {
                     LazyVStack(spacing: 0) {
                         // Productos destacados
                         featuredProductsView
@@ -42,6 +39,7 @@ struct MarketplaceFlowView: View {
                     await refreshMarketplace()
                 }
             }
+            .themedBackground()
             .navigationBarHidden(true)
         }
         .sheet(isPresented: $showFilters) {
@@ -96,7 +94,7 @@ struct MarketplaceFlowView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color(.systemBackground))
+        //.background(Color(.systemBackground))
     }
     
     // MARK: - Categories View
@@ -121,9 +119,9 @@ struct MarketplaceFlowView: View {
             
             // Separador
             Divider()
-                .background(Color(.systemGray5))
+                .background(themeManager.currentSecondaryTextColor.opacity(0.3))
         }
-        .background(Color(.systemBackground))
+        //.background(Color(.systemBackground))
     }
     
     // MARK: - Featured Products View
@@ -157,7 +155,7 @@ struct MarketplaceFlowView: View {
             }
         }
         .padding(.vertical, 16)
-        .background(Color(.systemBackground))
+        //.background(Color(.systemBackground))
     }
     
     // MARK: - Products Grid View

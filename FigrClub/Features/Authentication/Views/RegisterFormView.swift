@@ -20,7 +20,7 @@ struct RegisterFormView: View {
     @State private var showingPrivacyPolicy = false
     
     var body: some View {
-        ScrollView {
+        ScrollView(showsIndicators: false) {
             VStack(spacing: AppTheme.Spacing.xlarge) {
                 headerSection
                 formSection

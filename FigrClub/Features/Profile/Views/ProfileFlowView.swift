@@ -12,6 +12,7 @@ struct ProfileFlowView: View {
     let user: User
     @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
     @EnvironmentObject private var authStateManager: AuthStateManager
+    @EnvironmentObject private var themeManager: ThemeManager
     
     @State private var isLoggingOut = false
     @State private var showLogoutConfirmation = false
@@ -33,6 +34,7 @@ struct ProfileFlowView: View {
             }
             .navigationTitle("Perfil")
             .navigationBarTitleDisplayMode(.large)
+            .themedBackground()
         }
         .alert("Cerrar Sesión", isPresented: $showLogoutConfirmation) {
             Button("Cancelar", role: .cancel) {

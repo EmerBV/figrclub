@@ -12,6 +12,7 @@ struct FeedFlowView: View {
     let user: User
     @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
     @EnvironmentObject private var authStateManager: AuthStateManager
+    @EnvironmentObject private var themeManager: ThemeManager
     
     // Estado local para UI
     @State private var isLoggingOut = false
@@ -23,19 +24,16 @@ struct FeedFlowView: View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
                 LazyVStack(spacing: 0) {
-                    // Header con logo y botones
                     headerView
-                    
-                    // Stories horizontales
                     storiesView
                     
-                    // Posts del feed
                     ForEach(posts) { post in
                         PostView(post: post, currentUser: user)
                             .environmentObject(navigationCoordinator)
                     }
                 }
             }
+            .themedBackground()
             .navigationBarHidden(true)
             .refreshable {
                 await refreshFeed()
@@ -73,13 +71,12 @@ struct FeedFlowView: View {
         }
     }
     
-    // MARK: - Header View (Instagram Style)
     private var headerView: some View {
         HStack {
             // Logo de FigrClub
             Text("FigrClub")
                 .font(.system(size: 24, weight: .bold, design: .rounded))
-                .foregroundColor(.primary)
+                .themedTextColor(.primary)
             
             Spacer()
             
@@ -90,7 +87,7 @@ struct FeedFlowView: View {
                 } label: {
                     Image(systemName: "heart")
                         .font(.title2)
-                        .foregroundColor(.primary)
+                        .themedTextColor(.primary)
                 }
                 
                 // Botón de mensajes
@@ -99,7 +96,7 @@ struct FeedFlowView: View {
                 } label: {
                     Image(systemName: "paperplane")
                         .font(.title2)
-                        .foregroundColor(.primary)
+                        .themedTextColor(.primary)
                 }
                 
                 // Botón de logout
@@ -108,14 +105,13 @@ struct FeedFlowView: View {
                 } label: {
                     Image(systemName: "line.3.horizontal")
                         .font(.title2)
-                        .foregroundColor(.primary)
+                        .themedTextColor(.primary)
                 }
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-        .padding(.bottom, 8)
-        .background(Color(.systemBackground))
+        .padding(.horizontal, AppTheme.Spacing.medium)
+        .padding(.top, AppTheme.Spacing.small)
+        .padding(.bottom, AppTheme.Spacing.small)
     }
     
     // MARK: - Stories View
@@ -133,7 +129,6 @@ struct FeedFlowView: View {
             .padding(.horizontal, 16)
         }
         .padding(.vertical, 8)
-        .background(Color(.systemBackground))
     }
     
     // MARK: - Private Methods
@@ -283,7 +278,6 @@ struct PostView: View {
             timestampView
                 .padding(.horizontal, 16)
         }
-        .background(Color(.systemBackground))
     }
     
     private var postHeader: some View {

@@ -14,6 +14,8 @@ struct LegalDocumentView: View {
     @Environment(\.localizationManager) private var localizationManager
     @Environment(\.dismiss) private var dismiss
     
+    @EnvironmentObject private var themeManager: ThemeManager
+    
     var body: some View {
         NavigationView {
             ZStack {

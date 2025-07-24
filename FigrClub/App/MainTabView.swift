@@ -56,16 +56,20 @@ struct MainTabView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(themeManager.currentBackgroundColor)
+            //.background(themeManager.currentBackgroundColor)
             
             // Custom Tab Bar
             customTabBar
         }
+        /*
         .background(
             // Fondo que se extiende hasta el bottom safe area
             themeManager.currentBackgroundColor
                 .ignoresSafeArea(.container, edges: .bottom)
         )
+         */
+        
+        .themedBackground()
         .environmentObject(navigationCoordinator)
         .onAppear {
             setupDeepLinkManager()
@@ -121,7 +125,7 @@ struct MainTabView: View {
             .padding(.top, AppTheme.Spacing.small)
             .padding(.bottom, AppTheme.Spacing.small)
         }
-        .background(themeManager.currentCardColor)
+        //.background(themeManager.currentCardColor)
         .shadow(
             color: themeManager.colorScheme == .dark ?
             AppTheme.Shadow.cardShadowColor.opacity(0.3) :
