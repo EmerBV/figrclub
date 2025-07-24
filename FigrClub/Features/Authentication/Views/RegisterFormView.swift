@@ -170,7 +170,7 @@ struct RegisterFormView: View {
     }
     
     private var termsAndConditionsView: some View {
-        HStack(alignment: .center, spacing: 12) {
+        HStack(spacing: 12) {
             Button {
                 if !viewModel.acceptTerms {
                     viewModel.acceptTermsAndConditions()
@@ -188,27 +188,28 @@ struct RegisterFormView: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 0) {
                     Text("Acepto los ")
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
+                        .themedFont(.titleSmall)
+                        .themedTextColor(.secondary)
                     
                     Button(action: {
                         showingTermsOfService = true
                     }) {
                         Text(localizationManager.localizedString(for: .termsAndConditions))
-                            .font(.system(size: 14))
+                            .themedFont(.titleSmall)
                             .foregroundColor(.blue)
                             .underline()
                     }
+                    .frame(maxWidth: .infinity)
                     
                     Text(" y la ")
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
+                        .themedFont(.titleSmall)
+                        .themedTextColor(.secondary)
                     
                     Button(action: {
                         showingPrivacyPolicy = true
                     }) {
                         Text(localizationManager.localizedString(for: .privacyPolicy))
-                            .font(.system(size: 14))
+                            .themedFont(.titleSmall)
                             .foregroundColor(.blue)
                             .underline()
                     }
@@ -221,6 +222,7 @@ struct RegisterFormView: View {
                         .padding(.top, 2)
                 }
             }
+            .frame(maxWidth: .infinity)
         }
     }
     
