@@ -202,7 +202,7 @@ enum ThemedFontType {
     case displayLarge, displayMedium, displaySmall
     case headlineLarge, headlineMedium, headlineSmall
     case titleLarge, titleMedium, titleSmall
-    case bodyLarge, bodyMedium, bodySmall
+    case bodyLarge, bodyMedium, bodySmall, bodyXSmall
     case buttonLarge, buttonMedium, buttonSmall
     case priceLarge, priceMedium, priceSmall
 }
@@ -245,6 +245,8 @@ struct ThemedFontModifier: ViewModifier {
             return .scaledForTheme(baseSize: 16, weight: .regular, scaleFactor: scaleFactor)
         case .bodySmall:
             return .scaledForTheme(baseSize: 15, weight: .regular, scaleFactor: scaleFactor)
+        case .bodyXSmall:
+            return .scaledForTheme(baseSize: 12, weight: .regular, scaleFactor: scaleFactor)
         case .buttonLarge:
             return .scaledForTheme(baseSize: 18, weight: .semibold, scaleFactor: scaleFactor)
         case .buttonMedium:

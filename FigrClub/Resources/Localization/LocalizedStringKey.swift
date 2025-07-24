@@ -27,6 +27,7 @@ enum LocalizedStringKey: String, CaseIterable {
     case previous = "previous"
     case continueButton = "continue"
     case skip = "skip"
+    case or = "or"
     
     // MARK: - Authentication
     case login = "login"
@@ -46,13 +47,14 @@ enum LocalizedStringKey: String, CaseIterable {
     // MARK: - Form Fields
     case email = "email"
     case password = "password"
-    case confirmPassword = "confirm_password"
     case username = "username"
     case fullName = "full_name"
     case firstName = "first_name"
     case lastName = "last_name"
     case emailPlaceholder = "email_placeholder"
     case passwordPlaceholder = "password_placeholder"
+    case confirmPassword = "confirm_password"
+    case createPasswordPlaceholder = "create_password_placeholder"
     case confirmPasswordPlaceholder = "confirm_password_placeholder"
     case usernamePlaceholder = "username_placeholder"
     case fullNamePlaceholder = "full_name_placeholder"
@@ -85,9 +87,11 @@ enum LocalizedStringKey: String, CaseIterable {
     case passwordMustHaveSpecial = "password_must_have_special"
     
     // MARK: - Terms and Conditions
+    case legalDocuments = "legal_documents"
     case acceptTerms = "accept_terms"
     case termsAndConditions = "terms_and_conditions"
     case privacyPolicy = "privacy_policy"
+    case legalDocumentsDescription = "legal_documents_description"
     case acceptedAt = "accepted_at"
     
     // MARK: - Consents
@@ -162,7 +166,7 @@ enum LocalizedStringKey: String, CaseIterable {
     
     var fallbackValue: String {
         switch self {
-        // General
+            // General
         case .appName: return "FigrClub"
         case .cancel: return "Cancelar"
         case .confirm: return "Confirmar"
@@ -179,8 +183,9 @@ enum LocalizedStringKey: String, CaseIterable {
         case .previous: return "Anterior"
         case .continueButton: return "Continuar"
         case .skip: return "Omitir"
-        
-        // Authentication
+        case .or: return "o"
+            
+            // Authentication
         case .login: return "Iniciar sesión"
         case .register: return "Registrarse"
         case .logout: return "Cerrar sesión"
@@ -194,22 +199,23 @@ enum LocalizedStringKey: String, CaseIterable {
         case .alreadyHaveAccount: return "¿Ya tienes cuenta? Inicia sesión"
         case .dontHaveAccount: return "¿No tienes cuenta? Regístrate"
         case .forgotPassword: return "¿Olvidaste tu contraseña?"
-        
-        // Form Fields
+            
+            // Form Fields
         case .email: return "Correo"
         case .password: return "Contraseña"
-        case .confirmPassword: return "Confirmar contraseña"
         case .username: return "Nombre de usuario"
         case .fullName: return "Nombre completo"
         case .firstName: return "Nombre"
         case .lastName: return "Apellido"
-        case .emailPlaceholder: return "your@email.com"
-        case .passwordPlaceholder: return "Crea una contraseña"
+        case .emailPlaceholder: return "Introduce tu correo"
+        case .passwordPlaceholder: return "Introduce tu contraseña"
+        case .confirmPassword: return "Confirmar contraseña"
+        case .createPasswordPlaceholder: return "Crea una contraseña"
         case .confirmPasswordPlaceholder: return "Confirma tu contraseña"
         case .usernamePlaceholder: return "nombreusuario"
         case .fullNamePlaceholder: return "Tu nombre completo"
-        
-        // Validation Messages
+            
+            // Validation Messages
         case .emailRequired: return "El email no puede estar vacío"
         case .emailInvalid: return "Formato de email inválido"
         case .passwordRequired: return "La contraseña no puede estar vacía"
@@ -228,28 +234,30 @@ enum LocalizedStringKey: String, CaseIterable {
         case .fullNameTooShort: return "El nombre completo debe tener al menos 2 caracteres"
         case .fullNameTooLong: return "El nombre completo no puede tener más de 50 caracteres"
         case .fullNameInvalidChars: return "El nombre contiene caracteres no válidos"
-        
-        // Password Requirements
+            
+            // Password Requirements
         case .passwordRequirements: return "Requisitos de contraseña:"
         case .passwordMinLength: return "Al menos 8 caracteres"
         case .passwordMustHaveLetter: return "Al menos una letra"
         case .passwordMustHaveNumber: return "Al menos un número"
         case .passwordMustHaveSpecial: return "Al menos un carácter especial (!@#$%^&*)"
-        
-        // Terms and Conditions
+            
+            // Terms and Conditions
+        case .legalDocuments: return "Documentos legales"
         case .acceptTerms: return "Acepto los términos y condiciones y la política de privacidad"
         case .termsAndConditions: return "términos y condiciones"
         case .privacyPolicy: return "política de privacidad"
+        case .legalDocumentsDescription: return "He leído y acepto los documentos legales anteriores."
         case .acceptedAt: return "Aceptado el: %@"
-        
-        // Consents
+            
+            // Consents
         case .consents: return "Consentimientos"
         case .dataProcessing: return "Procesamiento de datos"
         case .dataProcessingDescription: return "Acepto el procesamiento de mis datos personales según la política de privacidad."
         case .functionalCookies: return "Cookies funcionales"
         case .functionalCookiesDescription: return "Acepto el uso de cookies funcionales para mejorar la experiencia de usuario."
-        
-        // Email Verification
+            
+            // Email Verification
         case .emailVerification: return "Verificación de email"
         case .verifyEmail: return "Verifica tu email"
         case .emailSent: return "Email enviado"
@@ -257,15 +265,15 @@ enum LocalizedStringKey: String, CaseIterable {
         case .emailSentInstructions: return "Por favor, revisa tu bandeja de entrada y haz clic en el enlace de verificación para completar tu registro."
         case .didntReceiveEmail: return "¿No recibiste el email?"
         case .resendEmail: return "Reenviar"
-        
-        // Loading States
+            
+            // Loading States
         case .loggingIn: return "Iniciando sesión..."
         case .creatingAccount: return "Creando cuenta..."
         case .signingOut: return "Cerrando sesión..."
         case .verifying: return "Verificando..."
         case .processing: return "Procesando..."
-        
-        // Error Messages
+            
+            // Error Messages
         case .networkError: return "Error de conexión. Verifica tu internet."
         case .authError: return "Error de autenticación"
         case .validationError: return "Por favor completa todos los campos correctamente"
@@ -279,23 +287,23 @@ enum LocalizedStringKey: String, CaseIterable {
         case .emailAlreadyInUse: return "Este email ya está en uso"
         case .userNotFound: return "Usuario no encontrado"
         case .tooManyRequests: return "Demasiados intentos. Inténtalo más tarde."
-        
-        // Success Messages
+            
+            // Success Messages
         case .loginSuccessful: return "¡Sesión iniciada con éxito!"
         case .registrationSuccessful: return "¡Cuenta creada con éxito!"
         case .emailVerified: return "Email verificado correctamente"
         case .passwordChanged: return "Contraseña cambiada con éxito"
         case .profileUpdated: return "Perfil actualizado con éxito"
-        
-        // Language Settings
+            
+            // Language Settings
         case .language: return "Idioma"
         case .changeLanguage: return "Cambiar idioma"
         case .spanish: return "Español"
         case .english: return "English"
         case .systemLanguage: return "Idioma del sistema"
         case .languageChanged: return "Idioma cambiado a %@"
-        
-        // Navigation
+            
+            // Navigation
         case .home: return "Inicio"
         case .feed: return "Feed"
         case .search: return "Buscar"
@@ -304,8 +312,8 @@ enum LocalizedStringKey: String, CaseIterable {
         case .notifications: return "Notificaciones"
         case .profile: return "Perfil"
         case .settings: return "Configuración"
-        
-        // Legal Documents
+            
+            // Legal Documents
         case .loadingDocument: return "Cargando documento..."
         case .noDocumentAvailable: return "Documento no disponible"
         case .version: return "Versión"

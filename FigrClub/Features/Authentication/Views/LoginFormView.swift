@@ -33,7 +33,6 @@ struct LoginFormView: View {
     }
     
     // MARK: - Header Section
-    
     private var headerSection: some View {
         VStack(spacing: AppTheme.Spacing.large) {
             logoSection
@@ -82,7 +81,7 @@ struct LoginFormView: View {
                 .themedFont(.titleMedium)
                 .themedTextColor(.primary)
             
-            TextField(localizationManager.localizedString(for: .email), text: $viewModel.loginEmail)
+            TextField(localizationManager.localizedString(for: .emailPlaceholder), text: $viewModel.loginEmail)
                 .modifier(ThemedTextFieldModifier(
                     isValid: getValidationState(viewModel.loginEmailValidation) != .invalid
                 ))
@@ -95,11 +94,11 @@ struct LoginFormView: View {
     
     private var passwordField: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
-            Text("Contraseña")
+            Text(localizationManager.localizedString(for: .password))
                 .themedFont(.titleMedium)
                 .themedTextColor(.primary)
             
-            SecureField("Tu contraseña", text: $viewModel.loginPassword)
+            SecureField(localizationManager.localizedString(for: .passwordPlaceholder), text: $viewModel.loginPassword)
                 .modifier(ThemedTextFieldModifier(
                     isValid: getValidationState(viewModel.loginPasswordValidation) != .invalid
                 ))
@@ -110,7 +109,7 @@ struct LoginFormView: View {
     private var forgotPasswordLink: some View {
         HStack {
             Spacer()
-            Button("¿Olvidaste tu contraseña?") {
+            Button(localizationManager.localizedString(for: .forgotPassword)) {
                 handleForgotPassword()
             }
             .themedFont(.bodySmall)
@@ -120,7 +119,6 @@ struct LoginFormView: View {
     }
     
     // MARK: - Action Buttons Section
-    
     private var actionButtonsSection: some View {
         VStack(spacing: AppTheme.Spacing.large) {
             loginButton
@@ -140,10 +138,10 @@ struct LoginFormView: View {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         .scaleEffect(0.8)
-                    Text("Iniciando sesión...")
+                    Text(localizationManager.localizedString(for: .loggingIn))
                         .themedFont(.buttonMedium)
                 } else {
-                    Text("Iniciar Sesión")
+                    Text(localizationManager.localizedString(for: .login))
                         .themedFont(.buttonMedium)
                 }
             }
@@ -162,7 +160,7 @@ struct LoginFormView: View {
                 .fill(themeManager.currentSecondaryTextColor.opacity(0.3))
                 .frame(height: 1)
             
-            Text("o")
+            Text(localizationManager.localizedString(for: .or))
                 .themedFont(.bodySmall)
                 .themedTextColor(.secondary)
                 .padding(.horizontal, AppTheme.Spacing.medium)
@@ -171,11 +169,11 @@ struct LoginFormView: View {
                 .fill(themeManager.currentSecondaryTextColor.opacity(0.3))
                 .frame(height: 1)
         }
+        .padding(.horizontal, AppTheme.Spacing.medium)
     }
     
     private var createAccountButton: some View {
-        Button("Crear una cuenta") {
-            Logger.info("🔄 LoginFormView: User tapped 'Crear una cuenta'")
+        Button(localizationManager.localizedString(for: .register)) {
             viewModel.switchToRegister()
         }
         .themedFont(.buttonMedium)
@@ -184,7 +182,6 @@ struct LoginFormView: View {
     }
     
     // MARK: - Private Methods
-    
     private func performLogin() async {
         errorHandler.dismiss()
         

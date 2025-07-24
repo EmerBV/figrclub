@@ -1,9 +1,9 @@
-/* 
-  Localizable.strings (Spanish)
-  FigrClub
-
-  Created by Emerson Balahan Varona on 16/7/25.
-*/
+/*
+ Localizable.strings (Spanish)
+ FigrClub
+ 
+ Created by Emerson Balahan Varona on 16/7/25.
+ */
 
 // MARK: - General
 "app_name" = "FigrClub";
@@ -22,6 +22,7 @@
 "previous" = "Anterior";
 "continue" = "Continuar";
 "skip" = "Omitir";
+"or" = "o";
 
 // MARK: - Authentication
 "login" = "Iniciar sesión";
@@ -46,8 +47,9 @@
 "full_name" = "Nombre completo";
 "first_name" = "Nombre";
 "last_name" = "Apellido";
-"email_placeholder" = "your@email.com";
-"password_placeholder" = "Crea una contraseña";
+"email_placeholder" = "Introduce tu correo";
+"password_placeholder" = "Introduce tu contraseña";
+"create_password_placeholder" = "Crea una contraseña";
 "confirm_password_placeholder" = "Confirma tu contraseña";
 "username_placeholder" = "Nombre usuario";
 "full_name_placeholder" = "Nombre completo";
@@ -80,9 +82,11 @@
 "password_must_have_special" = "Al menos un carácter especial (!@#$%^&*)";
 
 // MARK: - Terms and Conditions
+"legal_documents" = "Documentos legales";
 "accept_terms" = "Acepto los términos y condiciones y la política de privacidad";
-"terms_and_conditions" = "términos y condiciones";
-"privacy_policy" = "política de privacidad";
+"terms_and_conditions" = "Términos y condiciones";
+"privacy_policy" = "Política de privacidad";
+"legal_documents_description" = "He leído y acepto los documentos legales anteriores.";
 "accepted_at" = "Aceptado el: %@";
 
 // MARK: - Consents
@@ -151,4 +155,4 @@
 // MARK: - Legal Documents
 "loading_document" = "Cargando documento...";
 "no_document_available" = "Documento no disponible";
-"version" = "Versión"; 
+"version" = "Versión";

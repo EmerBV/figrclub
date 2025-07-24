@@ -90,7 +90,7 @@ struct RegisterFormView: View {
     
     private var emailField: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
-            Text(localizationManager.localizedString(for: .email))
+            Text(localizationManager.localizedString(for: .emailPlaceholder))
                 .themedFont(.titleMedium)
                 .themedTextColor(.primary)
             
@@ -142,7 +142,7 @@ struct RegisterFormView: View {
                 .themedFont(.titleMedium)
                 .themedTextColor(.primary)
             
-            SecureField(localizationManager.localizedString(for: .passwordPlaceholder), text: $viewModel.registerPassword)
+            SecureField(localizationManager.localizedString(for: .createPasswordPlaceholder), text: $viewModel.registerPassword)
                 .modifier(ThemedTextFieldModifier(
                     isValid: getValidationState(viewModel.registerPasswordValidation) != .invalid
                 ))
@@ -170,115 +170,238 @@ struct RegisterFormView: View {
     }
     
     private var termsAndConditionsView: some View {
-        HStack(spacing: 12) {
-            Button {
-                if !viewModel.acceptTerms {
-                    viewModel.acceptTermsAndConditions()
-                } else {
-                    viewModel.acceptTerms = false
-                    viewModel.termsAcceptedAt = nil
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+            // Header
+            Text(localizationManager.localizedString(for: .legalDocuments))
+                .themedFont(.titleMedium)
+                .themedTextColor(.primary)
+            
+            VStack(alignment: .leading, spacing: 12) {
+                // Terms Row
+                HStack {
+                    Button(action: {
+                        showingTermsOfService = true
+                    }) {
+                        HStack(spacing: 12) {
+                            Image(systemName: "doc.text")
+                                .font(.system(size: 16))
+                                .foregroundColor(.blue)
+                                .frame(width: 20)
+                            
+                            Text(localizationManager.localizedString(for: .termsAndConditions))
+                                .themedFont(.titleSmall)
+                                .foregroundColor(.blue)
+                                .multilineTextAlignment(.leading)
+                            
+                            Spacer()
+                            
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                
+                Divider()
+                    .opacity(0.3)
+                
+                // Privacy Policy Row
+                HStack {
+                    Button(action: {
+                        showingPrivacyPolicy = true
+                    }) {
+                        HStack(spacing: 12) {
+                            Image(systemName: "shield.checkered")
+                                .font(.system(size: 16))
+                                .foregroundColor(.blue)
+                                .frame(width: 20)
+                            
+                            Text(localizationManager.localizedString(for: .privacyPolicy))
+                                .themedFont(.titleSmall)
+                                .foregroundColor(.blue)
+                                .multilineTextAlignment(.leading)
+                            
+                            Spacer()
+                            
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemGray6))
+            )
+            
+            // Single acceptance checkbox
+            HStack(alignment: .center, spacing: 12) {
+                Button {
+                    if !viewModel.acceptTerms {
+                        viewModel.acceptTermsAndConditions()
+                    } else {
+                        viewModel.acceptTerms = false
+                        viewModel.termsAcceptedAt = nil
+                    }
+                } label: {
+                    Image(systemName: viewModel.acceptTerms ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 20))
+                        .foregroundColor(viewModel.acceptTerms ? .blue : .gray)
+                }
+                .disabled(viewModel.isLoading)
+                
+                Text(localizationManager.localizedString(for: .legalDocumentsDescription))
+                    .themedFont(.bodyXSmall)
+                    .themedTextColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+    
+    private var consentsSection: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+            Text(localizationManager.localizedString(for: .consents))
+                .themedFont(.titleMedium)
+                .themedTextColor(.primary)
+            
+            // Data Processing Consent
+            consentView(
+                title: localizationManager.localizedString(for: .dataProcessing),
+                description: localizationManager.localizedString(for: .dataProcessingDescription),
+                isAccepted: viewModel.acceptDataProcessing,
+                //acceptedAt: viewModel.dataProcessingAcceptedAt,
+                onToggle: {
+                    if !viewModel.acceptDataProcessing {
+                        viewModel.acceptDataProcessingConsent()
+                    } else {
+                        viewModel.acceptDataProcessing = false
+                        viewModel.dataProcessingAcceptedAt = nil
+                    }
+                }
+            )
+            
+            // Functional Cookies Consent
+            consentView(
+                title: localizationManager.localizedString(for: .functionalCookies),
+                description: localizationManager.localizedString(for: .functionalCookiesDescription),
+                isAccepted: viewModel.acceptFunctionalCookies,
+                //acceptedAt: viewModel.functionalCookiesAcceptedAt,
+                onToggle: {
+                    if !viewModel.acceptFunctionalCookies {
+                        viewModel.acceptFunctionalCookiesConsent()
+                    } else {
+                        viewModel.acceptFunctionalCookies = false
+                        viewModel.functionalCookiesAcceptedAt = nil
+                    }
+                }
+            )
+        }
+    }
+    
+    private func consentView(
+        title: String,
+        description: String,
+        isAccepted: Bool,
+        //acceptedAt: Date?,
+        onToggle: @escaping () -> Void
+    ) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Button {
+                onToggle()
             } label: {
-                Image(systemName: viewModel.acceptTerms ? "checkmark.circle.fill" : "circle")
+                Image(systemName: isAccepted ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 20))
-                    .foregroundColor(viewModel.acceptTerms ? .blue : .gray)
+                    .foregroundColor(isAccepted ? .blue : .gray)
             }
             .disabled(viewModel.isLoading)
             
             VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 0) {
-                    Text("Acepto los ")
-                        .themedFont(.titleSmall)
-                        .themedTextColor(.secondary)
-                    
-                    Button(action: {
-                        showingTermsOfService = true
-                    }) {
-                        Text(localizationManager.localizedString(for: .termsAndConditions))
-                            .themedFont(.titleSmall)
-                            .foregroundColor(.blue)
-                            .underline()
-                    }
-                    .frame(maxWidth: .infinity)
-                    
-                    Text(" y la ")
-                        .themedFont(.titleSmall)
-                        .themedTextColor(.secondary)
-                    
-                    Button(action: {
-                        showingPrivacyPolicy = true
-                    }) {
-                        Text(localizationManager.localizedString(for: .privacyPolicy))
-                            .themedFont(.titleSmall)
-                            .foregroundColor(.blue)
-                            .underline()
-                    }
-                }
+                Text(title)
+                    .themedFont(.titleSmall)
+                    .themedTextColor(.primary)
                 
-                if let acceptedAt = viewModel.termsAcceptedAt {
-                    Text(localizationManager.localizedString(for: .acceptedAt, arguments: DateFormatter.localizedString(from: acceptedAt, dateStyle: .short, timeStyle: .short)))
-                        .font(.system(size: 10))
-                        .foregroundColor(.green)
-                        .padding(.top, 2)
-                }
+                Text(description)
+                    .themedFont(.bodyXSmall)
+                    .themedTextColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                
+                /*
+                 if let acceptedAt = acceptedAt {
+                 Text(localizationManager.localizedString(for: .acceptedAt, arguments: DateFormatter.localizedString(from: acceptedAt, dateStyle: .short, timeStyle: .short)))
+                 .font(.system(size: 10))
+                 .foregroundColor(.green)
+                 }
+                 */
             }
-            .frame(maxWidth: .infinity)
         }
     }
     
     private var actionButtonsSection: some View {
-        VStack(spacing: 20) {
-            // Register Button
-            Button {
-                Task {
-                    await performRegister()
-                }
-            } label: {
-                HStack {
-                    if viewModel.isLoading {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            .scaleEffect(0.8)
-                        Text(localizationManager.localizedString(for: .creatingAccount))
-                    } else {
-                        Text(localizationManager.localizedString(for: .createAccount))
-                            .font(.system(size: 16, weight: .semibold))
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-            }
-            .buttonStyle(EBVAuthBtnStyle(
-                isEnabled: viewModel.canRegister && !viewModel.isLoading,
-                isLoading: viewModel.isLoading
-            ))
-            .disabled(!viewModel.canRegister || viewModel.isLoading)
-            
-            // Divider with "o"
-            HStack {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(height: 1)
-                
-                Text("o")
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(.gray)
-                    .padding(.horizontal, 16)
-                
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(height: 1)
-            }
-            
-            // Login Button
-            Button(localizationManager.localizedString(for: .alreadyHaveAccount)) {
-                Logger.info("🔄 RegisterFormView: User tapped 'Ya tienes cuenta'")
-                viewModel.switchToLogin()
-            }
-            .font(.system(size: 16, weight: .semibold))
-            .foregroundColor(.primary)
-            .disabled(viewModel.isLoading)
+        VStack(spacing: AppTheme.Spacing.large) {
+            registerButton
+            dividerSection
+            switchToLoginButton
         }
+    }
+    
+    private var registerButton: some View {
+        Button {
+            Task {
+                await performRegister()
+            }
+        } label: {
+            HStack {
+                if viewModel.isLoading {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .scaleEffect(0.8)
+                    Text(localizationManager.localizedString(for: .creatingAccount))
+                        .themedFont(.buttonMedium)
+                } else {
+                    Text(localizationManager.localizedString(for: .createAccount))
+                        .themedFont(.buttonMedium)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 50)
+        }
+        .modifier(FigrPrimaryButtonModifier(
+            isEnabled: viewModel.canRegister && !viewModel.isLoading,
+            isLoading: viewModel.isLoading
+        ))
+        .disabled(!viewModel.canRegister || viewModel.isLoading)
+    }
+    
+    private var dividerSection: some View {
+        HStack {
+            Rectangle()
+                .fill(themeManager.currentSecondaryTextColor.opacity(0.3))
+                .frame(height: 1)
+            
+            Text(localizationManager.localizedString(for: .or))
+                .themedFont(.bodySmall)
+                .themedTextColor(.secondary)
+                .padding(.horizontal, AppTheme.Spacing.medium)
+            
+            Rectangle()
+                .fill(themeManager.currentSecondaryTextColor.opacity(0.3))
+                .frame(height: 1)
+        }
+        .padding(.horizontal, AppTheme.Spacing.medium)
+    }
+    
+    private var switchToLoginButton: some View {
+        Button(localizationManager.localizedString(for: .alreadyHaveAccount)) {
+            viewModel.switchToLogin()
+        }
+        .themedFont(.buttonMedium)
+        .themedTextColor(.primary)
+        .disabled(viewModel.isLoading)
     }
     
     private func performRegister() async {
@@ -288,8 +411,6 @@ struct RegisterFormView: View {
             errorHandler.handle(error)
         }
     }
-    
-    
     
     private func getValidationState(_ validation: ValidationResult) -> ValidationState {
         switch validation {
@@ -305,36 +426,36 @@ struct RegisterFormView: View {
             HStack(spacing: 4) {
                 Image(systemName: passwordMeetsLength ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(passwordMeetsLength ? .green : .gray)
-                    .font(.system(size: 12))
+                    .themedFont(.bodyXSmall)
                 Text(localizationManager.localizedString(for: .passwordMinLength))
-                    .font(.system(size: 12))
+                    .themedFont(.bodyXSmall)
                     .foregroundColor(passwordMeetsLength ? .green : .gray)
             }
             
             HStack(spacing: 4) {
                 Image(systemName: passwordHasLetter ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(passwordHasLetter ? .green : .gray)
-                    .font(.system(size: 12))
+                    .themedFont(.bodyXSmall)
                 Text(localizationManager.localizedString(for: .passwordMustHaveLetter))
-                    .font(.system(size: 12))
+                    .themedFont(.bodyXSmall)
                     .foregroundColor(passwordHasLetter ? .green : .gray)
             }
             
             HStack(spacing: 4) {
                 Image(systemName: passwordHasNumber ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(passwordHasNumber ? .green : .gray)
-                    .font(.system(size: 12))
+                    .themedFont(.bodyXSmall)
                 Text(localizationManager.localizedString(for: .passwordMustHaveNumber))
-                    .font(.system(size: 12))
+                    .themedFont(.bodyXSmall)
                     .foregroundColor(passwordHasNumber ? .green : .gray)
             }
             
             HStack(spacing: 4) {
                 Image(systemName: passwordHasSpecialChar ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(passwordHasSpecialChar ? .green : .gray)
-                    .font(.system(size: 12))
+                    .themedFont(.bodyXSmall)
                 Text(localizationManager.localizedString(for: .passwordMustHaveSpecial))
-                    .font(.system(size: 12))
+                    .themedFont(.bodyXSmall)
                     .foregroundColor(passwordHasSpecialChar ? .green : .gray)
             }
         }
@@ -356,81 +477,5 @@ struct RegisterFormView: View {
     
     private var passwordHasSpecialChar: Bool {
         viewModel.registerPassword.rangeOfCharacter(from: CharacterSet(charactersIn: "!@#$%^&*()_+-=[]{}|;:,.<>?")) != nil
-    }
-    
-    private var consentsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(localizationManager.localizedString(for: .consents))
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.primary)
-            
-            // Data Processing Consent
-            consentView(
-                title: localizationManager.localizedString(for: .dataProcessing),
-                description: localizationManager.localizedString(for: .dataProcessingDescription),
-                isAccepted: viewModel.acceptDataProcessing,
-                acceptedAt: viewModel.dataProcessingAcceptedAt,
-                onToggle: {
-                    if !viewModel.acceptDataProcessing {
-                        viewModel.acceptDataProcessingConsent()
-                    } else {
-                        viewModel.acceptDataProcessing = false
-                        viewModel.dataProcessingAcceptedAt = nil
-                    }
-                }
-            )
-            
-            // Functional Cookies Consent
-            consentView(
-                title: localizationManager.localizedString(for: .functionalCookies),
-                description: localizationManager.localizedString(for: .functionalCookiesDescription),
-                isAccepted: viewModel.acceptFunctionalCookies,
-                acceptedAt: viewModel.functionalCookiesAcceptedAt,
-                onToggle: {
-                    if !viewModel.acceptFunctionalCookies {
-                        viewModel.acceptFunctionalCookiesConsent()
-                    } else {
-                        viewModel.acceptFunctionalCookies = false
-                        viewModel.functionalCookiesAcceptedAt = nil
-                    }
-                }
-            )
-        }
-    }
-    
-    private func consentView(
-        title: String,
-        description: String,
-        isAccepted: Bool,
-        acceptedAt: Date?,
-        onToggle: @escaping () -> Void
-    ) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            Button {
-                onToggle()
-            } label: {
-                Image(systemName: isAccepted ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 20))
-                    .foregroundColor(isAccepted ? .green : .gray)
-            }
-            .disabled(viewModel.isLoading)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.primary)
-                
-                Text(description)
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                
-                if let acceptedAt = acceptedAt {
-                    Text(localizationManager.localizedString(for: .acceptedAt, arguments: DateFormatter.localizedString(from: acceptedAt, dateStyle: .short, timeStyle: .short)))
-                        .font(.system(size: 10))
-                        .foregroundColor(.green)
-                }
-            }
-        }
     }
 }
