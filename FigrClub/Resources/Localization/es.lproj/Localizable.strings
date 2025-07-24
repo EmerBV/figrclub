@@ -49,8 +49,8 @@
 "email_placeholder" = "your@email.com";
 "password_placeholder" = "Crea una contraseña";
 "confirm_password_placeholder" = "Confirma tu contraseña";
-"username_placeholder" = "nombreusuario";
-"full_name_placeholder" = "Tu nombre completo";
+"username_placeholder" = "Nombre usuario";
+"full_name_placeholder" = "Nombre completo";
 
 // MARK: - Validation Messages
 "email_required" = "El email no puede estar vacío";

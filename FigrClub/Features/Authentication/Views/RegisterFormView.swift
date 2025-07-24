@@ -12,26 +12,25 @@ struct RegisterFormView: View {
     @ObservedObject var errorHandler: GlobalErrorHandler
     @Environment(\.localizationManager) private var localizationManager
     
+    // MARK: - Environment Objects
+    @EnvironmentObject private var themeManager: ThemeManager
+    
     // MARK: - Legal Documents State
     @State private var showingTermsOfService = false
     @State private var showingPrivacyPolicy = false
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 32) {
-                // Header Section
+            VStack(spacing: AppTheme.Spacing.xlarge) {
                 headerSection
-                
-                // Form Section
                 formSection
-                
-                // Action Buttons
                 actionButtonsSection
             }
-            .padding(.horizontal, 32)
-            .padding(.top, 60)
-            .padding(.bottom, 40)
+            .padding(.horizontal, AppTheme.Spacing.screenPadding)
+            .padding(.top, AppTheme.Spacing.xxlarge)
+            .padding(.bottom, AppTheme.Spacing.xlarge)
         }
+        .themedBackground()
         .sheet(isPresented: $showingTermsOfService) {
             LegalDocumentView.termsOfService(errorHandler: errorHandler)
         }
@@ -40,117 +39,133 @@ struct RegisterFormView: View {
         }
     }
     
+    // MARK: - Header Section
     private var headerSection: some View {
-        VStack(spacing: 20) {
-            // Logo
-            Image("logo")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 80, height: 80)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.clear)
-                        .frame(width: 80, height: 80)
-                )
+        VStack(spacing: AppTheme.Spacing.large) {
+            logoSection
+            welcomeSection
+        }
+    }
+    
+    // MARK: - Logo Section
+    private var logoSection: some View {
+        Image("logo")
+            .resizable()
+            .scaledToFit()
+            .frame(width: AppTheme.IconSize.xxlarge, height: AppTheme.IconSize.xxlarge)
+            .background(
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
+                    .fill(Color.clear)
+                    .frame(width: AppTheme.IconSize.xxlarge, height: AppTheme.IconSize.xxlarge)
+            )
+    }
+    
+    // MARK: - Welcome Section
+    private var welcomeSection: some View {
+        VStack(spacing: AppTheme.Spacing.small) {
+            Text(localizationManager.localizedString(for: .registerTitle))
+                .themedFont(.displaySmall)
+                .themedTextColor(.primary)
+                .multilineTextAlignment(.center)
             
-            // Welcome Title
-            VStack(spacing: 8) {
-                Text(localizationManager.localizedString(for: .registerTitle))
-                    .font(.system(size: 24, weight: .bold, design: .default))
-                    .foregroundColor(.primary)
-                    .multilineTextAlignment(.center)
-                
-                Text(localizationManager.localizedString(for: .joinCommunity))
-                    .font(.system(size: 16, weight: .regular))
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
+            Text(localizationManager.localizedString(for: .joinCommunity))
+                .themedFont(.bodyMedium)
+                .themedTextColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+    }
+    
+    // MARK: - Form Section
+    private var formSection: some View {
+        VStack(spacing: AppTheme.Spacing.large) {
+            emailField
+            usernameField
+            fullnameField
+            passwordField
+            confirmPasswordField
+            termsAndConditionsView
+            consentsSection
+        }
+    }
+    
+    private var emailField: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
+            Text(localizationManager.localizedString(for: .email))
+                .themedFont(.titleMedium)
+                .themedTextColor(.primary)
+            
+            TextField(localizationManager.localizedString(for: .email), text: $viewModel.registerEmail)
+                .modifier(ThemedTextFieldModifier(
+                    isValid: getValidationState(viewModel.registerEmailValidation) != .invalid
+                ))
+                .keyboardType(.emailAddress)
+                .autocapitalization(.none)
+                .autocorrectionDisabled()
+                .disabled(viewModel.isLoading)
+        }
+    }
+    
+    private var usernameField: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
+            Text(localizationManager.localizedString(for: .username))
+                .themedFont(.titleMedium)
+                .themedTextColor(.primary)
+            
+            TextField(localizationManager.localizedString(for: .usernamePlaceholder), text: $viewModel.registerUsername)
+                .modifier(ThemedTextFieldModifier(
+                    isValid: getValidationState(viewModel.usernameValidation) != .invalid
+                ))
+                .autocapitalization(.none)
+                .autocorrectionDisabled()
+                .disabled(viewModel.isLoading)
+        }
+    }
+    
+    private var fullnameField: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
+            Text(localizationManager.localizedString(for: .fullName))
+                .themedFont(.titleMedium)
+                .themedTextColor(.primary)
+            
+            TextField(localizationManager.localizedString(for: .fullNamePlaceholder), text: $viewModel.registerFullName)
+                .modifier(ThemedTextFieldModifier(
+                    isValid: getValidationState(viewModel.fullNameValidation) != .invalid
+                ))
+                .autocapitalization(.words)
+                .disabled(viewModel.isLoading)
+        }
+    }
+    
+    private var passwordField: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
+            Text(localizationManager.localizedString(for: .password))
+                .themedFont(.titleMedium)
+                .themedTextColor(.primary)
+            
+            SecureField(localizationManager.localizedString(for: .passwordPlaceholder), text: $viewModel.registerPassword)
+                .modifier(ThemedTextFieldModifier(
+                    isValid: getValidationState(viewModel.registerPasswordValidation) != .invalid
+                ))
+                .disabled(viewModel.isLoading)
+            
+            // Password requirements info
+            if !viewModel.registerPassword.isEmpty {
+                passwordRequirementsView
             }
         }
     }
     
-    private var formSection: some View {
-        VStack(spacing: 24) {
-            // Email Field
-            VStack(alignment: .leading, spacing: 8) {
-                Text(localizationManager.localizedString(for: .email))
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.primary)
-                
-                TextField(localizationManager.localizedString(for: .emailPlaceholder), text: $viewModel.registerEmail)
-                    .textFieldStyle(EBVTextFieldStyle(
-                        isValid: getValidationState(viewModel.registerEmailValidation) != .invalid
-                    ))
-                    .keyboardType(.emailAddress)
-                    .autocapitalization(.none)
-                    .autocorrectionDisabled()
-                    .disabled(viewModel.isLoading)
-            }
+    private var confirmPasswordField: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
+            Text(localizationManager.localizedString(for: .confirmPassword))
+                .themedFont(.titleMedium)
+                .themedTextColor(.primary)
             
-            // Username Field
-            VStack(alignment: .leading, spacing: 8) {
-                Text(localizationManager.localizedString(for: .username))
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.primary)
-                
-                TextField(localizationManager.localizedString(for: .usernamePlaceholder), text: $viewModel.registerUsername)
-                    .textFieldStyle(EBVTextFieldStyle(
-                        isValid: getValidationState(viewModel.usernameValidation) != .invalid
-                    ))
-                    .autocapitalization(.none)
-                    .autocorrectionDisabled()
-                    .disabled(viewModel.isLoading)
-            }
-            
-            // Full Name Field
-            VStack(alignment: .leading, spacing: 8) {
-                Text(localizationManager.localizedString(for: .fullName))
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.primary)
-                
-                TextField(localizationManager.localizedString(for: .fullNamePlaceholder), text: $viewModel.registerFullName)
-                    .textFieldStyle(EBVTextFieldStyle(
-                        isValid: getValidationState(viewModel.fullNameValidation) != .invalid
-                    ))
-                    .autocapitalization(.words)
-                    .disabled(viewModel.isLoading)
-            }
-            
-            // Password Field
-            VStack(alignment: .leading, spacing: 8) {
-                Text(localizationManager.localizedString(for: .password))
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.primary)
-                
-                SecureField(localizationManager.localizedString(for: .passwordPlaceholder), text: $viewModel.registerPassword)
-                    .textFieldStyle(EBVTextFieldStyle(
-                        isValid: getValidationState(viewModel.registerPasswordValidation) != .invalid
-                    ))
-                    .disabled(viewModel.isLoading)
-                
-                // Password requirements info
-                if !viewModel.registerPassword.isEmpty {
-                    passwordRequirementsView
-                }
-            }
-            
-            // Confirm Password Field
-            VStack(alignment: .leading, spacing: 8) {
-                Text(localizationManager.localizedString(for: .confirmPassword))
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.primary)
-                
-                SecureField(localizationManager.localizedString(for: .confirmPasswordPlaceholder), text: $viewModel.registerConfirmPassword)
-                    .textFieldStyle(EBVTextFieldStyle(
-                        isValid: getValidationState(viewModel.confirmPasswordValidation) != .invalid
-                    ))
-                    .disabled(viewModel.isLoading)
-            }
-            
-            // Terms and Conditions
-            termsAndConditionsView
-            
-            // Consents Section
-            consentsSection
+            SecureField(localizationManager.localizedString(for: .confirmPasswordPlaceholder), text: $viewModel.registerConfirmPassword)
+                .modifier(ThemedTextFieldModifier(
+                    isValid: getValidationState(viewModel.confirmPasswordValidation) != .invalid
+                ))
+                .disabled(viewModel.isLoading)
         }
     }
     
@@ -272,7 +287,7 @@ struct RegisterFormView: View {
         }
     }
     
-
+    
     
     private func getValidationState(_ validation: ValidationResult) -> ValidationState {
         switch validation {

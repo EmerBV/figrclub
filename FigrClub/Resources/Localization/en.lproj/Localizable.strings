@@ -49,8 +49,8 @@
 "email_placeholder" = "your@email.com";
 "password_placeholder" = "Create a password";
 "confirm_password_placeholder" = "Confirm your password";
-"username_placeholder" = "username";
-"full_name_placeholder" = "Your full name";
+"username_placeholder" = "Username";
+"full_name_placeholder" = "Full name";
 
 // MARK: - Validation Messages
 "email_required" = "Email cannot be empty";

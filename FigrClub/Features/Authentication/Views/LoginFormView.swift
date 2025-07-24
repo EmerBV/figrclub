@@ -11,6 +11,7 @@ struct LoginFormView: View {
     // MARK: - Dependencies
     @ObservedObject var viewModel: AuthViewModel
     @ObservedObject var errorHandler: GlobalErrorHandler
+    @Environment(\.localizationManager) private var localizationManager
     
     // MARK: - Environment Objects
     @EnvironmentObject private var themeManager: ThemeManager
@@ -29,9 +30,6 @@ struct LoginFormView: View {
             .padding(.bottom, AppTheme.Spacing.xlarge)
         }
         .themedBackground()
-        .onAppear {
-            Logger.info("🎨 LoginFormView: Applied themed styling")
-        }
     }
     
     // MARK: - Header Section
@@ -57,12 +55,12 @@ struct LoginFormView: View {
     
     private var welcomeSection: some View {
         VStack(spacing: AppTheme.Spacing.small) {
-            Text("Bienvenido a FigrClub")
+            Text(localizationManager.localizedString(for: .welcomeBack))
                 .themedFont(.displayMedium)
                 .themedTextColor(.primary)
                 .multilineTextAlignment(.center)
             
-            Text("Inicia sesión en tu cuenta")
+            Text(localizationManager.localizedString(for: .welcomeBackSubtitle))
                 .themedFont(.bodyMedium)
                 .themedTextColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -70,7 +68,6 @@ struct LoginFormView: View {
     }
     
     // MARK: - Form Section
-    
     private var formSection: some View {
         VStack(spacing: AppTheme.Spacing.large) {
             emailField
@@ -81,11 +78,11 @@ struct LoginFormView: View {
     
     private var emailField: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
-            Text("Correo")
+            Text(localizationManager.localizedString(for: .email))
                 .themedFont(.titleMedium)
                 .themedTextColor(.primary)
             
-            TextField("your@email.com", text: $viewModel.loginEmail)
+            TextField(localizationManager.localizedString(for: .email), text: $viewModel.loginEmail)
                 .modifier(ThemedTextFieldModifier(
                     isValid: getValidationState(viewModel.loginEmailValidation) != .invalid
                 ))
