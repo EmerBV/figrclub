@@ -153,7 +153,7 @@ enum NetworkError: Error, LocalizedError {
             return networkError
         }
         
-        // Convert URLError to NetworkError
+        // Convert URLError to NetworkError with enhanced device-specific messages
         if let urlError = error as? URLError {
             switch urlError.code {
             case .notConnectedToInternet, .networkConnectionLost:
@@ -161,7 +161,33 @@ enum NetworkError: Error, LocalizedError {
             case .timedOut:
                 return .timeout
             case .cannotFindHost, .cannotConnectToHost:
-                return .serverError(nil)
+                // 🔧 FIX: Better error handling for localhost connection issues on physical devices
+                let urlString = urlError.failingURL?.absoluteString ?? ""
+                if urlString.contains("localhost") || urlString.contains("127.0.0.1") {
+                    #if targetEnvironment(simulator)
+                    return .serverError(APIError(
+                        message: "No se puede conectar al servidor de desarrollo. Verifica que el servidor esté ejecutándose.",
+                        code: "DEV_SERVER_UNAVAILABLE",
+                        details: ["Servidor de desarrollo no accesible desde el simulador"]
+                    ))
+                    #else
+                    return .serverError(APIError(
+                        message: "Error de configuración: No puedes conectarte a localhost desde un dispositivo físico. La aplicación intentará usar el servidor de staging automáticamente.",
+                        code: "LOCALHOST_PHYSICAL_DEVICE",
+                        details: [
+                            "Los dispositivos físicos no pueden acceder a localhost",
+                            "Configura tu IP de desarrollo o usa staging",
+                            "Ver logs para instrucciones detalladas"
+                        ]
+                    ))
+                    #endif
+                } else {
+                    return .serverError(APIError(
+                        message: "No se puede conectar al servidor. Verifica tu conexión a internet.",
+                        code: "CONNECTION_FAILED",
+                        details: ["Error de conectividad de red"]
+                    ))
+                }
             default:
                 return .unknown(urlError)
             }

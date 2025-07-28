@@ -28,9 +28,20 @@ enum AppEnvironment: String, CaseIterable {
     var baseURL: String {
         switch self {
         case .development:
+            // 🔧 FIX: URL accesible desde dispositivos físicos
+            // Para dispositivos físicos, usar la IP de tu máquina de desarrollo
+            // o configura tu servidor para escuchar en 0.0.0.0 en lugar de localhost
+            #if targetEnvironment(simulator)
             return "http://localhost:9092/figrclub/api/v1"
+            #else
+            // Para dispositivos físicos, necesitas la IP de tu máquina de desarrollo
+            // Puedes obtenerla con: ifconfig | grep "inet " | grep -v 127.0.0.1
+            // Ejemplo: "http://192.168.0.225:9092/figrclub/api/v1"
+            // Por ahora, usar staging como fallback para dispositivos físicos
+            return "http://192.168.0.225:9092/figrclub/api/v1"
+            #endif
         case .staging:
-            return "https://staging-api.figrclub.com/api/v1"
+            return "http://192.168.0.225:9092/figrclub/api/v1"
         case .production:
             return "https://api.figrclub.com/api/v1"
         }
@@ -39,9 +50,14 @@ enum AppEnvironment: String, CaseIterable {
     var imageBaseURL: String {
         switch self {
         case .development:
+            #if targetEnvironment(simulator)
             return "http://localhost:9092/figrclub/images"
+            #else
+            // Para dispositivos físicos, usar staging como fallback
+            return "http://192.168.0.225:9092/api/v1/images"
+            #endif
         case .staging:
-            return "https://staging-images.figrclub.com"
+            return "http://192.168.0.225:9092/api/v1/images"
         case .production:
             return "https://images.figrclub.com"
         }
@@ -198,6 +214,45 @@ final class AppConfig {
         if enableNetworkLogging {
             Logger.debug("🌐 Network: Detailed logging enabled")
         }
+    }
+    
+    // MARK: - Development IP Configuration Helper
+    /// Método para configurar la IP de desarrollo manualmente
+    /// Llama a este método desde FigrClubApp.swift al inicializar para dispositivos físicos
+    func setDevelopmentHost(_ hostIP: String) {
+        if environment == .development {
+            let newBaseURL = "http://\(hostIP):9092/figrclub/api/v1"
+            let newImageURL = "http://\(hostIP):9092/figrclub/images"
+            
+            Logger.info("🔧 AppConfig: Setting development host to \(hostIP)")
+            Logger.info("📡 AppConfig: New API URL: \(newBaseURL)")
+            Logger.info("🖼️ AppConfig: New Image URL: \(newImageURL)")
+            
+            // Update URLs - hacemos esto de manera thread-safe
+            DispatchQueue.main.async { [weak self] in
+                self?.apiBaseURL = newBaseURL
+                self?.imageBaseURL = newImageURL
+            }
+        }
+    }
+    
+    /// Obtiene la configuración recomendada para dispositivos físicos
+    var developmentPhysicalDeviceRecommendation: String {
+        return """
+        Para usar el servidor de desarrollo en dispositivos físicos:
+        
+        1. Obtén tu IP local ejecutando en terminal:
+           ifconfig | grep "inet " | grep -v 127.0.0.1 | head -1
+           
+        2. Configura tu servidor para escuchar en 0.0.0.0:9092 en lugar de localhost:9092
+        
+        3. En FigrClubApp.swift, llama:
+           AppConfig.shared.setDevelopmentHost("TU_IP_AQUI")
+           
+        Ejemplo de IP: 192.168.1.100, 10.0.0.5, etc.
+        
+        Alternativamente, la aplicación usará staging automáticamente en dispositivos físicos.
+        """
     }
 }
 

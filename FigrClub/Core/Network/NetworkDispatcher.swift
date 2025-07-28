@@ -149,17 +149,35 @@ final class NetworkDispatcher: NetworkDispatcherProtocol, @unchecked Sendable {
     private func executeRequestWithRetry(_ request: URLRequest, policy: RetryPolicy) async throws -> Data {
         var lastError: Error?
         
+        // 🔧 DEBUG: Log request details for debugging physical device issues
+        Logger.debug("🌐 NetworkDispatcher: Executing request to: \(request.url?.absoluteString ?? "unknown")")
+        Logger.debug("📱 NetworkDispatcher: Target Environment: \(AppConfig.shared.environment.displayName)")
+        #if targetEnvironment(simulator)
+        Logger.debug("📱 Running on: Simulator")
+        #else
+        Logger.debug("📱 Running on: Physical Device")
+        #endif
+        
         for attempt in 0...policy.maxRetries {
             do {
+                Logger.debug("🔄 NetworkDispatcher: Attempt \(attempt + 1)/\(policy.maxRetries + 1) for \(request.url?.path ?? "unknown")")
+                
+                let startTime = Date()
                 let (data, response) = try await sessionProvider.dataTask(for: request)
+                let duration = Date().timeIntervalSince(startTime)
+                
+                Logger.debug("⏱️ NetworkDispatcher: Request completed in \(String(format: "%.2f", duration))s")
                 
                 guard let httpResponse = response as? HTTPURLResponse else {
+                    Logger.error("❌ NetworkDispatcher: Invalid response type")
                     throw NetworkError.invalidResponse
                 }
                 
+                Logger.debug("📡 NetworkDispatcher: Response status: \(httpResponse.statusCode)")
+                
                 // Check if we should retry based on status code
                 if attempt < policy.maxRetries && policy.retryableStatusCodes.contains(httpResponse.statusCode) {
-                    Logger.warning("Request failed with status \(httpResponse.statusCode), retrying in \(policy.retryDelay)s")
+                    Logger.warning("⚠️ NetworkDispatcher: Request failed with status \(httpResponse.statusCode), retrying in \(policy.retryDelay)s")
                     try await Task.sleep(for: .seconds(policy.retryDelay))
                     continue
                 }
@@ -168,28 +186,47 @@ final class NetworkDispatcher: NetworkDispatcherProtocol, @unchecked Sendable {
                 
             } catch let error as NetworkError {
                 lastError = error
+                Logger.error("❌ NetworkDispatcher: NetworkError on attempt \(attempt + 1): \(error.localizedDescription)")
                 
                 // Don't retry on certain errors
                 switch error {
                 case .unauthorized, .forbidden, .notFound:
+                    Logger.debug("🚫 NetworkDispatcher: Non-retryable error, throwing immediately")
                     throw error
                 default:
                     if attempt < policy.maxRetries {
-                        Logger.warning("Request failed, retrying in \(policy.retryDelay)s: \(error)")
+                        Logger.warning("🔄 NetworkDispatcher: Retryable error, retrying in \(policy.retryDelay)s: \(error)")
                         try await Task.sleep(for: .seconds(policy.retryDelay))
                         continue
                     }
                 }
             } catch {
                 lastError = error
+                Logger.error("❌ NetworkDispatcher: Generic error on attempt \(attempt + 1): \(error.localizedDescription)")
+                
+                // 🔧 DEBUG: Especial handling for connection errors on physical devices
+                if let urlError = error as? URLError {
+                    switch urlError.code {
+                    case .cannotConnectToHost:
+                        Logger.error("🔌 NetworkDispatcher: Cannot connect to host - Check if server is running and accessible from device")
+                    case .timedOut:
+                        Logger.error("⏰ NetworkDispatcher: Request timed out - Check network connectivity")
+                    case .notConnectedToInternet:
+                        Logger.error("📡 NetworkDispatcher: No internet connection")
+                    default:
+                        Logger.error("🌐 NetworkDispatcher: URLError: \(urlError.localizedDescription)")
+                    }
+                }
+                
                 if attempt < policy.maxRetries {
-                    Logger.warning("Request failed, retrying in \(policy.retryDelay)s: \(error)")
+                    Logger.warning("🔄 NetworkDispatcher: Generic error, retrying in \(policy.retryDelay)s: \(error)")
                     try await Task.sleep(for: .seconds(policy.retryDelay))
                     continue
                 }
             }
         }
         
+        Logger.error("💥 NetworkDispatcher: All retry attempts failed. Final error: \(lastError?.localizedDescription ?? "Unknown")")
         throw lastError ?? NetworkError.unknown(NSError(domain: "UnknownError", code: -1))
     }
     

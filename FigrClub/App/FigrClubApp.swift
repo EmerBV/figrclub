@@ -45,6 +45,9 @@ struct FigrClubApp: App {
         // Setup logging after all stored properties are initialized
         setupLogging()
         
+        // 🔧 FIX: Configure development IP for physical devices
+        setupDevelopmentConfiguration()
+        
 #if DEBUG
         // Perform architecture health check in debug mode
         performArchitectureHealthCheck()
@@ -109,6 +112,32 @@ private extension FigrClubApp {
         Logger.info("✅ Logging system initialized")
     }
     
+    /// Configura la IP de desarrollo para dispositivos físicos
+    private func setupDevelopmentConfiguration() {
+        #if DEBUG
+        let appConfig = AppConfig.shared
+        
+        // Solo para ambiente de desarrollo
+        guard appConfig.environment == .development else { return }
+        
+        #if targetEnvironment(simulator)
+        Logger.info("📱 Running on Simulator - Using localhost configuration")
+        #else
+        Logger.info("📱 Running on Physical Device - Checking development configuration")
+        
+        // Para dispositivos físicos en desarrollo, log la recomendación
+        Logger.info("🔧 Development Configuration for Physical Device:")
+        Logger.info(appConfig.developmentPhysicalDeviceRecommendation)
+        
+        // NOTA: Si tienes una IP específica para desarrollo, descomenta la línea siguiente:
+        // AppConfig.shared.setDevelopmentHost("192.168.1.100") // Reemplaza con tu IP
+        
+        Logger.info("📡 Current API URL: \(appConfig.apiBaseURL)")
+        Logger.info("🖼️ Current Image URL: \(appConfig.imageBaseURL)")
+        #endif
+        #endif
+    }
+
 #if DEBUG
     func performArchitectureHealthCheck() {
         Logger.info("🏥 FigrClub: Starting architecture health check...")
