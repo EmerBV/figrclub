@@ -156,3 +156,24 @@
 "loading_document" = "Cargando documento...";
 "no_document_available" = "Documento no disponible";
 "version" = "Versión";
+
+// MARK: - Marketplace
+"search_textfield" = "Buscar figuras, colecciones...";
+"featured_string" = "Destacados";
+"see_all_string" = "Ver todo";
+"all_products_string" = "Todos los productos";
+"number_of_products" = "%d productos";
+"category_string" = "Categoría";
+"apply_filter_string" = "Aplicar filtro";
+"clear_filter_string" = "Limpiar filtro";
+"filters_string" = "Filtros";
+
+// MARK: - Product Categories
+"category_all" = "Todos";
+"category_anime" = "Anime";
+"category_manga" = "Manga";
+"category_gaming" = "Gaming";
+"category_movies" = "Películas";
+"category_tv" = "TV/Series";
+"category_collectibles" = "Coleccionables";
+"category_vintage" = "Vintage";

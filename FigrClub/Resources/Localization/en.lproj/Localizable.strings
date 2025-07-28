@@ -155,4 +155,25 @@
 // MARK: - Legal Documents
 "loading_document" = "Loading document...";
 "no_document_available" = "Document not available";
-"version" = "Version"; 
+"version" = "Version";
+
+// MARK: - Marketplace
+"search_textfield" = "Search for figures, collections...";
+"featured_string" = "Featured";
+"see_all_string" = "See all";
+"all_products_string" = "All products";
+"number_of_products" = "%d products";
+"category_string" = "Category";
+"apply_filter_string" = "Apply filter";
+"clear_filter_string" = "Clear filter";
+"filters_string" = "Filters";
+
+// MARK: - Product Categories
+"category_all" = "All";
+"category_anime" = "Anime";
+"category_manga" = "Manga";
+"category_gaming" = "Gaming";
+"category_movies" = "Movies";
+"category_tv" = "TV/Series";
+"category_collectibles" = "Collectibles";
+"category_vintage" = "Vintage";

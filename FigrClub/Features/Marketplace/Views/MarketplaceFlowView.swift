@@ -10,6 +10,9 @@ import Kingfisher
 
 struct MarketplaceFlowView: View {
     let user: User
+    @Environment(\.localizationManager) private var localizationManager
+    
+    // MARK: - Environment Objects
     @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
     @EnvironmentObject private var themeManager: ThemeManager
     
@@ -41,7 +44,6 @@ struct MarketplaceFlowView: View {
     // MARK: - Header Section
     private var headerSection: some View {
         VStack(spacing: AppTheme.Spacing.medium) {
-            // Título y botón de filtros
             HStack {
                 Text("Marketplace")
                     .themedFont(.displayMedium)
@@ -49,7 +51,6 @@ struct MarketplaceFlowView: View {
                 
                 Spacer()
                 
-                // Botón de filtros
                 Button {
                     showFilters = true
                 } label: {
@@ -59,12 +60,11 @@ struct MarketplaceFlowView: View {
                 }
             }
             
-            // Barra de búsqueda
             HStack {
                 Image(systemName: "magnifyingglass")
                     .themedTextColor(.secondary)
                 
-                TextField("Buscar figuras, colecciones...", text: $searchText)
+                TextField(localizationManager.localizedString(for: .searchTextfield), text: $searchText)
                     .themedFont(.bodyMedium)
                 
                 if !searchText.isEmpty {
@@ -104,7 +104,6 @@ struct MarketplaceFlowView: View {
             }
             .padding(.vertical, AppTheme.Spacing.small)
             
-            // Separador
             Divider()
                 .background(themeManager.currentSecondaryTextColor.opacity(0.3))
         }
@@ -127,13 +126,13 @@ struct MarketplaceFlowView: View {
     private var featuredProductsView: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Destacados")
+                Text(localizationManager.localizedString(for: .featuredString))
                     .themedFont(.headlineMedium)
                     .themedTextColor(.primary)
                 
                 Spacer()
                 
-                Button("Ver todo") {
+                Button(localizationManager.localizedString(for: .seeAllString)) {
                     // TODO: Navegar a destacados
                 }
                 .font(.system(size: 14, weight: .medium))
@@ -160,13 +159,13 @@ struct MarketplaceFlowView: View {
         LazyVStack(spacing: 0) {
             // Header de sección
             HStack {
-                Text("Todos los productos")
+                Text(localizationManager.localizedString(for: .allProductsString))
                     .themedFont(.headlineMedium)
                     .themedTextColor(.primary)
                 
                 Spacer()
                 
-                Text("\(filteredProducts.count) productos")
+                Text(localizationManager.localizedString(for: .numberOfProducts, arguments: filteredProducts.count))
                     .font(.system(size: 14))
                     .themedTextColor(.secondary)
             }
@@ -225,9 +224,11 @@ struct CategoryChip: View {
     let isSelected: Bool
     let action: () -> Void
     
+    @Environment(\.localizationManager) private var localizationManager
+    
     var body: some View {
         Button(action: action) {
-            Text(category.displayName)
+            Text(localizationManager.localizedString(for: category.localizedStringKey))
                 .themedFont(.titleSmall)
                 .foregroundColor(isSelected ? .white : .primary)
                 .padding(.horizontal, AppTheme.Spacing.medium)
@@ -245,6 +246,8 @@ struct CategoryChip: View {
 struct FeaturedProductCard: View {
     let product: MarketplaceProduct
     let action: () -> Void
+    
+    @Environment(\.localizationManager) private var localizationManager
     
     var body: some View {
         Button(action: action) {
@@ -276,7 +279,7 @@ struct FeaturedProductCard: View {
                         .frame(height: 34, alignment: .top)
                         .multilineTextAlignment(.leading)
                     
-                    Text("$\(product.price, specifier: "%.2f")")
+                    Text(localizationManager.currencyString(from: product.price))
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.blue)
                     
@@ -303,7 +306,9 @@ struct FeaturedProductCard: View {
 struct ProductCard: View {
     let product: MarketplaceProduct
     let action: () -> Void
+    
     @State private var isFavorite = false
+    @Environment(\.localizationManager) private var localizationManager
     
     var body: some View {
         Button(action: action) {
@@ -344,7 +349,7 @@ struct ProductCard: View {
                         .frame(height: 34, alignment: .top)
                         .multilineTextAlignment(.leading)
                     
-                    Text("$\(product.price, specifier: "%.2f")")
+                    Text(localizationManager.currencyString(from: product.price))
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.blue)
                     
@@ -390,11 +395,11 @@ struct ProductCard: View {
         .buttonStyle(PlainButtonStyle())
         //.themedCard()
         /*
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
-        )
+         .background(
+         RoundedRectangle(cornerRadius: 12)
+         .fill(Color(.systemBackground))
+         .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+         )
          */
     }
 }
@@ -403,26 +408,27 @@ struct ProductCard: View {
 struct FiltersSheet: View {
     @Binding var selectedCategory: ProductCategory
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.localizationManager) private var localizationManager
     
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.screenPadding) {
                 // Categorías
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Categoría")
+                    Text(localizationManager.localizedString(for: .categoryString))
                         .themedFont(.titleLarge)
                         .themedTextColor(.primary)
                     
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 8) {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: AppTheme.Spacing.small) {
                         ForEach(ProductCategory.allCases, id: \.self) { category in
                             Button {
                                 selectedCategory = category
                             } label: {
-                                Text(category.displayName)
+                                Text(localizationManager.localizedString(for: category.localizedStringKey))
                                     .font(.system(size: 14, weight: .medium))
                                     .foregroundColor(selectedCategory == category ? .white : .primary)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, AppTheme.Spacing.buttonPadding)
+                                    .padding(.vertical, AppTheme.Spacing.small)
                                     .frame(maxWidth: .infinity)
                                     .background(
                                         RoundedRectangle(cornerRadius: 8)
@@ -437,29 +443,30 @@ struct FiltersSheet: View {
                 Spacer()
                 
                 // Botones de acción
-                VStack(spacing: 12) {
-                    Button("Aplicar filtros") {
+                VStack(spacing: AppTheme.Spacing.buttonPadding) {
+                    Button(localizationManager.localizedString(for: .applyFilterString)) {
                         dismiss()
                     }
                     .buttonStyle(EBVPrimaryBtnStyle())
                     
-                    Button("Limpiar filtros") {
+                    Button(localizationManager.localizedString(for: .clearFilterString)) {
                         selectedCategory = .all
                     }
-                    .font(.system(size: 16, weight: .medium))
+                    .themedFont(.titleMedium)
                     .foregroundColor(.blue)
                 }
             }
             .padding(20)
-            .navigationTitle("Filtros")
+            .navigationTitle(localizationManager.localizedString(for: .filtersString))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cerrar") {
+                    Button(localizationManager.localizedString(for: .close)) {
                         dismiss()
                     }
                 }
             }
+            .themedBackground()
         }
     }
 }
@@ -490,16 +497,16 @@ enum ProductCategory: CaseIterable {
     case collectibles
     case vintage
     
-    var displayName: String {
+    var localizedStringKey: LocalizedStringKey {
         switch self {
-        case .all: return "Todos"
-        case .anime: return "Anime"
-        case .manga: return "Manga"
-        case .gaming: return "Gaming"
-        case .movies: return "Películas"
-        case .tv: return "TV/Series"
-        case .collectibles: return "Coleccionables"
-        case .vintage: return "Vintage"
+        case .all: return .categoryAll
+        case .anime: return .categoryAnime
+        case .manga: return .categoryManga
+        case .gaming: return .categoryGaming
+        case .movies: return .categoryMovies
+        case .tv: return .categoryTv
+        case .collectibles: return .categoryCollectibles
+        case .vintage: return .categoryVintage
         }
     }
 }

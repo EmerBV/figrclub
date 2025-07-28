@@ -162,8 +162,29 @@ enum LocalizedStringKey: String, CaseIterable {
     case noDocumentAvailable = "no_document_available"
     case version = "version"
     
-    // MARK: - Computed Properties
+    // MARK: - Marketplace
+    case searchTextfield = "search_textfield"
+    case featuredString = "featured_string"
+    case seeAllString = "see_all_string"
+    case allProductsString = "all_products_string"
+    case numberOfProducts = "number_of_products"
+    case categoryString = "category_string"
+    case applyFilterString = "apply_filter_string"
+    case clearFilterString = "clear_filter_string"
+    case filtersString = "filters_string"
     
+    // MARK: - Product Categories
+    case categoryAll = "category_all"
+    case categoryAnime = "category_anime"
+    case categoryManga = "category_manga"
+    case categoryGaming = "category_gaming"
+    case categoryMovies = "category_movies"
+    case categoryTv = "category_tv"
+    case categoryCollectibles = "category_collectibles"
+    case categoryVintage = "category_vintage"
+    
+    
+    // MARK: - Computed Properties
     var fallbackValue: String {
         switch self {
             // General
@@ -317,6 +338,27 @@ enum LocalizedStringKey: String, CaseIterable {
         case .loadingDocument: return "Cargando documento..."
         case .noDocumentAvailable: return "Documento no disponible"
         case .version: return "Versión"
+            
+            // Marketplace
+        case .searchTextfield: return "Buscar figuras, colecciones..."
+        case .featuredString: return "Destacados"
+        case .seeAllString: return "Ver todo"
+        case .allProductsString: return "Todos los productos"
+        case .numberOfProducts: return "%d productos"
+        case .categoryString: return "Categoría"
+        case .applyFilterString: return "Aplicar filtro"
+        case .clearFilterString: return "Limpiar filtro"
+        case .filtersString: return "Filtros"
+            
+            // Product Categories
+        case .categoryAll: return "Todos"
+        case .categoryAnime: return "Anime"
+        case .categoryManga: return "Manga"
+        case .categoryGaming: return "Gaming"
+        case .categoryMovies: return "Películas"
+        case .categoryTv: return "TV/Series"
+        case .categoryCollectibles: return "Coleccionables"
+        case .categoryVintage: return "Vintage"
         }
     }
     
@@ -328,4 +370,4 @@ enum LocalizedStringKey: String, CaseIterable {
         default: return "Localized string for \(rawValue)"
         }
     }
-} 
+}

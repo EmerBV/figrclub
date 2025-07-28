@@ -42,7 +42,21 @@ enum SupportedLanguage: String, CaseIterable {
     }
     
     var locale: Locale {
-        return Locale(identifier: rawValue)
+        switch self {
+        case .spanish:
+            return Locale(identifier: "es_ES") // Español (España) - Euro
+        case .english:
+            return Locale(identifier: "en_US") // Inglés (Estados Unidos) - Dólar
+        }
+    }
+    
+    var currencyCode: String {
+        switch self {
+        case .spanish:
+            return "EUR" // Euro para España
+        case .english:
+            return "USD" // Dólar estadounidense
+        }
     }
 }
 
@@ -56,6 +70,7 @@ protocol LocalizationManagerProtocol: ObservableObject {
     func detectSystemLanguage() -> SupportedLanguage
     func localizedString(for key: LocalizedStringKey) -> String
     func localizedString(for key: LocalizedStringKey, arguments: CVarArg...) -> String
+    func currencyString(from value: Double) -> String
 }
 
 // MARK: - Localization Manager
@@ -134,6 +149,14 @@ final class LocalizationManager: ObservableObject, LocalizationManagerProtocol {
         } else {
             return String(format: localizedString, arguments: arguments)
         }
+    }
+    
+    func currencyString(from value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.locale = getCurrentLocale()
+        formatter.currencyCode = currentLanguage.currencyCode
+        return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
     }
     
     // MARK: - Language Management
