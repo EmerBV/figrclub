@@ -20,10 +20,8 @@ struct AppTheme {
         static let xxlarge: CGFloat = 48
         
         // Specific use cases
-        static let cardPadding: CGFloat = 16
-        static let screenPadding: CGFloat = 20
-        static let sectionSpacing: CGFloat = 24
         static let buttonPadding: CGFloat = 12
+        static let screenPadding: CGFloat = 20
     }
     
     // MARK: - Corner Radius System
@@ -366,41 +364,6 @@ struct FigrShimmerView: View {
                     isAnimating = true
                 }
             }
-    }
-}
-
-// MARK: - View Extensions for Theme
-extension View {
-    /*
-     func figrCard() -> some View {
-     self.modifier(AppTheme.cardStyle)
-     }
-     */
-    
-    func figrElevatedCard() -> some View {
-        self.modifier(AppTheme.elevatedCardStyle)
-    }
-    
-    func figrProductCard() -> some View {
-        self.modifier(AppTheme.productCardStyle)
-    }
-    
-    /*
-     func figrScreenPadding() -> some View {
-     self.padding(.horizontal, AppTheme.Spacing.screenPadding)
-     }
-     */
-    
-    func figrCardPadding() -> some View {
-        self.padding(AppTheme.Spacing.cardPadding)
-    }
-    
-    func figrSectionSpacing() -> some View {
-        self.padding(.bottom, AppTheme.Spacing.sectionSpacing)
-    }
-    
-    func figrScreenContainer() -> some View {
-        self.modifier(ScreenContainerModifier())
     }
 }
 

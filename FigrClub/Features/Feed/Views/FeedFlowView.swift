@@ -24,8 +24,8 @@ struct FeedFlowView: View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
                 LazyVStack(spacing: 0) {
-                    headerView
-                    storiesView
+                    headerSection
+                    storiesSection
                     
                     ForEach(posts) { post in
                         PostView(post: post, currentUser: user)
@@ -71,7 +71,7 @@ struct FeedFlowView: View {
         }
     }
     
-    private var headerView: some View {
+    private var headerSection: some View {
         HStack {
             // Logo de FigrClub
             Text("FigrClub")
@@ -110,12 +110,12 @@ struct FeedFlowView: View {
             }
         }
         .padding(.horizontal, AppTheme.Spacing.medium)
-        .padding(.top, AppTheme.Spacing.small)
-        .padding(.bottom, AppTheme.Spacing.small)
+        .padding(.top, AppTheme.Spacing.medium)
+        .padding(.bottom, AppTheme.Spacing.medium)
     }
     
     // MARK: - Stories View
-    private var storiesView: some View {
+    private var storiesSection: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 16) {
                 // Tu historia

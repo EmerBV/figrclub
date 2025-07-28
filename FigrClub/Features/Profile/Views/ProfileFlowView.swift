@@ -21,13 +21,8 @@ struct ProfileFlowView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: Spacing.large) {
-                    // Profile Header
-                    profileHeaderView
-                    
-                    // User Info
+                    headerSection
                     userInfoSection
-                    
-                    // Action Buttons
                     profileActionsSection
                 }
                 .padding()
@@ -59,7 +54,7 @@ struct ProfileFlowView: View {
         }
     }
     
-    private var profileHeaderView: some View {
+    private var headerSection: some View {
         VStack(spacing: Spacing.medium) {
             // Imagen de perfil usando KFImage y las extensiones existentes
             let imageURL = URL(string: "http://localhost:8080/figrclub/api/v1/images/user/\(user.id)/profile")

@@ -19,6 +19,11 @@ extension View {
         self.modifier(ThemedFontModifier(fontType: fontType))
     }
     
+    /// Aplica colores de texto temáticos
+    func themedTextColor(_ level: TextColorLevel = .primary) -> some View {
+        self.modifier(ThemedTextColorModifier(level: level))
+    }
+    
     /// Aplica un color de fondo temático
     func themedBackground() -> some View {
         self.modifier(ThemedBackgroundModifier())
@@ -27,11 +32,6 @@ extension View {
     /// Aplica un color de tarjeta temático
     func themedCard() -> some View {
         self.modifier(ThemedCardModifier())
-    }
-    
-    /// Aplica colores de texto temáticos
-    func themedTextColor(_ level: TextColorLevel = .primary) -> some View {
-        self.modifier(ThemedTextColorModifier(level: level))
     }
 }
 
@@ -115,30 +115,6 @@ struct ThemedTextColorModifier: ViewModifier {
         case .accent:
             return themeManager.accentColor
         }
-    }
-}
-
-// MARK: - Card Extensions
-
-extension View {
-    /// Aplica estilo de tarjeta FigrClub
-    func figrCard() -> some View {
-        self.modifier(FigrCardModifier())
-    }
-    
-    /// Aplica padding de tarjeta FigrClub
-    func figrCardPadding(_ padding: CGFloat = AppTheme.Spacing.cardPadding) -> some View {
-        self.padding(padding)
-    }
-    
-    /// Aplica sombra de tarjeta FigrClub
-    func figrCardShadow() -> some View {
-        self.shadow(
-            color: AppTheme.Shadow.cardShadowColor,
-            radius: AppTheme.Shadow.cardShadow.radius,
-            x: AppTheme.Shadow.cardShadow.x,
-            y: AppTheme.Shadow.cardShadow.y
-        )
     }
 }
 
@@ -580,12 +556,58 @@ extension View {
     
     /// Aplica padding de sección
     func figrSectionPadding() -> some View {
-        self.padding(.vertical, AppTheme.Spacing.sectionSpacing)
+        self.padding(.vertical, AppTheme.Spacing.large)
     }
     
     /// Aplica espaciado estándar
     func figrSpacing(_ size: AppTheme.Spacing.Size = .medium) -> some View {
         self.padding(size.value)
+    }
+    
+    /// Aplica estilo de tarjeta FigrClub
+    /*
+     func figrCard() -> some View {
+     self.modifier(AppTheme.cardStyle)
+     }
+     */
+    
+    func figrCard() -> some View {
+        self.modifier(FigrCardModifier())
+    }
+    
+    /// Aplica padding de tarjeta FigrClub
+    func figrCardPadding(_ padding: CGFloat = AppTheme.Spacing.medium) -> some View {
+        self.padding(padding)
+    }
+    
+    /// Aplica sombra de tarjeta FigrClub
+    func figrCardShadow() -> some View {
+        self.shadow(
+            color: AppTheme.Shadow.cardShadowColor,
+            radius: AppTheme.Shadow.cardShadow.radius,
+            x: AppTheme.Shadow.cardShadow.x,
+            y: AppTheme.Shadow.cardShadow.y
+        )
+    }
+    
+    func figrElevatedCard() -> some View {
+        self.modifier(AppTheme.elevatedCardStyle)
+    }
+    
+    func figrProductCard() -> some View {
+        self.modifier(AppTheme.productCardStyle)
+    }
+    
+    func figrCardPadding() -> some View {
+        self.padding(AppTheme.Spacing.medium)
+    }
+    
+    func figrSectionSpacing() -> some View {
+        self.padding(.bottom, AppTheme.Spacing.large)
+    }
+    
+    func figrScreenContainer() -> some View {
+        self.modifier(ScreenContainerModifier())
     }
 }
 

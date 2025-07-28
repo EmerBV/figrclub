@@ -22,22 +22,10 @@ struct MarketplaceFlowView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                headerView
-                categoriesView
-                
-                ScrollView(.vertical, showsIndicators: false) {
-                    LazyVStack(spacing: 0) {
-                        // Productos destacados
-                        featuredProductsView
-                        
-                        // Grid de productos
-                        productsGridView
-                    }
-                }
-                .refreshable {
-                    await refreshMarketplace()
-                }
+            VStack(spacing: 12) {
+                headerSection
+                categoriesSection
+                productsSection
             }
             .themedBackground()
             .navigationBarHidden(true)
@@ -50,14 +38,14 @@ struct MarketplaceFlowView: View {
         }
     }
     
-    // MARK: - Header View
-    private var headerView: some View {
-        VStack(spacing: 16) {
+    // MARK: - Header Section
+    private var headerSection: some View {
+        VStack(spacing: AppTheme.Spacing.medium) {
             // Título y botón de filtros
             HStack {
                 Text("Marketplace")
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(.primary)
+                    .themedFont(.displayMedium)
+                    .themedTextColor(.primary)
                 
                 Spacer()
                 
@@ -67,38 +55,37 @@ struct MarketplaceFlowView: View {
                 } label: {
                     Image(systemName: "slider.horizontal.3")
                         .font(.title2)
-                        .foregroundColor(.primary)
+                        .themedTextColor(.primary)
                 }
             }
             
             // Barra de búsqueda
             HStack {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(.secondary)
+                    .themedTextColor(.secondary)
                 
                 TextField("Buscar figuras, colecciones...", text: $searchText)
-                    .font(.system(size: 16))
+                    .themedFont(.bodyMedium)
                 
                 if !searchText.isEmpty {
                     Button {
                         searchText = ""
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.secondary)
+                            .themedTextColor(.secondary)
                     }
                 }
             }
-            .padding(12)
+            //.padding(12)
+            .figrSpacing(.medium)
             .background(Color(.systemGray6))
-            .cornerRadius(12)
+            .cornerRadius(AppTheme.CornerRadius.medium)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        //.background(Color(.systemBackground))
+        .padding(.horizontal, AppTheme.Spacing.medium)
     }
     
-    // MARK: - Categories View
-    private var categoriesView: some View {
+    // MARK: - Categories Section
+    private var categoriesSection: some View {
         VStack(spacing: 0) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
@@ -113,15 +100,27 @@ struct MarketplaceFlowView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, AppTheme.Spacing.medium)
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, AppTheme.Spacing.small)
             
             // Separador
             Divider()
                 .background(themeManager.currentSecondaryTextColor.opacity(0.3))
         }
-        //.background(Color(.systemBackground))
+    }
+    
+    // MARK: - Products Section
+    private var productsSection: some View {
+        ScrollView(.vertical, showsIndicators: false) {
+            LazyVStack(spacing: 0) {
+                featuredProductsView
+                productsGridView
+            }
+        }
+        .refreshable {
+            await refreshMarketplace()
+        }
     }
     
     // MARK: - Featured Products View
@@ -129,8 +128,8 @@ struct MarketplaceFlowView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Destacados")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.primary)
+                    .themedFont(.headlineMedium)
+                    .themedTextColor(.primary)
                 
                 Spacer()
                 
@@ -140,7 +139,7 @@ struct MarketplaceFlowView: View {
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.blue)
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, AppTheme.Spacing.medium)
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
@@ -151,11 +150,9 @@ struct MarketplaceFlowView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, AppTheme.Spacing.medium)
             }
         }
-        .padding(.vertical, 16)
-        //.background(Color(.systemBackground))
     }
     
     // MARK: - Products Grid View
@@ -164,22 +161,22 @@ struct MarketplaceFlowView: View {
             // Header de sección
             HStack {
                 Text("Todos los productos")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.primary)
+                    .themedFont(.headlineMedium)
+                    .themedTextColor(.primary)
                 
                 Spacer()
                 
                 Text("\(filteredProducts.count) productos")
                     .font(.system(size: 14))
-                    .foregroundColor(.secondary)
+                    .themedTextColor(.secondary)
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, AppTheme.Spacing.medium)
             .padding(.vertical, 12)
             
             // Grid de productos
             LazyVGrid(
                 columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2),
-                spacing: 16
+                spacing: AppTheme.Spacing.medium
             ) {
                 ForEach(filteredProducts) { product in
                     ProductCard(product: product) {
@@ -188,9 +185,9 @@ struct MarketplaceFlowView: View {
                     }
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, AppTheme.Spacing.medium)
         }
-        .padding(.bottom, 20)
+        .padding(.bottom, AppTheme.Spacing.medium)
     }
     
     // MARK: - Computed Properties
@@ -231,10 +228,10 @@ struct CategoryChip: View {
     var body: some View {
         Button(action: action) {
             Text(category.displayName)
-                .font(.system(size: 14, weight: .medium))
+                .themedFont(.titleSmall)
                 .foregroundColor(isSelected ? .white : .primary)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .padding(.horizontal, AppTheme.Spacing.medium)
+                .padding(.vertical, AppTheme.Spacing.small)
                 .background(
                     RoundedRectangle(cornerRadius: 20)
                         .fill(isSelected ? Color.blue : Color(.systemGray6))
@@ -251,7 +248,7 @@ struct FeaturedProductCard: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
                 // Imagen del producto
                 ZStack(alignment: .topTrailing) {
                     KFImage(URL(string: product.imageURL))
@@ -264,17 +261,17 @@ struct FeaturedProductCard: View {
                     // Badge de destacado
                     Text("⭐")
                         .font(.system(size: 12))
-                        .padding(4)
+                        .figrSpacing(.tiny)
                         .background(Color.yellow)
                         .cornerRadius(6)
                         .offset(x: -6, y: 6)
                 }
                 
                 // Información del producto
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.tiny) {
                     Text(product.title)
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.primary)
+                        .themedTextColor(.primary)
                         .lineLimit(2)
                         .frame(height: 34, alignment: .top)
                         .multilineTextAlignment(.leading)
@@ -288,11 +285,12 @@ struct FeaturedProductCard: View {
                             .profileImageStyle(size: 16)
                         
                         Text(product.sellerName)
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
+                            .themedFont(.bodyXSmall)
+                            .themedTextColor(.secondary)
                             .lineLimit(1)
                     }
                 }
+                .figrSpacing(.tiny)
                 .frame(width: 160, alignment: .leading)
             }
             .frame(width: 160)
@@ -309,7 +307,7 @@ struct ProductCard: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
                 // Imagen del producto
                 ZStack(alignment: .topTrailing) {
                     KFImage(URL(string: product.imageURL))
@@ -338,10 +336,10 @@ struct ProductCard: View {
                 }
                 
                 // Información del producto
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.tiny) {
                     Text(product.title)
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.primary)
+                        .themedTextColor(.primary)
                         .lineLimit(2)
                         .frame(height: 34, alignment: .top)
                         .multilineTextAlignment(.leading)
@@ -366,8 +364,8 @@ struct ProductCard: View {
                             .profileImageStyle(size: 16)
                         
                         Text(product.sellerName)
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
+                            .themedFont(.bodyXSmall)
+                            .themedTextColor(.secondary)
                             .lineLimit(1)
                         
                         Spacer()
@@ -376,24 +374,28 @@ struct ProductCard: View {
                             HStack(spacing: 2) {
                                 Image(systemName: "location.fill")
                                     .font(.system(size: 10))
-                                    .foregroundColor(.secondary)
+                                    .themedTextColor(.secondary)
                                 
                                 Text(location)
                                     .font(.system(size: 10))
-                                    .foregroundColor(.secondary)
+                                    .themedTextColor(.secondary)
                                     .lineLimit(1)
                             }
                         }
                     }
                 }
+                .padding(4)
             }
         }
         .buttonStyle(PlainButtonStyle())
+        //.themedCard()
+        /*
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(.systemBackground))
                 .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
         )
+         */
     }
 }
 
@@ -408,8 +410,8 @@ struct FiltersSheet: View {
                 // Categorías
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Categoría")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.primary)
+                        .themedFont(.titleLarge)
+                        .themedTextColor(.primary)
                     
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 8) {
                         ForEach(ProductCategory.allCases, id: \.self) { category in
