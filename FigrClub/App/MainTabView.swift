@@ -18,6 +18,7 @@ struct MainTabView: View {
     
     // Estado local para el tab seleccionado
     @State private var selectedTab: MainTab = .feed
+    @State private var lastNonCreateTab: MainTab = .feed
     
     var body: some View {
         Group {
@@ -44,15 +45,32 @@ struct MainTabView: View {
             Group {
                 switch selectedTab {
                 case .feed:
-                    FeedFlowView(user: user)
+                    AnyView(FeedFlowView(user: user))
                 case .marketplace:
-                    MarketplaceFlowView(user: user)
+                    AnyView(MarketplaceFlowView(user: user))
                 case .create:
-                    CreateFlowView(user: user)
+                    // Mostrar la última pestaña seleccionada cuando se presiona Create
+                    // El contenido real se presenta como modal
+                    AnyView(
+                        Group {
+                            switch lastNonCreateTab {
+                            case .feed:
+                                FeedFlowView(user: user)
+                            case .marketplace:
+                                MarketplaceFlowView(user: user)
+                            case .notifications:
+                                NotificationsFlowView(user: user)
+                            case .profile:
+                                ProfileFlowView(user: user)
+                            case .create:
+                                FeedFlowView(user: user) // Fallback
+                            }
+                        }
+                    )
                 case .notifications:
-                    NotificationsFlowView(user: user)
+                    AnyView(NotificationsFlowView(user: user))
                 case .profile:
-                    ProfileFlowView(user: user)
+                    AnyView(ProfileFlowView(user: user))
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -71,6 +89,11 @@ struct MainTabView: View {
         
         .themedBackground()
         .environmentObject(navigationCoordinator)
+        .fullScreenCover(isPresented: $navigationCoordinator.showingCreatePost) {
+            CreateFlowView(user: user)
+                .environmentObject(themeManager)
+                .environmentObject(navigationCoordinator)
+        }
         .onAppear {
             setupDeepLinkManager()
             Logger.debug("✅ MainTabView: Appeared with user: \(user.displayName)")
@@ -90,6 +113,21 @@ struct MainTabView: View {
         }
     }
     
+    // MARK: - Helper Methods
+    
+    private func handleTabSelection(_ tab: MainTab) {
+        if tab == .create {
+            // Mostrar modal de creación en lugar de cambiar tab
+            navigationCoordinator.showCreatePost()
+        } else {
+            // Cambiar tab normalmente y recordar la última pestaña no-create
+            withAnimation(.easeInOut(duration: 0.2)) {
+                lastNonCreateTab = selectedTab != .create ? selectedTab : lastNonCreateTab
+                selectedTab = tab
+            }
+        }
+    }
+    
     // MARK: - Custom Tab Bar
     
     private var customTabBar: some View {
@@ -103,9 +141,7 @@ struct MainTabView: View {
             HStack {
                 ForEach(MainTab.allCases, id: \.id) { tab in
                     Button(action: {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            selectedTab = tab
-                        }
+                        handleTabSelection(tab)
                     }) {
                         VStack(spacing: 4) {
                             // Tab Icon
@@ -140,7 +176,8 @@ struct MainTabView: View {
     
     @ViewBuilder
     private func regularTabIcon(for tab: MainTab) -> some View {
-        let isSelected = selectedTab == tab
+        // Create tab nunca se marca como seleccionado visualmente
+        let isSelected = tab == .create ? false : selectedTab == tab
         let iconName = isSelected ? tab.selectedIcon : tab.icon
         
         Image(systemName: iconName)

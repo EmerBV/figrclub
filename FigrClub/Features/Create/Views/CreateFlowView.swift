@@ -103,6 +103,7 @@ struct CreateFlowView: View {
             }
         }
         .ignoresSafeArea(.all) // Full screen, hiding tab bar completely
+        .toolbar(.hidden, for: .tabBar) // Asegurar que no aparezca tab bar
         .sheet(isPresented: $showingImagePicker) {
             ImageLibraryView()
         }
