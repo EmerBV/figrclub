@@ -118,7 +118,7 @@ struct CreateFlowView: View {
                 openAppSettings()
             }
             Button("Cancelar", role: .cancel) {
-                navigationCoordinator.dismissCreateFlow()
+                navigationCoordinator.dismissCreatePost()
             }
         } message: {
             Text("Para usar la cámara, ve a Configuración > Privacidad y Seguridad > Cámara y activa el permiso para FigrClub.")
@@ -229,7 +229,7 @@ struct CreateFlowView: View {
         HStack {
             // Close button
             Button(action: {
-                navigationCoordinator.dismissCreateFlow()
+                navigationCoordinator.dismissCreatePost()
             }) {
                 Image(systemName: "xmark")
                     .font(.system(size: 20, weight: .medium))

@@ -165,6 +165,7 @@ class NavigationCoordinator: ObservableObject {
 }
 
 // MARK: - Create Flow Navigation Extension
+/*
 extension NavigationCoordinator {
     
     /// Presenta el flujo de creación de contenido
@@ -287,6 +288,7 @@ extension NavigationCoordinator {
         }
     }
 }
+ */
 
 // MARK: - Media Asset Model
 struct MediaAsset: Identifiable, Hashable {
