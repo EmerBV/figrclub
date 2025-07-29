@@ -7,19 +7,40 @@
 
 import UIKit
 
+// MARK: - Protocol Definition
+
+/// Protocolo para gestión centralizada de feedback háptico
+protocol HapticFeedbackServiceProtocol {
+    func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle)
+    func notification(_ type: UINotificationFeedbackGenerator.FeedbackType)
+    func selection()
+    
+    // Context-specific methods
+    func photoCapture()
+    func recordingStart()
+    func recordingStop()
+    func cameraFlip()
+    func flashModeChange()
+    func zoom()
+    func focus()
+    func error()
+    func success()
+    func warning()
+}
+
+// MARK: - Service Implementation
+
 /// Gestor centralizado para feedback háptico siguiendo las Human Interface Guidelines
-final class HapticFeedbackManager {
+final class HapticFeedbackService: HapticFeedbackServiceProtocol {
     
-    // MARK: - Singleton
-    static let shared = HapticFeedbackManager()
-    
-    private init() {}
+    // MARK: - Initialization
+    init() {}
     
     // MARK: - Impact Feedback
     
     /// Proporciona feedback háptico de impacto
     /// - Parameter style: Estilo del impacto (light, medium, heavy)
-    static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
+    func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
         guard UIDevice.current.userInterfaceIdiom == .phone else { return }
         
         let impactFeedback = UIImpactFeedbackGenerator(style: style)
@@ -31,7 +52,7 @@ final class HapticFeedbackManager {
     
     /// Proporciona feedback háptico de notificación
     /// - Parameter type: Tipo de notificación (success, warning, error)
-    static func notification(_ type: UINotificationFeedbackGenerator.FeedbackType) {
+    func notification(_ type: UINotificationFeedbackGenerator.FeedbackType) {
         guard UIDevice.current.userInterfaceIdiom == .phone else { return }
         
         let notificationFeedback = UINotificationFeedbackGenerator()
@@ -42,7 +63,7 @@ final class HapticFeedbackManager {
     // MARK: - Selection Feedback
     
     /// Proporciona feedback háptico de selección
-    static func selection() {
+    func selection() {
         guard UIDevice.current.userInterfaceIdiom == .phone else { return }
         
         let selectionFeedback = UISelectionFeedbackGenerator()
@@ -53,52 +74,75 @@ final class HapticFeedbackManager {
     // MARK: - Context-Specific Methods
     
     /// Feedback para captura de foto
-    static func photoCapture() {
+    func photoCapture() {
         impact(.heavy)
     }
     
     /// Feedback para iniciar grabación
-    static func recordingStart() {
+    func recordingStart() {
         impact(.heavy)
     }
     
     /// Feedback para detener grabación
-    static func recordingStop() {
+    func recordingStop() {
         impact(.medium)
     }
     
     /// Feedback para cambio de cámara
-    static func cameraFlip() {
+    func cameraFlip() {
         impact(.medium)
     }
     
     /// Feedback para cambio de modo de flash
-    static func flashModeChange() {
+    func flashModeChange() {
         impact(.light)
     }
     
     /// Feedback para zoom
-    static func zoom() {
+    func zoom() {
         impact(.light)
     }
     
     /// Feedback para enfoque
-    static func focus() {
+    func focus() {
         impact(.light)
     }
     
     /// Feedback para error
-    static func error() {
+    func error() {
         notification(.error)
     }
     
     /// Feedback para éxito
-    static func success() {
+    func success() {
         notification(.success)
     }
     
     /// Feedback para advertencia
-    static func warning() {
+    func warning() {
         notification(.warning)
+    }
+}
+
+// MARK: - Legacy Support
+
+/// Clase legacy para mantener compatibilidad temporal
+/// @deprecated Usar HapticFeedbackServiceProtocol con inyección de dependencias
+final class HapticFeedbackManager {
+    private static let service = HapticFeedbackService()
+    
+    @available(*, deprecated, message: "Usar HapticFeedbackServiceProtocol con inyección de dependencias")
+    static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
+        service.impact(style)
+    }
+    
+    @available(*, deprecated, message: "Usar HapticFeedbackServiceProtocol con inyección de dependencias")
+    static func notification(_ type: UINotificationFeedbackGenerator.FeedbackType) {
+        service.notification(type)
+    }
+    
+    @available(*, deprecated, message: "Usar HapticFeedbackServiceProtocol con inyección de dependencias")
+    static func selection() {
+        service.selection()
     }
 }

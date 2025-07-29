@@ -59,8 +59,9 @@ struct CreateFlowView: View {
     @EnvironmentObject private var themeManager: ThemeManager
     @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
     
-    // Camera Manager
-    @StateObject private var cameraManager = CameraManager()
+    // Injected Dependencies
+    @EnvironmentObject private var cameraManager: CameraManager
+    @EnvironmentObject private var hapticService: HapticFeedbackService
     
     // UI State
     @State private var selectedContentType: CreationContentType = .publicacion
@@ -522,14 +523,14 @@ extension CreateFlowView {
             let nextIndex = (currentIndex + 1) % allCases.count
             flashMode = allCases[nextIndex]
         }
-        HapticFeedbackManager.impact(.light)
+        hapticService.flashModeChange()
     }
     
     private func flipCamera() {
         Task {
             do {
                 try await cameraManager.flipCamera()
-                HapticFeedbackManager.impact(.medium)
+                hapticService.cameraFlip()
             } catch {
                 Logger.error("Failed to flip camera: \(error)")
             }
@@ -555,7 +556,7 @@ extension CreateFlowView {
         Task {
             do {
                 try await cameraManager.capturePhoto()
-                HapticFeedbackManager.impact(.heavy)
+                hapticService.photoCapture()
             } catch {
                 Logger.error("Failed to capture photo: \(error)")
             }
@@ -566,7 +567,7 @@ extension CreateFlowView {
         Task {
             do {
                 try await cameraManager.startVideoRecording()
-                HapticFeedbackManager.impact(.heavy)
+                hapticService.recordingStart()
             } catch {
                 Logger.error("Failed to start recording: \(error)")
             }
@@ -575,11 +576,11 @@ extension CreateFlowView {
     
     private func stopRecording() {
         cameraManager.stopVideoRecording()
-        HapticFeedbackManager.impact(.medium)
+        hapticService.recordingStop()
     }
     
     private func startLiveStream() {
-        HapticFeedbackManager.impact(.heavy)
+        hapticService.impact(.heavy)
         // TODO: Initialize live streaming
     }
     

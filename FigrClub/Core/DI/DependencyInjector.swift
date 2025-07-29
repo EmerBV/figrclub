@@ -36,6 +36,10 @@ final class DependencyInjector {
                 // MARK: - Image Loading
                 KingfisherAssembly(),
                 
+                // MARK: - System Services
+                HapticFeedbackAssembly(),
+                CameraAssembly(),
+                
                 // MARK: - Data
                 ServiceAssembly(),
                 RepositoryAssembly(),

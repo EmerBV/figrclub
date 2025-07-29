@@ -93,6 +93,8 @@ struct MainTabView: View {
             CreateFlowView(user: user)
                 .environmentObject(themeManager)
                 .environmentObject(navigationCoordinator)
+                .environmentObject(DependencyInjector.shared.resolve(CameraManager.self))
+                .environmentObject(DependencyInjector.shared.resolve(HapticFeedbackService.self))
         }
         .onAppear {
             setupDeepLinkManager()
