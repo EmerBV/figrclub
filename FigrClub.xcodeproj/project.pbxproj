@@ -449,6 +449,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FigrClub/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "FigrClub necesita acceso a la cámara para tomar fotos de tus figuras.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "FigrClub necesita acceso al micrófono para grabar audio en tus videos.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "FigrClub necesita acceso a tu librería de fotos para compartir imágenes.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -480,6 +481,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FigrClub/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "FigrClub necesita acceso a la cámara para tomar fotos de tus figuras.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "FigrClub necesita acceso al micrófono para grabar audio en tus videos.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "FigrClub necesita acceso a tu librería de fotos para compartir imágenes.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

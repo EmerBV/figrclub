@@ -7,6 +7,8 @@
 
 import SwiftUI
 import Kingfisher
+import AVFoundation
+import Photos
 
 // MARK: - Content Creation Types
 enum CreationContentType: String, CaseIterable, Identifiable {
@@ -20,6 +22,35 @@ enum CreationContentType: String, CaseIterable, Identifiable {
     var title: String { rawValue }
 }
 
+// MARK: - Flash Mode Enum
+enum FlashMode: CaseIterable {
+    case off, on, auto
+    
+    var iconName: String {
+        switch self {
+        case .off: return "bolt.slash"
+        case .on: return "bolt"
+        case .auto: return "bolt.badge.a"
+        }
+    }
+    
+    var title: String {
+        switch self {
+        case .off: return "Off"
+        case .on: return "On"
+        case .auto: return "Auto"
+        }
+    }
+    
+    var cameraFlashMode: CameraFlashMode {
+        switch self {
+        case .off: return .off
+        case .on: return .on
+        case .auto: return .auto
+        }
+    }
+}
+
 // MARK: - Create Flow View
 struct CreateFlowView: View {
     let user: User
@@ -28,12 +59,21 @@ struct CreateFlowView: View {
     @EnvironmentObject private var themeManager: ThemeManager
     @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
     
+    // Camera Manager
+    @StateObject private var cameraManager = CameraManager()
+    
+    // UI State
     @State private var selectedContentType: CreationContentType = .publicacion
     @State private var showingImagePicker = false
     @State private var flashMode: FlashMode = .off
     @State private var isRecording = false
     @State private var recordingTimer: Timer?
     @State private var recordingDuration: TimeInterval = 0
+    @State private var showingCapturedMedia = false
+    @State private var capturedImage: UIImage?
+    @State private var capturedVideoURL: URL?
+    @State private var showingPermissionAlert = false
+    @State private var currentZoom: CGFloat = 1.0
     
     var body: some View {
         ZStack {
@@ -66,29 +106,120 @@ struct CreateFlowView: View {
         .sheet(isPresented: $showingImagePicker) {
             ImageLibraryView()
         }
+        .sheet(isPresented: $showingCapturedMedia) {
+            if let image = capturedImage {
+                MediaEditView(image: image, user: user)
+            } else if let videoURL = capturedVideoURL {
+                MediaEditView(videoURL: videoURL, user: user)
+            }
+        }
+        .alert("Permiso de cámara requerido", isPresented: $showingPermissionAlert) {
+            Button("Configuración") {
+                openAppSettings()
+            }
+            Button("Cancelar", role: .cancel) {
+                navigationCoordinator.dismissCreateFlow()
+            }
+        } message: {
+            Text("FigrClub necesita acceso a la cámara para tomar fotos y grabar videos. Ve a Configuración para habilitar el permiso.")
+        }
+        .onAppear {
+            setupCamera()
+        }
+        .onDisappear {
+            Task {
+                await cameraManager.stopSession()
+            }
+        }
+        .onChange(of: cameraManager.isRecording) { oldValue, newValue in
+            isRecording = newValue
+        }
+        .onChange(of: cameraManager.recordingDuration) { oldValue, newValue in
+            recordingDuration = newValue
+        }
+        .onChange(of: flashMode) { oldValue, newValue in
+            cameraManager.setFlashMode(newValue.cameraFlashMode)
+        }
     }
     
     // MARK: - Camera Background
     private var cameraBackgroundView: some View {
         ZStack {
-            // Simulated camera view
-            Rectangle()
-                .fill(Color.black)
+            if cameraManager.isConfigured && cameraManager.permissionGranted {
+                // Real camera preview
+                CameraPreviewView(
+                    previewLayer: cameraManager.getPreviewLayer(),
+                    onTap: { point in
+                        Task {
+                            await cameraManager.focusAt(point)
+                        }
+                    },
+                    onPinch: { zoomFactor in
+                        let newZoom = currentZoom * zoomFactor
+                        Task {
+                            await cameraManager.setZoom(newZoom)
+                            await MainActor.run {
+                                currentZoom = newZoom
+                            }
+                        }
+                    }
+                )
                 .ignoresSafeArea(.all)
-            
-            // Camera preview placeholder
-            VStack {
-                Spacer()
                 
-                Text("Vista de Cámara")
-                    .font(.title2.weight(.medium))
-                    .foregroundColor(.white.opacity(0.6))
+                // Zoom indicator
+                if currentZoom > 1.0 {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Text("\(String(format: "%.1f", currentZoom))x")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(Color.black.opacity(0.6))
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                                .padding(.trailing, 20)
+                                .padding(.top, 100)
+                        }
+                        Spacer()
+                    }
+                }
+            } else {
+                // Fallback black view
+                Rectangle()
+                    .fill(Color.black)
+                    .ignoresSafeArea(.all)
                 
-                Text("Integrar AVCaptureSession aquí")
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.4))
-                
-                Spacer()
+                VStack(spacing: 16) {
+                    if !cameraManager.permissionGranted {
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 48))
+                            .foregroundColor(.white.opacity(0.6))
+                        
+                        Text("Permiso de cámara requerido")
+                            .font(.title2.weight(.medium))
+                            .foregroundColor(.white.opacity(0.8))
+                            .multilineTextAlignment(.center)
+                        
+                        Text("Toca para permitir acceso a la cámara")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.6))
+                            .multilineTextAlignment(.center)
+                    } else {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                            .tint(.white)
+                        
+                        Text("Configurando cámara...")
+                            .font(.title2.weight(.medium))
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                }
+                .onTapGesture {
+                    if !cameraManager.permissionGranted {
+                        showingPermissionAlert = true
+                    }
+                }
             }
         }
     }
@@ -98,7 +229,7 @@ struct CreateFlowView: View {
         HStack {
             // Close button
             Button(action: {
-                // Close create flow and return to previous tab
+                navigationCoordinator.dismissCreateFlow()
             }) {
                 Image(systemName: "xmark")
                     .font(.system(size: 20, weight: .medium))
@@ -135,86 +266,6 @@ struct CreateFlowView: View {
                     Color.black.opacity(0.7),
                     Color.black.opacity(0.4),
                     Color.clear
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
-    }
-    
-    // MARK: - Bottom Capture and Selector Area
-    private var bottomCaptureAndSelectorArea: some View {
-        VStack(spacing: 20) {
-            // Center capture button (above the selector)
-            centerCaptureButton
-            
-            // Bottom area with gallery, content selector, and flip camera
-            HStack(alignment: .center, spacing: 0) {
-                // Gallery button (left)
-                Button(action: {
-                    showingImagePicker = true
-                }) {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.black)
-                        .stroke(Color.white, lineWidth: 2)
-                        .frame(width: 50, height: 50)
-                        .overlay(
-                            Image(systemName: "photo")
-                                .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(.white)
-                        )
-                }
-                .frame(width: 80)
-                
-                Spacer()
-                
-                // Content type selector (center)
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 20) {
-                        ForEach(CreationContentType.allCases) { contentType in
-                            Button(action: {
-                                withAnimation(.easeInOut(duration: 0.3)) {
-                                    selectedContentType = contentType
-                                }
-                            }) {
-                                Text(contentType.title)
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(selectedContentType == contentType ? .white : .white.opacity(0.6))
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 10)
-                }
-                //.scrollClipDisabled()
-                
-                Spacer()
-                
-                // Camera flip button (right)
-                Button(action: {
-                    flipCamera()
-                }) {
-                    Circle()
-                        .fill(Color.black)
-                        .stroke(Color.white, lineWidth: 2)
-                        .frame(width: 50, height: 50)
-                        .overlay(
-                            Image(systemName: "camera.rotate")
-                                .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(.white)
-                        )
-                }
-                .frame(width: 80)
-                
-            }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 34) // Safe area
-        }
-        .background(
-            LinearGradient(
-                colors: [
-                    Color.clear,
-                    Color.black.opacity(0.3),
-                    Color.black.opacity(0.8)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -287,6 +338,102 @@ struct CreateFlowView: View {
         }
     }
     
+    // MARK: - Right Side Controls
+    private var rightSideControls: some View {
+        VStack(spacing: 24) {
+            // Music (for reels and stories)
+            if selectedContentType == .reel || selectedContentType == .historia {
+                Button(action: {
+                    // Add music
+                }) {
+                    Image(systemName: "music.note")
+                        .font(.system(size: 24, weight: .medium))
+                        .foregroundColor(.white)
+                }
+            }
+            
+            // Additional effects or controls can go here
+        }
+    }
+    
+    // MARK: - Bottom Capture and Selector Area
+    private var bottomCaptureAndSelectorArea: some View {
+        VStack(spacing: 20) {
+            // Center capture button (above the selector)
+            centerCaptureButton
+            
+            // Bottom area with gallery, content selector, and flip camera
+            HStack(alignment: .center, spacing: 0) {
+                // Gallery button (left)
+                Button(action: {
+                    showingImagePicker = true
+                }) {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.black)
+                        .stroke(Color.white, lineWidth: 2)
+                        .frame(width: 50, height: 50)
+                        .overlay(
+                            Image(systemName: "photo")
+                                .font(.system(size: 20, weight: .medium))
+                                .foregroundColor(.white)
+                        )
+                }
+                .frame(width: 80)
+                
+                Spacer()
+                
+                // Content type selector (center)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 20) {
+                        ForEach(CreationContentType.allCases) { contentType in
+                            Button(action: {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    selectedContentType = contentType
+                                }
+                            }) {
+                                Text(contentType.title)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(selectedContentType == contentType ? .white : .white.opacity(0.6))
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 10)
+                }
+                
+                Spacer()
+                
+                // Camera flip button (right)
+                Button(action: {
+                    flipCamera()
+                }) {
+                    Circle()
+                        .fill(Color.black)
+                        .stroke(Color.white, lineWidth: 2)
+                        .frame(width: 50, height: 50)
+                        .overlay(
+                            Image(systemName: "camera.rotate")
+                                .font(.system(size: 20, weight: .medium))
+                                .foregroundColor(.white)
+                        )
+                }
+                .frame(width: 80)
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 34) // Safe area
+        }
+        .background(
+            LinearGradient(
+                colors: [
+                    Color.clear,
+                    Color.black.opacity(0.3),
+                    Color.black.opacity(0.8)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+    }
+    
     // MARK: - Center Capture Button
     private var centerCaptureButton: some View {
         VStack(spacing: 12) {
@@ -336,32 +483,6 @@ struct CreateFlowView: View {
             .animation(.easeInOut(duration: 0.2), value: isRecording)
         }
     }
-    
-    // MARK: - Right Side Controls
-    private var rightSideControls: some View {
-        VStack(spacing: 24) {
-            // Music (for reels and stories)
-            if selectedContentType == .reel || selectedContentType == .historia {
-                Button(action: {
-                    // Add music
-                }) {
-                    Image(systemName: "music.note")
-                        .font(.system(size: 24, weight: .medium))
-                        .foregroundColor(.white)
-                }
-            }
-            
-            // Additional effects or controls can go here
-        }
-    }
-    
-    // MARK: - Bottom Content Type Selector
-    private var bottomContentTypeSelector: some View {
-        VStack(spacing: 0) {
-            // This section is now handled by bottomCaptureAndSelectorArea
-            EmptyView()
-        }
-    }
 }
 
 // MARK: - Computed Properties
@@ -386,6 +507,14 @@ extension CreateFlowView {
 
 // MARK: - Helper Methods
 extension CreateFlowView {
+    private func setupCamera() {
+        cameraManager.delegate = self
+        
+        Task {
+            await cameraManager.startSession()
+        }
+    }
+    
     private func cycleFlashMode() {
         let allCases = FlashMode.allCases
         if let currentIndex = allCases.firstIndex(of: flashMode) {
@@ -396,11 +525,14 @@ extension CreateFlowView {
     }
     
     private func flipCamera() {
-        // Implement camera flip with animation
-        withAnimation(.easeInOut(duration: 0.3)) {
-            // Toggle camera position
+        Task {
+            do {
+                try await cameraManager.flipCamera()
+                HapticFeedbackManager.impact(.medium)
+            } catch {
+                Logger.error("Failed to flip camera: \(error)")
+            }
         }
-        HapticFeedbackManager.impact(.medium)
     }
     
     private func handleCaptureAction() {
@@ -419,33 +551,30 @@ extension CreateFlowView {
     }
     
     private func capturePhoto() {
-        HapticFeedbackManager.impact(.heavy)
-        // TODO: Capture photo and navigate to edit screen
+        Task {
+            do {
+                try await cameraManager.capturePhoto()
+                HapticFeedbackManager.impact(.heavy)
+            } catch {
+                Logger.error("Failed to capture photo: \(error)")
+            }
+        }
     }
     
     private func startRecording() {
-        isRecording = true
-        recordingDuration = 0
-        
-        recordingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
-            recordingDuration += 0.1
-            
-            // Auto stop for stories after 15 seconds
-            if selectedContentType == .historia && recordingDuration >= 15.0 {
-                stopRecording()
+        Task {
+            do {
+                try await cameraManager.startVideoRecording()
+                HapticFeedbackManager.impact(.heavy)
+            } catch {
+                Logger.error("Failed to start recording: \(error)")
             }
         }
-        
-        HapticFeedbackManager.impact(.heavy)
     }
     
     private func stopRecording() {
-        isRecording = false
-        recordingTimer?.invalidate()
-        recordingTimer = nil
-        
+        cameraManager.stopVideoRecording()
         HapticFeedbackManager.impact(.medium)
-        // TODO: Navigate to edit screen with recorded content
     }
     
     private func startLiveStream() {
@@ -458,25 +587,134 @@ extension CreateFlowView {
         let seconds = Int(duration) % 60
         return String(format: "%d:%02d", minutes, seconds)
     }
+    
+    private func openAppSettings() {
+        guard let settingsUrl = URL(string: UIApplication.openSettingsURLString),
+              UIApplication.shared.canOpenURL(settingsUrl) else {
+            return
+        }
+        
+        UIApplication.shared.open(settingsUrl)
+    }
 }
 
-// MARK: - Flash Mode Enum
-enum FlashMode: CaseIterable {
-    case off, on, auto
-    
-    var iconName: String {
-        switch self {
-        case .off: return "bolt.slash"
-        case .on: return "bolt"
-        case .auto: return "bolt.badge.a"
+// MARK: - CameraManagerDelegate
+extension CreateFlowView: CameraManagerDelegate {
+    func cameraManager(_ manager: CameraManager, didCapturePhoto image: UIImage) {
+        Task { @MainActor in
+            capturedImage = image
+            capturedVideoURL = nil
+            showingCapturedMedia = true
         }
     }
     
-    var title: String {
-        switch self {
-        case .off: return "Off"
-        case .on: return "On"
-        case .auto: return "Auto"
+    func cameraManager(_ manager: CameraManager, didStartRecording url: URL) {
+        Logger.info("Started recording video")
+    }
+    
+    func cameraManager(_ manager: CameraManager, didFinishRecording url: URL) {
+        Task { @MainActor in
+            capturedVideoURL = url
+            capturedImage = nil
+            showingCapturedMedia = true
+        }
+    }
+    
+    func cameraManager(_ manager: CameraManager, didFailWithError error: CameraError) {
+        Task { @MainActor in
+            Logger.error("Camera error: \(error.localizedDescription)")
+            
+            switch error {
+            case .notAuthorized:
+                showingPermissionAlert = true
+            default:
+                // Handle other errors - could show toast or alert
+                break
+            }
+        }
+    }
+    
+    func cameraManager(_ manager: CameraManager, didUpdateRecordingDuration duration: TimeInterval) {
+        // Recording duration is already observed via @Published property
+        
+        // Auto stop for stories after 15 seconds
+        if selectedContentType == .historia && duration >= 15.0 {
+            stopRecording()
+        }
+        
+        // Auto stop for reels after 60 seconds
+        if selectedContentType == .reel && duration >= 60.0 {
+            stopRecording()
+        }
+    }
+}
+
+// MARK: - Media Edit View
+struct MediaEditView: View {
+    let image: UIImage?
+    let videoURL: URL?
+    let user: User
+    
+    @Environment(\.dismiss) private var dismiss
+    
+    init(image: UIImage, user: User) {
+        self.image = image
+        self.videoURL = nil
+        self.user = user
+    }
+    
+    init(videoURL: URL, user: User) {
+        self.image = nil
+        self.videoURL = videoURL
+        self.user = user
+    }
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.black.ignoresSafeArea()
+                
+                VStack {
+                    // Preview area
+                    if let image = image {
+                        Image(uiImage: image)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if let videoURL = videoURL {
+                        // Video player would go here
+                        VStack {
+                            Spacer()
+                            Text("Video Preview")
+                                .foregroundColor(.white)
+                                .font(.title2)
+                            Text(videoURL.lastPathComponent)
+                                .foregroundColor(.white.opacity(0.7))
+                                .font(.caption)
+                            Spacer()
+                        }
+                    }
+                    
+                    // Bottom controls
+                    HStack {
+                        Button("Cancelar") {
+                            dismiss()
+                        }
+                        .foregroundColor(.white)
+                        
+                        Spacer()
+                        
+                        Button("Siguiente") {
+                            // Process and save media
+                            dismiss()
+                        }
+                        .foregroundColor(.blue)
+                        .fontWeight(.semibold)
+                    }
+                    .padding()
+                }
+            }
+            .navigationBarHidden(true)
         }
     }
 }
@@ -507,55 +745,25 @@ struct ImageLibraryView: View {
                         Spacer()
                         
                         Button("Siguiente") {
-                            // Process selected media
+                            // Handle selection
                             dismiss()
                         }
                         .foregroundColor(.blue)
+                        .fontWeight(.semibold)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
+                    .padding()
                     
-                    // Media grid placeholder
-                    ScrollView {
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 3), spacing: 2) {
-                            ForEach(0..<20) { index in
-                                Rectangle()
-                                    .fill(Color.gray.opacity(0.3))
-                                    .aspectRatio(1, contentMode: .fit)
-                                    .overlay(
-                                        Image(systemName: "photo")
-                                            .foregroundColor(.white.opacity(0.6))
-                                    )
-                            }
-                        }
-                        .padding(.horizontal, 2)
-                    }
+                    Spacer()
+                    
+                    // Photo library grid would go here
+                    Text("Galería de fotos")
+                        .foregroundColor(.white.opacity(0.6))
+                        .font(.title2)
                     
                     Spacer()
                 }
             }
+            .navigationBarHidden(true)
         }
-    }
-}
-
-// MARK: - Haptic Feedback Manager
-struct HapticFeedbackManager {
-    enum FeedbackType {
-        case light, medium, heavy
-    }
-    
-    static func impact(_ type: FeedbackType) {
-        let impactGenerator: UIImpactFeedbackGenerator
-        
-        switch type {
-        case .light:
-            impactGenerator = UIImpactFeedbackGenerator(style: .light)
-        case .medium:
-            impactGenerator = UIImpactFeedbackGenerator(style: .medium)
-        case .heavy:
-            impactGenerator = UIImpactFeedbackGenerator(style: .heavy)
-        }
-        
-        impactGenerator.impactOccurred()
     }
 }
