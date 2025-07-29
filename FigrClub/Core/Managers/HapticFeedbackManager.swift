@@ -155,36 +155,3 @@ final class DeviceCapabilityChecker: DeviceCapabilityCheckerProtocol {
         return UIDevice.current.userInterfaceIdiom == .phone
     }
 }
-
-// MARK: - Legacy Support
-
-/// Clase legacy para mantener compatibilidad temporal
-/// @deprecated Usar HapticFeedbackManagerProtocol con inyección de dependencias
-final class HapticFeedbackService {
-    private static let manager: HapticFeedbackManager = {
-        return MainActor.assumeIsolated {
-            HapticFeedbackManager()
-        }
-    }()
-    
-    @available(*, deprecated, message: "Usar HapticFeedbackManagerProtocol con inyección de dependencias")
-    static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
-        Task { @MainActor in
-            manager.impact(style)
-        }
-    }
-    
-    @available(*, deprecated, message: "Usar HapticFeedbackManagerProtocol con inyección de dependencias")
-    static func notification(_ type: UINotificationFeedbackGenerator.FeedbackType) {
-        Task { @MainActor in
-            manager.notification(type)
-        }
-    }
-    
-    @available(*, deprecated, message: "Usar HapticFeedbackManagerProtocol con inyección de dependencias")
-    static func selection() {
-        Task { @MainActor in
-            manager.selection()
-        }
-    }
-}
