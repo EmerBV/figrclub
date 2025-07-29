@@ -17,5 +17,11 @@
 	</array>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>FigrClub te enviará notificaciones sobre nuevos posts, likes y mensajes.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>FigrClub necesita acceso a la cámara para tomar fotos y grabar videos para tus publicaciones.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>FigrClub necesita acceso al micrófono para grabar audio en tus videos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>FigrClub necesita acceso a tu galería de fotos para seleccionar imágenes y videos para tus publicaciones.</string>
 </dict>
 </plist>

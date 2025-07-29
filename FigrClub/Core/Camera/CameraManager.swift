@@ -118,25 +118,8 @@ final class CameraManager: NSObject, ObservableObject {
     override init() {
         super.init()
         
-        // Request camera permissions
-        switch AVCaptureDevice.authorizationStatus(for: .video) {
-        case .authorized:
-            self.permissionGranted = true
-        case .notDetermined:
-            sessionQueue.suspend()
-            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
-                Task { @MainActor in
-                    self?.permissionGranted = granted
-                    if !granted {
-                        self?.setupResult = .notAuthorized
-                    }
-                    self?.sessionQueue.resume()
-                }
-            }
-        default:
-            self.setupResult = .notAuthorized
-            self.permissionGranted = false
-        }
+        // Check camera permissions without requesting
+        updatePermissionStatus()
         
         sessionQueue.async { [weak self] in
             self?.configureSession()
@@ -150,6 +133,55 @@ final class CameraManager: NSObject, ObservableObject {
     }
     
     // MARK: - Public Methods
+    
+    /// Actualiza el estado de permisos sin solicitarlos
+    private func updatePermissionStatus() {
+        let status = AVCaptureDevice.authorizationStatus(for: .video)
+        switch status {
+        case .authorized:
+            permissionGranted = true
+            setupResult = .success
+        case .denied, .restricted:
+            permissionGranted = false
+            setupResult = .notAuthorized
+        case .notDetermined:
+            permissionGranted = false
+            setupResult = .success // Permitimos configurar, pero solicitaremos permisos al iniciar
+        @unknown default:
+            permissionGranted = false
+            setupResult = .notAuthorized
+        }
+    }
+    
+    /// Solicita permisos de cámara si es necesario
+    func requestCameraPermissionIfNeeded() async -> Bool {
+        let status = AVCaptureDevice.authorizationStatus(for: .video)
+        
+        switch status {
+        case .authorized:
+            await MainActor.run {
+                permissionGranted = true
+            }
+            return true
+            
+        case .notDetermined:
+            let granted = await AVCaptureDevice.requestAccess(for: .video)
+            await MainActor.run {
+                permissionGranted = granted
+                if !granted {
+                    setupResult = .notAuthorized
+                }
+            }
+            return granted
+            
+        default:
+            await MainActor.run {
+                permissionGranted = false
+                setupResult = .notAuthorized
+            }
+            return false
+        }
+    }
     
     /// Configura la sesión de captura
     private func configureSession() {
@@ -232,31 +264,42 @@ final class CameraManager: NSObject, ObservableObject {
     
     /// Inicia la sesión de captura
     func startSession() async {
-        guard permissionGranted else {
+        // Solicitar permisos si es necesario
+        let hasPermission = await requestCameraPermissionIfNeeded()
+        
+        guard hasPermission else {
             await MainActor.run {
                 delegate?.cameraManager(self, didFailWithError: .notAuthorized)
             }
             return
         }
         
-        sessionQueue.async { [weak self] in
-            guard let self = self else { return }
-            
-            switch self.setupResult {
-            case .success:
-                self.captureSession.startRunning()
-                Task { @MainActor in
-                    self.isSessionRunning = self.captureSession.isRunning
+        await withCheckedContinuation { continuation in
+            sessionQueue.async { [weak self] in
+                guard let self = self else { 
+                    continuation.resume()
+                    return 
                 }
                 
-            case .notAuthorized:
-                Task { @MainActor in
-                    self.delegate?.cameraManager(self, didFailWithError: .notAuthorized)
-                }
-                
-            case .configurationFailed:
-                Task { @MainActor in
-                    self.delegate?.cameraManager(self, didFailWithError: .configurationFailed)
+                switch self.setupResult {
+                case .success:
+                    self.captureSession.startRunning()
+                    Task { @MainActor in
+                        self.isSessionRunning = self.captureSession.isRunning
+                        continuation.resume()
+                    }
+                    
+                case .notAuthorized:
+                    Task { @MainActor in
+                        self.delegate?.cameraManager(self, didFailWithError: .notAuthorized)
+                        continuation.resume()
+                    }
+                    
+                case .configurationFailed:
+                    Task { @MainActor in
+                        self.delegate?.cameraManager(self, didFailWithError: .configurationFailed)
+                        continuation.resume()
+                    }
                 }
             }
         }

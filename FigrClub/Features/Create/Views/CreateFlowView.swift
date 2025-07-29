@@ -114,14 +114,14 @@ struct CreateFlowView: View {
             }
         }
         .alert("Permiso de cámara requerido", isPresented: $showingPermissionAlert) {
-            Button("Configuración") {
+            Button("Ir a Configuración") {
                 openAppSettings()
             }
             Button("Cancelar", role: .cancel) {
                 navigationCoordinator.dismissCreateFlow()
             }
         } message: {
-            Text("FigrClub necesita acceso a la cámara para tomar fotos y grabar videos. Ve a Configuración para habilitar el permiso.")
+            Text("Para usar la cámara, ve a Configuración > Privacidad y Seguridad > Cámara y activa el permiso para FigrClub.")
         }
         .onAppear {
             setupCamera()
