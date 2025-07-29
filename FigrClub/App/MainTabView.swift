@@ -94,7 +94,7 @@ struct MainTabView: View {
                 .environmentObject(themeManager)
                 .environmentObject(navigationCoordinator)
                 .environmentObject(DependencyInjector.shared.resolve(CameraManager.self))
-                .environmentObject(DependencyInjector.shared.resolve(HapticFeedbackService.self))
+                .environmentObject(DependencyInjector.shared.resolve(HapticFeedbackManager.self))
         }
         .onAppear {
             setupDeepLinkManager()

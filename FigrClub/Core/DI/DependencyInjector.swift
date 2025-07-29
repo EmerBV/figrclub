@@ -196,6 +196,19 @@ extension DependencyInjector {
     }
 }
 
+extension DependencyInjector {
+    
+    /// Get Haptic Feedback Manager
+    func getHapticFeedbackManager() -> HapticFeedbackManager {
+        return resolve(HapticFeedbackManager.self)
+    }
+    
+    /// Get Haptic Feedback Manager Protocol
+    func getHapticFeedbackManagerProtocol() -> HapticFeedbackManagerProtocol {
+        return resolve(HapticFeedbackManagerProtocol.self)
+    }
+} 
+
 /*
  extension DependencyInjector {
  

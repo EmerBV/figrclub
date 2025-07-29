@@ -6,11 +6,10 @@
 //
 
 import UIKit
+import SwiftUI
 
-// MARK: - Protocol Definition
-
-/// Protocolo para gestión centralizada de feedback háptico
-protocol HapticFeedbackServiceProtocol {
+// MARK: - Haptic Feedback Manager Protocol
+protocol HapticFeedbackManagerProtocol: ObservableObject {
     func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle)
     func notification(_ type: UINotificationFeedbackGenerator.FeedbackType)
     func selection()
@@ -28,24 +27,35 @@ protocol HapticFeedbackServiceProtocol {
     func warning()
 }
 
-// MARK: - Service Implementation
-
-/// Gestor centralizado para feedback háptico siguiendo las Human Interface Guidelines
-final class HapticFeedbackService: HapticFeedbackServiceProtocol {
+// MARK: - Haptic Feedback Manager Implementation
+@MainActor
+final class HapticFeedbackManager: ObservableObject, HapticFeedbackManagerProtocol {
+    
+    // MARK: - Published Properties
+    @Published private(set) var isEnabled = true
+    @Published private(set) var lastFeedbackTime: Date?
+    
+    // MARK: - Properties
+    private let deviceCapabilityChecker: DeviceCapabilityCheckerProtocol
     
     // MARK: - Initialization
-    init() {}
+    init(deviceCapabilityChecker: DeviceCapabilityCheckerProtocol = DeviceCapabilityChecker()) {
+        self.deviceCapabilityChecker = deviceCapabilityChecker
+        Logger.info("🎯 HapticFeedbackManager: Initialized")
+    }
     
     // MARK: - Impact Feedback
     
     /// Proporciona feedback háptico de impacto
     /// - Parameter style: Estilo del impacto (light, medium, heavy)
     func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
-        guard UIDevice.current.userInterfaceIdiom == .phone else { return }
+        guard deviceCapabilityChecker.supportsHapticFeedback else { return }
         
         let impactFeedback = UIImpactFeedbackGenerator(style: style)
         impactFeedback.prepare()
         impactFeedback.impactOccurred()
+        
+        updateLastFeedbackTime()
     }
     
     // MARK: - Notification Feedback
@@ -53,22 +63,26 @@ final class HapticFeedbackService: HapticFeedbackServiceProtocol {
     /// Proporciona feedback háptico de notificación
     /// - Parameter type: Tipo de notificación (success, warning, error)
     func notification(_ type: UINotificationFeedbackGenerator.FeedbackType) {
-        guard UIDevice.current.userInterfaceIdiom == .phone else { return }
+        guard deviceCapabilityChecker.supportsHapticFeedback else { return }
         
         let notificationFeedback = UINotificationFeedbackGenerator()
         notificationFeedback.prepare()
         notificationFeedback.notificationOccurred(type)
+        
+        updateLastFeedbackTime()
     }
     
     // MARK: - Selection Feedback
     
     /// Proporciona feedback háptico de selección
     func selection() {
-        guard UIDevice.current.userInterfaceIdiom == .phone else { return }
+        guard deviceCapabilityChecker.supportsHapticFeedback else { return }
         
         let selectionFeedback = UISelectionFeedbackGenerator()
         selectionFeedback.prepare()
         selectionFeedback.selectionChanged()
+        
+        updateLastFeedbackTime()
     }
     
     // MARK: - Context-Specific Methods
@@ -122,27 +136,55 @@ final class HapticFeedbackService: HapticFeedbackServiceProtocol {
     func warning() {
         notification(.warning)
     }
+    
+    // MARK: - Private Methods
+    
+    private func updateLastFeedbackTime() {
+        lastFeedbackTime = Date()
+    }
+}
+
+// MARK: - Device Capability Checker Protocol
+protocol DeviceCapabilityCheckerProtocol {
+    var supportsHapticFeedback: Bool { get }
+}
+
+// MARK: - Device Capability Checker Implementation
+final class DeviceCapabilityChecker: DeviceCapabilityCheckerProtocol {
+    var supportsHapticFeedback: Bool {
+        return UIDevice.current.userInterfaceIdiom == .phone
+    }
 }
 
 // MARK: - Legacy Support
 
 /// Clase legacy para mantener compatibilidad temporal
-/// @deprecated Usar HapticFeedbackServiceProtocol con inyección de dependencias
-final class HapticFeedbackManager {
-    private static let service = HapticFeedbackService()
+/// @deprecated Usar HapticFeedbackManagerProtocol con inyección de dependencias
+final class HapticFeedbackService {
+    private static let manager: HapticFeedbackManager = {
+        return MainActor.assumeIsolated {
+            HapticFeedbackManager()
+        }
+    }()
     
-    @available(*, deprecated, message: "Usar HapticFeedbackServiceProtocol con inyección de dependencias")
+    @available(*, deprecated, message: "Usar HapticFeedbackManagerProtocol con inyección de dependencias")
     static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
-        service.impact(style)
+        Task { @MainActor in
+            manager.impact(style)
+        }
     }
     
-    @available(*, deprecated, message: "Usar HapticFeedbackServiceProtocol con inyección de dependencias")
+    @available(*, deprecated, message: "Usar HapticFeedbackManagerProtocol con inyección de dependencias")
     static func notification(_ type: UINotificationFeedbackGenerator.FeedbackType) {
-        service.notification(type)
+        Task { @MainActor in
+            manager.notification(type)
+        }
     }
     
-    @available(*, deprecated, message: "Usar HapticFeedbackServiceProtocol con inyección de dependencias")
+    @available(*, deprecated, message: "Usar HapticFeedbackManagerProtocol con inyección de dependencias")
     static func selection() {
-        service.selection()
+        Task { @MainActor in
+            manager.selection()
+        }
     }
 }

@@ -13,20 +13,34 @@ final class HapticFeedbackAssembly: Assembly {
     func assemble(container: Container) {
         Logger.info("🎯 HapticFeedbackAssembly: Registering haptic feedback services...")
         
-        // MARK: - Haptic Feedback Service Protocol
+        // MARK: - Device Capability Checker
         
-        /// HapticFeedbackServiceProtocol (Gestión de feedback háptico)
-        container.register(HapticFeedbackServiceProtocol.self) { _ in
-            return HapticFeedbackService()
+        // Device Capability Checker
+        container.register(DeviceCapabilityCheckerProtocol.self) { _ in
+            return DeviceCapabilityChecker()
         }.inObjectScope(.container)
         
-        // MARK: - Concrete HapticFeedbackService
+        // MARK: - Manager
         
-        /// Concrete HapticFeedbackService registration for environment objects
-        container.register(HapticFeedbackService.self) { resolver in
-            return resolver.resolve(HapticFeedbackServiceProtocol.self) as! HapticFeedbackService
+        // Haptic Feedback Manager - Create on main actor
+        container.register(HapticFeedbackManagerProtocol.self) { resolver in
+            let deviceCapabilityChecker = resolver.resolve(DeviceCapabilityCheckerProtocol.self)!
+            
+            // Create on main actor to avoid actor isolation issues
+            return MainActor.assumeIsolated {
+                return HapticFeedbackManager(
+                    deviceCapabilityChecker: deviceCapabilityChecker
+                )
+            }
+        }.inObjectScope(.container)
+        
+        // Register concrete type for @EnvironmentObject
+        container.register(HapticFeedbackManager.self) { resolver in
+            // This will be resolved on main actor too
+            return resolver.resolve(HapticFeedbackManagerProtocol.self)! as! HapticFeedbackManager
         }.inObjectScope(.container)
         
         Logger.info("✅ HapticFeedbackAssembly: Haptic feedback services registered successfully")
     }
-} 
+}
+
