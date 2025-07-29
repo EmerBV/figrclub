@@ -183,6 +183,13 @@ enum LocalizedStringKey: String, CaseIterable {
     case categoryCollectibles = "category_collectibles"
     case categoryVintage = "category_vintage"
     
+    // MARK: - Logout Alert Confirmation
+    case areYouSureToLogout = "are_you_sure_to_logout"
+    
+    // MARK: - Feed
+    case yourStoryString = "your_story_string"
+    case likesString = "likes_string"
+    case seeAllComments = "see_all_comments"
     
     // MARK: - Computed Properties
     var fallbackValue: String {
@@ -359,6 +366,14 @@ enum LocalizedStringKey: String, CaseIterable {
         case .categoryTv: return "TV/Series"
         case .categoryCollectibles: return "Coleccionables"
         case .categoryVintage: return "Vintage"
+            
+            // Logout Alert Confirmation
+        case .areYouSureToLogout: return "¿Estás seguro de que quieres cerrar tu sesión?"
+            
+            // Feed
+        case .yourStoryString: return "Tu historia"
+        case .likesString: return "%d me gusta"
+        case .seeAllComments: return "Ver los %d comentarios"
         }
     }
     

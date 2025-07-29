@@ -10,6 +10,8 @@ import Kingfisher
 
 struct FeedFlowView: View {
     let user: User
+    @Environment(\.localizationManager) private var localizationManager
+    
     @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
     @EnvironmentObject private var authStateManager: AuthStateManager
     @EnvironmentObject private var themeManager: ThemeManager
@@ -51,15 +53,15 @@ struct FeedFlowView: View {
             }
         }
         // Alert de confirmación para logout
-        .alert("Cerrar Sesión", isPresented: $showLogoutConfirmation) {
-            Button("Cancelar", role: .cancel) {
+        .alert(localizationManager.localizedString(for: .logout), isPresented: $showLogoutConfirmation) {
+            Button(localizationManager.localizedString(for: .cancel), role: .cancel) {
                 showLogoutConfirmation = false
             }
-            Button("Cerrar Sesión", role: .destructive) {
+            Button(localizationManager.localizedString(for: .logout), role: .destructive) {
                 performLogout()
             }
         } message: {
-            Text("¿Estás seguro de que quieres cerrar tu sesión?")
+            Text(localizationManager.localizedString(for: .areYouSureToLogout))
         }
         .onChange(of: authStateManager.authState) { oldValue, newValue in
             if case .unauthenticated = newValue {
@@ -160,6 +162,8 @@ struct FeedFlowView: View {
 struct UserStoryView: View {
     let user: User
     
+    @Environment(\.localizationManager) private var localizationManager
+    
     var body: some View {
         VStack(spacing: 4) {
             ZStack {
@@ -200,7 +204,7 @@ struct UserStoryView: View {
                     .offset(x: 22, y: 22)
             }
             
-            Text("Tu historia")
+            Text(localizationManager.localizedString(for: .yourStoryString))
                 .font(.caption)
                 .foregroundColor(.primary)
                 .lineLimit(1)
@@ -248,6 +252,8 @@ struct StoryView: View {
 struct PostView: View {
     let post: SamplePost
     let currentUser: User
+    
+    @Environment(\.localizationManager) private var localizationManager
     @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
     @State private var isLiked = false
     @State private var isSaved = false
@@ -392,7 +398,7 @@ struct PostView: View {
         VStack(alignment: .leading, spacing: 4) {
             // Número de likes
             if post.likesCount < 10 {
-                Text("\(post.likesCount) me gusta")
+                Text(localizationManager.localizedString(for: .numberOfProducts, arguments: post.likesCount))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.primary)
             }
@@ -419,7 +425,7 @@ struct PostView: View {
                 Button {
                     showComments = true
                 } label: {
-                    Text("Ver los \(post.commentsCount) comentarios")
+                    Text(localizationManager.localizedString(for: .seeAllComments, arguments: post.commentsCount))
                         .font(.system(size: 14))
                         .foregroundColor(.secondary)
                 }

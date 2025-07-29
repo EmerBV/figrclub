@@ -177,3 +177,11 @@
 "category_tv" = "TV/Series";
 "category_collectibles" = "Collectibles";
 "category_vintage" = "Vintage";
+
+// MARK: - Logout Alert Confirmation
+"are_you_sure_to_logout" = "Are you sure you want to log out?";
+
+// MARK: - Feed
+"your_story_string" = "Your story";
+"likes_string" = "%d likes";
+"see_all_comments" = "See all %d comments";

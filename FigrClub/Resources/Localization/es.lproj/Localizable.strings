@@ -177,3 +177,11 @@
 "category_tv" = "TV/Series";
 "category_collectibles" = "Coleccionables";
 "category_vintage" = "Vintage";
+
+// MARK: - Logout Alert Confirmation
+"are_you_sure_to_logout" = "¿Estás seguro de que quieres cerrar tu sesión?";
+
+// MARK: - Feed
+"your_story_string" = "Tu historia";
+"likes_string" = "%d me gusta";
+"see_all_comments" = "Ver los %d comentarios";
