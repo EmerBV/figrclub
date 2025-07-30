@@ -191,6 +191,22 @@ enum LocalizedStringKey: String, CaseIterable {
     case likesString = "likes_string"
     case seeAllComments = "see_all_comments"
     
+    // MARK: - Create
+    case createPost = "create_post"
+    case createStory = "create_story"
+    case createReel = "create_reel"
+    case createLiveStream = "create_live_stream"
+    case cameraPermissionRequired = "camera_permission_required"
+    case goToSettings = "go_to_settings"
+    case cameraPermissionSettingsDescription = "camera_permission_settings_description"
+    case tapToAllowCameraPermission = "tap_to_allow_camera_permission"
+    case settingUpCamera = "setting_up_camera"
+    case shareWithFollowers = "share_with_followers"
+    case videoPreview = "video_preview"
+    case recentString = "recent_string"
+    case photoGallery = "photo_gallery"
+    
+    
     // MARK: - Computed Properties
     var fallbackValue: String {
         switch self {
@@ -374,6 +390,21 @@ enum LocalizedStringKey: String, CaseIterable {
         case .yourStoryString: return "Tu historia"
         case .likesString: return "%d me gusta"
         case .seeAllComments: return "Ver los %d comentarios"
+            
+            // Create
+        case .createPost: return "PUBLICACIÓN"
+        case .createStory: return "HISTORIA"
+        case .createReel: return "REEL"
+        case .createLiveStream: return "EN DIRECTO"
+        case .cameraPermissionRequired: return "Permiso de cámara requerido"
+        case .goToSettings: return "Ir a Configuración"
+        case .cameraPermissionSettingsDescription: return "Para usar la cámara, ve a Configuración > Privacidad y Seguridad > Cámara y activa el permiso para FigrClub."
+        case .tapToAllowCameraPermission: return "Toca para permitir acceso a la cámara"
+        case .settingUpCamera: return "Configurando cámara..."
+        case .shareWithFollowers: return " Compartir con Seguidores"
+        case .videoPreview: return "Previsualización del video"
+        case .recentString: return "Recientes"
+        case .photoGallery: return "Galería de fotos"
         }
     }
     

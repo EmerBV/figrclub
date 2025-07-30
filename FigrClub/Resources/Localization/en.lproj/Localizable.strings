@@ -185,3 +185,18 @@
 "your_story_string" = "Your story";
 "likes_string" = "%d likes";
 "see_all_comments" = "See all %d comments";
+
+// MARK: - Create
+"create_post" = "POST";
+"create_story" = "STORY";
+"create_reel" = "REEL";
+"create_live_stream" = "LIVE";
+"camera_permission_required" = "Camera permission required";
+"go_to_settings" = "Go to Settings";
+"camera_permission_settings_description" = "To use the camera, go to Settings > Privacy & Security > Camera and enable the FigrClub permission.";
+"tap_to_allow_camera_permission" = "Tap to allow camera access";
+"setting_up_camera" = "Setting up camera...";
+"share_with_followers" = "Share with Followers";
+"video_preview" = "Video Preview";
+"recent_string" = "Recent";
+"photo_gallery" = "Photo gallery";

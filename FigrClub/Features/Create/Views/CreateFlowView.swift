@@ -12,10 +12,19 @@ import Photos
 
 // MARK: - Content Creation Types
 enum CreationContentType: String, CaseIterable, Identifiable {
-    case publicacion = "PUBLICACIÓN"
-    case historia = "HISTORIA"
-    case reel = "REEL"
-    case enDirecto = "EN DIRECTO"
+    case post
+    case story
+    case reel
+    case liveStream
+    
+    var localizedStringKey: LocalizedStringKey {
+        switch self {
+        case .post: return .createPost
+        case .story: return .createStory
+        case .reel: return .createReel
+        case .liveStream: return .createLiveStream
+        }
+    }
     
     var id: String { rawValue }
     
@@ -64,7 +73,7 @@ struct CreateFlowView: View {
     @EnvironmentObject private var hapticManager: HapticFeedbackManager
     
     // UI State
-    @State private var selectedContentType: CreationContentType = .publicacion
+    @State private var selectedContentType: CreationContentType = .post
     @State private var showingImagePicker = false
     @State private var flashMode: FlashMode = .off
     @State private var isRecording = false
@@ -115,15 +124,15 @@ struct CreateFlowView: View {
                 MediaEditView(videoURL: videoURL, user: user)
             }
         }
-        .alert("Permiso de cámara requerido", isPresented: $showingPermissionAlert) {
-            Button("Ir a Configuración") {
+        .alert(localizationManager.localizedString(for: .cameraPermissionRequired), isPresented: $showingPermissionAlert) {
+            Button(localizationManager.localizedString(for: .goToSettings)) {
                 openAppSettings()
             }
-            Button("Cancelar", role: .cancel) {
+            Button(localizationManager.localizedString(for: .cancel), role: .cancel) {
                 navigationCoordinator.dismissCreatePost()
             }
         } message: {
-            Text("Para usar la cámara, ve a Configuración > Privacidad y Seguridad > Cámara y activa el permiso para FigrClub.")
+            Text(localizationManager.localizedString(for: .cameraPermissionSettingsDescription))
         }
         .onAppear {
             setupCamera()
@@ -198,12 +207,12 @@ struct CreateFlowView: View {
                             .font(.system(size: 48))
                             .foregroundColor(.white.opacity(0.6))
                         
-                        Text("Permiso de cámara requerido")
+                        Text(localizationManager.localizedString(for: .cameraPermissionRequired))
                             .font(.title2.weight(.medium))
                             .foregroundColor(.white.opacity(0.8))
                             .multilineTextAlignment(.center)
                         
-                        Text("Toca para permitir acceso a la cámara")
+                        Text(localizationManager.localizedString(for: .tapToAllowCameraPermission))
                             .font(.caption)
                             .foregroundColor(.white.opacity(0.6))
                             .multilineTextAlignment(.center)
@@ -212,7 +221,7 @@ struct CreateFlowView: View {
                             .scaleEffect(1.5)
                             .tint(.white)
                         
-                        Text("Configurando cámara...")
+                        Text(localizationManager.localizedString(for: .settingUpCamera))
                             .font(.title2.weight(.medium))
                             .foregroundColor(.white.opacity(0.6))
                     }
@@ -242,8 +251,8 @@ struct CreateFlowView: View {
             Spacer()
             
             // Title when in live mode
-            if selectedContentType == .enDirecto {
-                Text("¿Compartir con Seguidores?")
+            if selectedContentType == .liveStream {
+                Text(localizationManager.localizedString(for: .shareWithFollowers))
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white)
             }
@@ -304,16 +313,12 @@ struct CreateFlowView: View {
                         Text("1x")
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.white)
-                        
-                        Text("VELOCIDAD")
-                            .font(.system(size: 8, weight: .medium))
-                            .foregroundColor(.white)
                     }
                 }
             }
             
             // Timer (for stories)
-            if selectedContentType == .historia {
+            if selectedContentType == .story {
                 Button(action: {
                     // Set timer
                 }) {
@@ -344,7 +349,7 @@ struct CreateFlowView: View {
     private var rightSideControls: some View {
         VStack(spacing: 24) {
             // Music (for reels and stories)
-            if selectedContentType == .reel || selectedContentType == .historia {
+            if selectedContentType == .reel || selectedContentType == .story {
                 Button(action: {
                     // Add music
                 }) {
@@ -393,7 +398,7 @@ struct CreateFlowView: View {
                                     selectedContentType = contentType
                                 }
                             }) {
-                                Text(contentType.title)
+                                Text(localizationManager.localizedString(for: contentType.localizedStringKey))
                                     .font(.system(size: 14, weight: .semibold))
                                     .foregroundColor(selectedContentType == contentType ? .white : .white.opacity(0.6))
                             }
@@ -467,9 +472,9 @@ struct CreateFlowView: View {
                         .scaleEffect(isRecording ? 0.7 : 1.0)
                     
                     // Live indicator
-                    if selectedContentType == .enDirecto {
+                    if selectedContentType == .liveStream {
                         VStack {
-                            Text("EN VIVO")
+                            Text(localizationManager.localizedString(for: .createLiveStream))
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 8)
@@ -491,13 +496,13 @@ struct CreateFlowView: View {
 extension CreateFlowView {
     private var captureButtonColor: Color {
         switch selectedContentType {
-        case .publicacion:
+        case .post:
             return .white
-        case .historia:
+        case .story:
             return isRecording ? .red : .white
         case .reel:
             return isRecording ? .red : .white
-        case .enDirecto:
+        case .liveStream:
             return .red
         }
     }
@@ -539,15 +544,15 @@ extension CreateFlowView {
     
     private func handleCaptureAction() {
         switch selectedContentType {
-        case .publicacion:
+        case .post:
             capturePhoto()
-        case .historia, .reel:
+        case .story, .reel:
             if isRecording {
                 stopRecording()
             } else {
                 startRecording()
             }
-        case .enDirecto:
+        case .liveStream:
             startLiveStream()
         }
     }
@@ -640,7 +645,7 @@ extension CreateFlowView: CameraManagerDelegate {
         // Recording duration is already observed via @Published property
         
         // Auto stop for stories after 15 seconds
-        if selectedContentType == .historia && duration >= 15.0 {
+        if selectedContentType == .story && duration >= 15.0 {
             stopRecording()
         }
         
@@ -658,6 +663,7 @@ struct MediaEditView: View {
     let user: User
     
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.localizationManager) private var localizationManager
     
     init(image: UIImage, user: User) {
         self.image = image
@@ -687,7 +693,7 @@ struct MediaEditView: View {
                         // Video player would go here
                         VStack {
                             Spacer()
-                            Text("Video Preview")
+                            Text(localizationManager.localizedString(for: .createLiveStream))
                                 .foregroundColor(.white)
                                 .font(.title2)
                             Text(videoURL.lastPathComponent)
@@ -699,14 +705,14 @@ struct MediaEditView: View {
                     
                     // Bottom controls
                     HStack {
-                        Button("Cancelar") {
+                        Button(localizationManager.localizedString(for: .cancel)) {
                             dismiss()
                         }
                         .foregroundColor(.white)
                         
                         Spacer()
                         
-                        Button("Siguiente") {
+                        Button(localizationManager.localizedString(for: .next)) {
                             // Process and save media
                             dismiss()
                         }
@@ -724,6 +730,7 @@ struct MediaEditView: View {
 // MARK: - Image Library View
 struct ImageLibraryView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.localizationManager) private var localizationManager
     
     var body: some View {
         NavigationStack {
@@ -731,22 +738,21 @@ struct ImageLibraryView: View {
                 Color.black.ignoresSafeArea()
                 
                 VStack {
-                    // Header similar to Instagram
                     HStack {
-                        Button("Cancelar") {
+                        Button(localizationManager.localizedString(for: .cancel)) {
                             dismiss()
                         }
                         .foregroundColor(.white)
                         
                         Spacer()
                         
-                        Text("Recientes")
+                        Text(localizationManager.localizedString(for: .recentString))
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.white)
                         
                         Spacer()
                         
-                        Button("Siguiente") {
+                        Button(localizationManager.localizedString(for: .next)) {
                             // Handle selection
                             dismiss()
                         }
@@ -758,7 +764,7 @@ struct ImageLibraryView: View {
                     Spacer()
                     
                     // Photo library grid would go here
-                    Text("Galería de fotos")
+                    Text(localizationManager.localizedString(for: .photoGallery))
                         .foregroundColor(.white.opacity(0.6))
                         .font(.title2)
                     

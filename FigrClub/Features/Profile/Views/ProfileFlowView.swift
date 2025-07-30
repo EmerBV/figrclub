@@ -48,10 +48,10 @@ struct ProfileFlowView: View {
             SettingsView(user: user)
         }
         .sheet(isPresented: $navigationCoordinator.showingUserProfileDetail) {
-                    if let selectedUser = navigationCoordinator.selectedUserForDetail {
-                        UserProfileDetailView(user: selectedUser)
-                    }
-                }
+            if let selectedUser = navigationCoordinator.selectedUserForDetail {
+                UserProfileDetailView(user: selectedUser)
+            }
+        }
         .sheet(isPresented: $navigationCoordinator.showingEditProfile) {
             EditProfileView(user: user)
         }

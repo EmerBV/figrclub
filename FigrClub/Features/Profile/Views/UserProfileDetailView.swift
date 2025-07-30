@@ -22,7 +22,7 @@ struct UserProfileDetailView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
+            ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
                     // Header section
                     headerSection
@@ -255,12 +255,18 @@ struct UserProfileDetailView: View {
     
     // MARK: - On Sale Content
     private var onSaleContent: some View {
-        LazyVGrid(
-            columns: Array(repeating: GridItem(.flexible(), spacing: Spacing.medium), count: 2),
+        let activeProducts = sampleProducts.filter { $0.status == .active }
+        
+        return LazyVGrid(
+            columns: [
+                GridItem(.flexible(), spacing: Spacing.medium),
+                GridItem(.flexible(), spacing: Spacing.medium)
+            ],
             spacing: Spacing.medium
         ) {
-            ForEach(sampleProducts.filter { $0.status == .active }) { product in
+            ForEach(activeProducts) { product in
                 UserProductCard(product: product)
+                    .frame(maxWidth: .infinity)
             }
         }
     }
@@ -414,9 +420,12 @@ struct UserProductCard: View {
                     .foregroundColor(.secondary)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
+                    .frame(minHeight: 32) // Altura mínima para consistencia
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.top, Spacing.small)
+            
+            Spacer(minLength: 0)
             
             // Featured Button
             if product.status == .active {
@@ -432,9 +441,15 @@ struct UserProductCard: View {
                         .stroke(Color.blue, lineWidth: 1)
                 )
                 .padding(.top, Spacing.small)
+            } else {
+                // Espacio vacío para mantener consistencia cuando no hay botón
+                Spacer()
+                    .frame(height: 32)
+                    .padding(.top, Spacing.small)
             }
         }
         .frame(maxWidth: .infinity)
+        .background(Color.clear)
     }
 }
 
