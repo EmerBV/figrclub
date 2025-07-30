@@ -15,7 +15,7 @@ struct UserProfileDetailView: View {
     @Environment(\.localizationManager) private var localizationManager
     
     @EnvironmentObject private var themeManager: ThemeManager
-   
+    
     @State private var selectedTab: ProfileTab = .onSale
     @State private var userProducts: [UserProduct] = []
     @State private var isLoading = false
@@ -79,43 +79,91 @@ struct UserProfileDetailView: View {
     
     // MARK: - Header Section
     private var headerSection: some View {
-        VStack(spacing: Spacing.medium) {
-            HStack(alignment: .top, spacing: Spacing.medium) {
-                // Profile image
-                profileImageView
-                
-                VStack(alignment: .leading, spacing: Spacing.xSmall) {
-                    // Name
-                    Text(user.displayName)
-                        .font(.title.weight(.bold))
-                        .foregroundColor(.primary)
-                    
-                    // Rating stars
-                    HStack(spacing: Spacing.xxSmall) {
-                        ForEach(0..<5) { index in
-                            Image(systemName: "star.fill")
-                                .font(.caption)
-                                .foregroundColor(.yellow)
+        ZStack {
+            // Imagen de fondo
+            backgroundImageView
+            
+            // Contenido principal
+            VStack(spacing: Spacing.medium) {
+                // Primera fila: información del usuario y foto de perfil
+                HStack(alignment: .top, spacing: Spacing.medium) {
+                    // Información del usuario (lado izquierdo)
+                    VStack(alignment: .leading, spacing: Spacing.medium) {
+                        // Información básica
+                        userInfoSection
+                        
+                        // Estadísticas en VStack
+                        VStack(alignment: .leading, spacing: Spacing.small) {
+                            statisticsRow
                         }
                         
-                        Text("(\(user.followersCount))")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                        // Ubicación
+                        locationView
                     }
                     
                     Spacer()
+                    
+                    // Imagen de perfil (lado derecho, más pequeña)
+                    profileImageView
+                }
+            }
+            .padding(Spacing.large)
+        }
+        .frame(height: 220) // Altura fija para el header con fondo
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+    
+    // MARK: - Background Image View
+    private var backgroundImageView: some View {
+        // Puedes usar una imagen específica del usuario o una imagen por defecto
+        Rectangle()
+            .fill(
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        themeManager.accentColor.opacity(0.3),
+                        themeManager.accentColor.opacity(0.1)
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .overlay(
+                // Opcional: Imagen de fondo real si tienes una URL
+                AsyncImage(url: URL(string: "https://picsum.photos/800/400")) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    // Fallback al gradiente si no hay imagen
+                    EmptyView()
+                }
+                    .opacity(0.2) // Baja opacidad para no interferir con el texto
+            )
+    }
+    
+    // MARK: - User Info Section
+    private var userInfoSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.xSmall) {
+            // Nombre
+            Text(user.displayName)
+                .font(.title.weight(.bold))
+                .foregroundColor(.primary)
+                .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+            
+            // Rating stars
+            HStack(spacing: Spacing.xxSmall) {
+                ForEach(0..<5) { index in
+                    Image(systemName: "star.fill")
+                        .font(.caption)
+                        .foregroundColor(.yellow)
                 }
                 
-                Spacer()
+                Text("(\(user.followersCount))")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
             }
-            
-            // Statistics Row
-            statisticsRow
-            
-            // Location
-            locationView
         }
-        .padding(.top, Spacing.medium)
     }
     
     // MARK: - Profile Image
@@ -126,51 +174,65 @@ struct UserProfileDetailView: View {
             if user.hasProfileImage {
                 KFImage(imageURL)
                     .setProcessor(
-                        RoundCornerImageProcessor(cornerRadius: 45)
-                        |> DownsamplingImageProcessor(size: CGSize(width: 180, height: 180))
+                        RoundCornerImageProcessor(cornerRadius: 30)
+                        |> DownsamplingImageProcessor(size: CGSize(width: 120, height: 120))
                     )
                     .placeholder {
                         Circle()
                             .fill(themeManager.currentSecondaryTextColor.opacity(0.2))
-                            .frame(width: 90, height: 90)
+                            .frame(width: 60, height: 60)
                             .overlay(
                                 ProgressView()
-                                    .scaleEffect(0.7)
+                                    .scaleEffect(0.6)
                                     .tint(themeManager.accentColor)
                             )
                     }
                     .onFailure { error in
                         Logger.warning("⚠️ Profile image failed to load: \(error.localizedDescription)")
                     }
-                    .frame(width: 90, height: 90)
+                    .frame(width: 60, height: 60)
                     .clipShape(Circle())
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white, lineWidth: 2)
+                    )
+                    .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
             } else {
                 Circle()
                     .fill(themeManager.accentColor.opacity(0.2))
-                    .frame(width: 90, height: 90)
+                    .frame(width: 60, height: 60)
                     .overlay(
                         Text(user.displayName.prefix(1).uppercased())
-                            .font(.system(size: 36, weight: .bold))
+                            .font(.system(size: 24, weight: .bold))
                             .foregroundColor(themeManager.accentColor)
                     )
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white, lineWidth: 2)
+                    )
+                    .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
             }
         }
     }
     
     // MARK: - Statistics Row
     private var statisticsRow: some View {
-        HStack(spacing: Spacing.large) {
-            statisticItem(
-                icon: "chart.bar.fill",
-                value: "\(sampleProducts.filter { $0.status == .active }.count)",
-                label: "Ventas"
-            )
-            
-            statisticItem(
-                icon: "bag.fill",
-                value: "\(user.purchasesCount)",
-                label: "Compras"
-            )
+        VStack(alignment: .leading, spacing: Spacing.small) {
+            HStack(spacing: Spacing.large) {
+                statisticItem(
+                    icon: "chart.bar.fill",
+                    value: "\(sampleProducts.filter { $0.status == .active }.count)",
+                    label: "Ventas"
+                )
+                
+                statisticItem(
+                    icon: "bag.fill",
+                    value: "\(user.purchasesCount)",
+                    label: "Compras"
+                )
+                
+                Spacer()
+            }
             
             statisticItem(
                 icon: "shippingbox.fill",
@@ -185,35 +247,41 @@ struct UserProfileDetailView: View {
             Image(systemName: icon)
                 .font(.caption)
                 .foregroundColor(.primary)
+                .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
             
             Text(value)
                 .font(.body.weight(.semibold))
                 .foregroundColor(.primary)
+                .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
             
             Text(label)
                 .font(.body)
                 .foregroundColor(.primary)
+                .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
         }
     }
     
-    // MARK: - Location View
+    // MARK: - Location View (actualizado para alineación izquierda)
     private var locationView: some View {
         HStack(spacing: Spacing.xSmall) {
             Image(systemName: "location.fill")
                 .font(.caption)
                 .foregroundColor(.primary)
+                .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
             
             Text("28033, Madrid.")
                 .font(.body)
                 .foregroundColor(.primary)
+                .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
             
             Button("Ver mi ubicación") {
                 // Acción para mostrar ubicación
             }
             .font(.body)
             .foregroundColor(.blue)
+            .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
             
-            Spacer()
+            //Spacer()
         }
     }
     
