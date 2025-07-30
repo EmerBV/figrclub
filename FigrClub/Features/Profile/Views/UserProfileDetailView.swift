@@ -10,9 +10,12 @@ import Kingfisher
 
 struct UserProfileDetailView: View {
     let user: User
-    @EnvironmentObject private var themeManager: ThemeManager
-    @Environment(\.dismiss) private var dismiss
     
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.localizationManager) private var localizationManager
+    
+    @EnvironmentObject private var themeManager: ThemeManager
+   
     @State private var selectedTab: ProfileTab = .onSale
     @State private var userProducts: [UserProduct] = []
     @State private var isLoading = false

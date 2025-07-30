@@ -23,12 +23,9 @@ struct ProfileFlowView: View {
         NavigationView {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
-                    // Header con información del usuario
                     headerSection
                         .padding(.horizontal, Spacing.large)
                         .padding(.bottom, Spacing.large)
-                    
-                    // Lista de opciones
                     optionsSection
                 }
             }
