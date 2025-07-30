@@ -47,6 +47,11 @@ struct ProfileFlowView: View {
         .sheet(isPresented: $navigationCoordinator.showingSettings) {
             SettingsView(user: user)
         }
+        .sheet(isPresented: $navigationCoordinator.showingUserProfileDetail) {
+                    if let selectedUser = navigationCoordinator.selectedUserForDetail {
+                        UserProfileDetailView(user: selectedUser)
+                    }
+                }
         .sheet(isPresented: $navigationCoordinator.showingEditProfile) {
             EditProfileView(user: user)
         }
@@ -101,7 +106,7 @@ struct ProfileFlowView: View {
                 
                 // Botón de navegación
                 Button(action: {
-                    // Acción para ver perfil completo
+                    navigationCoordinator.showUserProfileDetail(user: user)
                 }) {
                     Image(systemName: "chevron.right")
                         .font(.caption)
