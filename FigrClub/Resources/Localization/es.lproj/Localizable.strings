@@ -200,3 +200,16 @@
 "video_preview" = "Previsualización del video";
 "recent_string" = "Recientes";
 "photo_gallery" = "Galería de fotos";
+
+// MARK: - Profile
+"in_figrclub_since" = "En FigrClub desde %@";
+"content_string" = "Contenido";
+"my_posts_string" = "Mis Posts";
+"my_stories_string" = "Mis Historias";
+"my_reels_string" = "Mis Reels";
+"my_live_streams_string" = "Mis Directos";
+"transactions_string" = "Transacciones";
+"shoppings_string" = "Compras";
+"sales_string" = "Ventas";
+"account_string" = "Cuenta";
+"favorites_string" = "Favoritos";

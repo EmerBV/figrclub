@@ -10,6 +10,8 @@ import Kingfisher
 
 struct ProfileFlowView: View {
     let user: User
+    
+    @Environment(\.localizationManager) private var localizationManager
     @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
     @EnvironmentObject private var authStateManager: AuthStateManager
     @EnvironmentObject private var themeManager: ThemeManager
@@ -34,15 +36,15 @@ struct ProfileFlowView: View {
             .navigationBarHidden(true)
             .themedBackground()
         }
-        .alert("Cerrar Sesión", isPresented: $showLogoutConfirmation) {
-            Button("Cancelar", role: .cancel) {
+        .alert(localizationManager.localizedString(for: .logout), isPresented: $showLogoutConfirmation) {
+            Button(localizationManager.localizedString(for: .cancel), role: .cancel) {
                 showLogoutConfirmation = false
             }
-            Button("Cerrar Sesión", role: .destructive) {
+            Button(localizationManager.localizedString(for: .logout), role: .destructive) {
                 performLogout()
             }
         } message: {
-            Text("¿Estás seguro de que quieres cerrar tu sesión?")
+            Text(localizationManager.localizedString(for: .areYouSureToLogout))
         }
         .sheet(isPresented: $navigationCoordinator.showingSettings) {
             SettingsView(user: user)
@@ -97,7 +99,7 @@ struct ProfileFlowView: View {
                     }
                     
                     // Fecha de registro
-                    Text("En FigrClub desde \(extractYear(from: user.createdAt))")
+                    Text(localizationManager.localizedString(for: .inFigrClubSince, arguments: extractYear(from: user.createdAt)))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -161,82 +163,88 @@ struct ProfileFlowView: View {
     private var optionsSection: some View {
         VStack(spacing: 0) {
             // Sección CONTENIDO
-            sectionHeader("CONTENIDO")
+            sectionHeader(localizationManager.localizedString(for: .contentString).uppercased())
             
             optionRow(
                 icon: "square.grid.3x3.fill",
-                title: "Mis Posts",
+                title: localizationManager.localizedString(for: .myPostsString),
                 action: { /* Navegar a mis posts */ }
             )
             
             optionRow(
                 icon: "play.rectangle.fill",
-                title: "Mis Reels",
+                title: localizationManager.localizedString(for: .myReelsString),
                 action: { /* Navegar a mis reels */ }
             )
             
             optionRow(
                 icon: "dot.radiowaves.left.and.right",
-                title: "Mis Directos",
+                title: localizationManager.localizedString(for: .myLiveStreamsString),
                 action: { /* Navegar a mis directos */ }
             )
             
             // Sección TRANSACCIONES
-            sectionHeader("TRANSACCIONES")
+            sectionHeader(localizationManager.localizedString(for: .transactionsString).uppercased())
             
             optionRow(
                 icon: "cart.fill",
-                title: "Compras",
+                title: localizationManager.localizedString(for: .shoppingsString),
                 action: { /* Navegar a compras */ }
             )
             
             optionRow(
                 icon: "tag.fill",
-                title: "Ventas",
+                title: localizationManager.localizedString(for: .salesString),
                 action: { /* Navegar a ventas */ }
             )
             
-            optionRow(
-                icon: "creditcard.fill",
-                title: "Monedero",
-                action: { /* Navegar a monedero */ }
-            )
-            
-            optionRow(
-                icon: "leaf.fill",
-                title: "Tu impacto positivo",
-                action: { /* Navegar a impacto */ }
-            )
+            /*
+             optionRow(
+             icon: "creditcard.fill",
+             title: "Monedero",
+             action: { /* Navegar a monedero */ }
+             )
+             
+             optionRow(
+             icon: "leaf.fill",
+             title: "Tu impacto positivo",
+             action: { /* Navegar a impacto */ }
+             )
+             */
             
             // Sección CUENTA
-            sectionHeader("CUENTA")
+            sectionHeader(localizationManager.localizedString(for: .accountString).uppercased())
             
-            optionRow(
-                icon: "star.fill",
-                title: "FigrClub PRO",
-                action: { /* Navegar a PRO */ }
-            )
+            /*
+             optionRow(
+             icon: "star.fill",
+             title: "FigrClub PRO",
+             action: { /* Navegar a PRO */ }
+             )
+             */
             
             optionRow(
                 icon: "heart.fill",
-                title: "Favoritos",
+                title: localizationManager.localizedString(for: .favoritesString),
                 action: { /* Navegar a favoritos */ }
             )
             
             optionRow(
                 icon: "gearshape.fill",
-                title: "Configuración",
+                title: localizationManager.localizedString(for: .settings),
                 action: { navigationCoordinator.showSettings() }
             )
             
-            // Sección FIGRCLUB AL HABLA
-            sectionHeader("FIGRCLUB AL HABLA")
-            
-            optionRow(
-                icon: "bubble.left.and.bubble.right.fill",
-                title: "Chat de la comunidad",
-                action: { /* Navegar a chat */ }
-            )
+            /*
+             // Sección FIGRCLUB AL HABLA
+             sectionHeader("FIGRCLUB AL HABLA")
+             
+             optionRow(
+             icon: "bubble.left.and.bubble.right.fill",
+             title: "Chat de la comunidad",
+             action: { /* Navegar a chat */ }
+             )
+             */
             
             // Botón de cerrar sesión
             logoutButton
@@ -307,7 +315,7 @@ struct ProfileFlowView: View {
                         .frame(width: 24, height: 24)
                 }
                 
-                Text(isLoggingOut ? "Cerrando sesión..." : "Cerrar Sesión")
+                Text(isLoggingOut ? localizationManager.localizedString(for: .signingOut) : localizationManager.localizedString(for: .logout))
                     .font(.body)
                     .foregroundColor(.red)
                 

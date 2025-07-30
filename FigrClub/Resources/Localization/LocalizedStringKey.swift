@@ -206,6 +206,18 @@ enum LocalizedStringKey: String, CaseIterable {
     case recentString = "recent_string"
     case photoGallery = "photo_gallery"
     
+    // MARK: - Profile
+    case inFigrClubSince = "in_figrclub_since"
+    case contentString = "content_string"
+    case myPostsString = "my_posts_string"
+    case myStoriesString = "my_stories_string"
+    case myReelsString = "my_reels_string"
+    case myLiveStreamsString = "my_live_streams_string"
+    case transactionsString = "transactions_string"
+    case shoppingsString = "shoppings_string"
+    case salesString = "sales_string"
+    case accountString = "account_string"
+    case favoritesString = "favorites_string"
     
     // MARK: - Computed Properties
     var fallbackValue: String {
@@ -405,6 +417,20 @@ enum LocalizedStringKey: String, CaseIterable {
         case .videoPreview: return "Previsualización del video"
         case .recentString: return "Recientes"
         case .photoGallery: return "Galería de fotos"
+            
+            // Profile
+        case .inFigrClubSince: return "En FigrClub desde %@"
+        case .contentString: return "Contenido"
+        case .myPostsString: return "Mis Posts"
+        case .myStoriesString: return "Mis Histories"
+        case .myReelsString: return "Mis Reels"
+        case .myLiveStreamsString: return "Mis Directos"
+        case .transactionsString: return "Transacciones"
+        case .shoppingsString: return "Compras"
+        case .salesString: return "Ventas"
+        case .accountString: return "Cuenta"
+        case .favoritesString: return "Favoritos"
+        
         }
     }
     
