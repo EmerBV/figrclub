@@ -205,9 +205,9 @@ enum MainTab: Int, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .feed: return "house"
-        case .marketplace: return "cart"
+        case .marketplace: return "storefront"
         case .create: return "plus.circle"
-        case .notifications: return "bell"
+        case .notifications: return "envelope"
         case .profile: return "person"
         }
     }
@@ -215,9 +215,9 @@ enum MainTab: Int, CaseIterable, Identifiable {
     var selectedIcon: String {
         switch self {
         case .feed: return "house.fill"
-        case .marketplace: return "cart.fill"
+        case .marketplace: return "storefront.fill"
         case .create: return "plus.circle.fill"
-        case .notifications: return "bell.fill"
+        case .notifications: return "envelope.fill"
         case .profile: return "person.fill"
         }
     }
