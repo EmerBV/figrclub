@@ -19,6 +19,8 @@ struct UserProfileDetailView: View {
     @State private var selectedTab: ProfileTab = .onSale
     @State private var userProducts: [UserProduct] = []
     @State private var isLoading = false
+    @State private var searchText = ""
+    @State private var selectedCategory: ProductCategory = .all
     
     // Sample data - en un caso real vendría del servidor
     @State private var sampleProducts: [UserProduct] = UserProfileDetailView.generateSampleProducts()
@@ -29,7 +31,6 @@ struct UserProfileDetailView: View {
                 VStack(spacing: 0) {
                     // Header section
                     headerSection
-                        .padding(.horizontal, Spacing.large)
                         .padding(.bottom, Spacing.large)
                     
                     // Tab selector
@@ -110,7 +111,7 @@ struct UserProfileDetailView: View {
             .padding(Spacing.large)
         }
         .frame(height: 220) // Altura fija para el header con fondo
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .frame(maxWidth: .infinity)
     }
     
     // MARK: - Background Image View
@@ -120,8 +121,9 @@ struct UserProfileDetailView: View {
             .fill(
                 LinearGradient(
                     gradient: Gradient(colors: [
-                        themeManager.accentColor.opacity(0.3),
-                        themeManager.accentColor.opacity(0.1)
+                        Color.black.opacity(0.4),
+                        Color.black.opacity(0.7),
+                        Color.black.opacity(0.2)
                     ]),
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -137,7 +139,7 @@ struct UserProfileDetailView: View {
                     // Fallback al gradiente si no hay imagen
                     EmptyView()
                 }
-                    .opacity(0.2) // Baja opacidad para no interferir con el texto
+                    .opacity(0.15) // Baja opacidad para no interferir con el texto
             )
     }
     
@@ -326,86 +328,281 @@ struct UserProfileDetailView: View {
     
     // MARK: - On Sale Content
     private var onSaleContent: some View {
-        let activeProducts = sampleProducts.filter { $0.status == .active }
-        
-        return LazyVGrid(
-            columns: [
+        VStack(spacing: Spacing.large) {
+            // Search Section
+            searchSection
+            
+            // Categories Section
+            categoriesSection
+            
+            // Products Grid
+            LazyVGrid(columns: [
                 GridItem(.flexible(), spacing: Spacing.medium),
                 GridItem(.flexible(), spacing: Spacing.medium)
-            ],
-            spacing: Spacing.medium
-        ) {
-            ForEach(activeProducts) { product in
-                UserProductCard(product: product)
-                    .frame(maxWidth: .infinity)
+            ], spacing: Spacing.medium) {
+                ForEach(filteredProducts) { product in
+                    UserProductCard(product: product)
+                }
             }
+        }
+    }
+    
+    // MARK: - Computed Properties
+    private var filteredProducts: [UserProduct] {
+        let activeProducts = sampleProducts.filter { $0.status == .active }
+        
+        return activeProducts.filter { product in
+            let matchesSearch = searchText.isEmpty ||
+            product.title.localizedCaseInsensitiveContains(searchText)
+            
+            // Por ahora, asumimos que todos los productos coinciden con la categoría
+            // En una implementación real, UserProduct tendría una propiedad category
+            let matchesCategory = selectedCategory == .all
+            
+            return matchesSearch && matchesCategory
         }
     }
     
     // MARK: - Reviews Content
     private var reviewsContent: some View {
-        VStack(spacing: Spacing.large) {
-            // Overall rating
-            VStack(spacing: Spacing.medium) {
-                Text("\(user.followersCount)")
-                    .font(.system(size: 48, weight: .bold))
-                    .foregroundColor(.primary)
-                
-                Text("Valoraciones")
-                    .font(.title3)
-                    .foregroundColor(.secondary)
-                
-                HStack(spacing: Spacing.xxSmall) {
-                    ForEach(0..<5) { index in
-                        Image(systemName: "star.fill")
-                            .font(.title3)
-                            .foregroundColor(.yellow)
+        VStack(alignment: .leading, spacing: Spacing.medium) {
+            // Rating summary
+            HStack(spacing: Spacing.medium) {
+                VStack(alignment: .leading, spacing: Spacing.xSmall) {
+                    Text("4.8")
+                        .font(.largeTitle.weight(.bold))
+                        .foregroundColor(.primary)
+                    
+                    HStack(spacing: Spacing.xxSmall) {
+                        ForEach(0..<5) { index in
+                            Image(systemName: "star.fill")
+                                .font(.caption)
+                                .foregroundColor(.yellow)
+                        }
                     }
+                    
+                    Text("Basado en 24 valoraciones")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
+                
+                Spacer()
             }
-            .padding(.vertical, Spacing.xLarge)
+            .padding(.bottom, Spacing.medium)
             
-            // Individual reviews would go here
-            Text("Las valoraciones aparecerán aquí")
-                .font(.body)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, Spacing.large)
+            // Sample reviews
+            ForEach(0..<3) { index in
+                ReviewCard(
+                    userName: "Usuario \(index + 1)",
+                    rating: Int.random(in: 4...5),
+                    comment: "Excelente vendedor, producto en perfectas condiciones y envío rápido.",
+                    date: Date().addingTimeInterval(-Double.random(in: 86400...2592000))
+                )
+            }
         }
     }
     
     // MARK: - Info Content
     private var infoContent: some View {
         VStack(alignment: .leading, spacing: Spacing.large) {
+            // Información personal
             VStack(alignment: .leading, spacing: Spacing.medium) {
                 Text("Información del perfil")
-                    .font(.headline)
+                    .font(.headline.weight(.semibold))
                     .foregroundColor(.primary)
                 
-                InfoRow(title: "Miembro desde", value: "FigrClub desde \(extractYear(from: user.createdAt))")
-                InfoRow(title: "Última conexión", value: user.lastActivityAt ?? "Hace poco")
-                InfoRow(title: "Tiempo de respuesta", value: "Menos de 1 hora")
-                InfoRow(title: "Idiomas", value: "Español")
+                VStack(spacing: Spacing.small) {
+                    InfoRow(title: "Miembro desde", value: memberSinceText(from: user.createdAt))
+                    InfoRow(title: "Última conexión", value: "Hace 2 horas")
+                    InfoRow(title: "Ubicación", value: user.city ?? "No especificada")
+                    InfoRow(title: "Idioma", value: "Español")
+                }
             }
             
-            Spacer(minLength: Spacing.xLarge)
+            // Estadísticas de venta
+            VStack(alignment: .leading, spacing: Spacing.medium) {
+                Text("Estadísticas de Venta")
+                    .font(.headline.weight(.semibold))
+                    .foregroundColor(.primary)
+                
+                VStack(spacing: Spacing.small) {
+                    InfoRow(title: "Productos vendidos", value: "\(sampleProducts.filter { $0.status == .sold }.count)")
+                    InfoRow(title: "Productos activos", value: "\(sampleProducts.filter { $0.status == .active }.count)")
+                    InfoRow(title: "Tiempo promedio de venta", value: "7 días")
+                    InfoRow(title: "Valoración promedio", value: "4.8 ⭐")
+                }
+            }
+            
+            // Política de devoluciones
+            VStack(alignment: .leading, spacing: Spacing.medium) {
+                Text("Política de Devoluciones")
+                    .font(.headline.weight(.semibold))
+                    .foregroundColor(.primary)
+                
+                Text("Este vendedor acepta devoluciones dentro de los 7 días posteriores a la recepción del producto, siempre que esté en las mismas condiciones.")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            
+            // Botón de contacto
+            if user.id != getCurrentUserId() { // Asumiendo que tienes una función para obtener el ID del usuario actual
+                Button(action: { /* Acción de contacto */ }) {
+                    HStack {
+                        Image(systemName: "message.fill")
+                            .font(.body)
+                        
+                        Text("Contactar")
+                            .font(.body.weight(.medium))
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Spacing.medium)
+                    .background(themeManager.accentColor)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .padding(.top, Spacing.small)
+            } else {
+                // Espacio vacío para mantener consistencia cuando no hay botón
+                Spacer()
+                    .frame(height: 32)
+                    .padding(.top, Spacing.small)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .background(Color.clear)
+    }
+    
+    // MARK: - Search Section
+    private var searchSection: some View {
+        HStack(spacing: Spacing.small) {
+            Image(systemName: "magnifyingglass")
+                .font(.body)
+                .foregroundColor(.secondary)
+            
+            TextField(localizationManager.localizedString(for: .searchTextfield), text: $searchText)
+                .font(.body)
+                .foregroundColor(.primary)
+            
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+        .padding(.horizontal, Spacing.medium)
+        .padding(.vertical, Spacing.small)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemGray6))
+        )
+    }
+    
+    // MARK: - Categories Section
+    private var categoriesSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.medium) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Spacing.small) {
+                    ForEach(ProductCategory.allCases, id: \.self) { category in
+                        CategoryChip(
+                            category: category,
+                            isSelected: selectedCategory == category
+                        ) {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                selectedCategory = category
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, Spacing.large)
+            }
+            
+            Divider()
+                .background(Color.gray.opacity(0.3))
+                .padding(.horizontal, Spacing.large)
         }
     }
     
     // MARK: - Helper Methods
     
     private func loadUserProducts() {
-        // En un caso real, aquí se cargarían los productos del usuario desde el servidor
-        userProducts = sampleProducts
+        isLoading = true
+        // Simular carga de datos
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            userProducts = sampleProducts
+            isLoading = false
+        }
+    }
+    
+    private func getCurrentUserId() -> Int {
+        // Implementar lógica para obtener el ID del usuario actual
+        return 0
+    }
+    
+    private func memberSinceText(from dateString: String) -> String {
+        let components = dateString.components(separatedBy: "-")
+        return components.first ?? "2025"
     }
     
     private func calculateTotalShipments() -> Int {
         return sampleProducts.filter { $0.status == .sold }.count
     }
     
-    private func extractYear(from dateString: String) -> String {
-        let components = dateString.components(separatedBy: "-")
-        return components.first ?? "2025"
+}
+
+// MARK: - Review Card Component
+struct ReviewCard: View {
+    let userName: String
+    let rating: Int
+    let comment: String
+    let date: Date
+    
+    @EnvironmentObject private var themeManager: ThemeManager
+    
+    private var dateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.small) {
+            HStack {
+                Text(userName)
+                    .font(.body.weight(.medium))
+                    .foregroundColor(.primary)
+                
+                Spacer()
+                
+                HStack(spacing: Spacing.xxSmall) {
+                    ForEach(0..<5) { index in
+                        Image(systemName: "star.fill")
+                            .font(.caption2)
+                            .foregroundColor(index < rating ? .yellow : Color.gray.opacity(0.3))
+                    }
+                }
+            }
+            
+            Text(comment)
+                .font(.body)
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            
+            Text(dateFormatter.string(from: date))
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .padding(Spacing.medium)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(themeManager.accentColor)
+                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+        )
     }
 }
 
