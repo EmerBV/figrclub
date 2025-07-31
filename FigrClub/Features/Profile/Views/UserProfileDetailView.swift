@@ -224,13 +224,13 @@ struct UserProfileDetailView: View {
                 statisticItem(
                     icon: "chart.bar.fill",
                     value: "\(sampleProducts.filter { $0.status == .active }.count)",
-                    label: "Ventas"
+                    label: localizationManager.localizedString(for: .salesString)
                 )
                 
                 statisticItem(
                     icon: "bag.fill",
                     value: "\(user.purchasesCount)",
-                    label: "Compras"
+                    label: localizationManager.localizedString(for: .shoppingsString)
                 )
                 
                 Spacer()
@@ -239,7 +239,7 @@ struct UserProfileDetailView: View {
             statisticItem(
                 icon: "shippingbox.fill",
                 value: "\(calculateTotalShipments())",
-                label: "Envíos"
+                label: localizationManager.localizedString(for: .shippingString)
             )
         }
     }
@@ -263,7 +263,7 @@ struct UserProfileDetailView: View {
         }
     }
     
-    // MARK: - Location View (actualizado para alineación izquierda)
+    // MARK: - Location View
     private var locationView: some View {
         HStack(spacing: Spacing.xSmall) {
             Image(systemName: "location.fill")
@@ -271,12 +271,12 @@ struct UserProfileDetailView: View {
                 .foregroundColor(.primary)
                 .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
             
-            Text("28033, Madrid.")
+            Text("28033, \(user.city ?? localizationManager.localizedString(for: .notSpecified)).")
                 .font(.body)
                 .foregroundColor(.primary)
                 .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
             
-            Button("Ver mi ubicación") {
+            Button(localizationManager.localizedString(for: .seeLocationString)) {
                 // Acción para mostrar ubicación
             }
             .font(.body)
@@ -293,7 +293,7 @@ struct UserProfileDetailView: View {
             ForEach(ProfileTab.allCases, id: \.self) { tab in
                 Button(action: { selectedTab = tab }) {
                     VStack(spacing: Spacing.xSmall) {
-                        Text(tab.title)
+                        Text(localizationManager.localizedString(for: tab.localizedStringKey))
                             .font(.body.weight(selectedTab == tab ? .semibold : .regular))
                             .foregroundColor(selectedTab == tab ? .primary : .secondary)
                         
@@ -381,7 +381,7 @@ struct UserProfileDetailView: View {
                         }
                     }
                     
-                    Text("Basado en 24 valoraciones")
+                    Text(localizationManager.localizedString(for: .basedOnString, arguments: 24))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -407,43 +407,44 @@ struct UserProfileDetailView: View {
         VStack(alignment: .leading, spacing: Spacing.large) {
             // Información personal
             VStack(alignment: .leading, spacing: Spacing.medium) {
-                Text("Información del perfil")
+                Text(localizationManager.localizedString(for: .profileInfo))
                     .font(.headline.weight(.semibold))
                     .foregroundColor(.primary)
                 
                 VStack(spacing: Spacing.small) {
-                    InfoRow(title: "Miembro desde", value: memberSinceText(from: user.createdAt))
-                    InfoRow(title: "Última conexión", value: "Hace 2 horas")
-                    InfoRow(title: "Ubicación", value: user.city ?? "No especificada")
-                    InfoRow(title: "Idioma", value: "Español")
+                    InfoRow(title: localizationManager.localizedString(for: .memberSince), value: createdAt(from: user.createdAt))
+                    InfoRow(title: localizationManager.localizedString(for: .lastActivity), value: user.lastActivityAt ?? "")
+                    InfoRow(title: localizationManager.localizedString(for: .locationString), value: user.city ?? localizationManager.localizedString(for: .notSpecified))
+                    InfoRow(title: localizationManager.localizedString(for: .language), value: user.preferredLanguage ?? "")
                 }
             }
             
             // Estadísticas de venta
             VStack(alignment: .leading, spacing: Spacing.medium) {
-                Text("Estadísticas de Venta")
+                Text(localizationManager.localizedString(for: .salesStatistics))
                     .font(.headline.weight(.semibold))
                     .foregroundColor(.primary)
                 
                 VStack(spacing: Spacing.small) {
-                    InfoRow(title: "Productos vendidos", value: "\(sampleProducts.filter { $0.status == .sold }.count)")
-                    InfoRow(title: "Productos activos", value: "\(sampleProducts.filter { $0.status == .active }.count)")
-                    InfoRow(title: "Tiempo promedio de venta", value: "7 días")
-                    InfoRow(title: "Valoración promedio", value: "4.8 ⭐")
+                    InfoRow(title: localizationManager.localizedString(for: .productsSold), value: "\(sampleProducts.filter { $0.status == .sold }.count)")
+                    InfoRow(title: localizationManager.localizedString(for: .activeProducts), value: "\(sampleProducts.filter { $0.status == .active }.count)")
+                    InfoRow(title: localizationManager.localizedString(for: .averageRating), value: "4.8 ⭐")
                 }
             }
             
             // Política de devoluciones
+            
             VStack(alignment: .leading, spacing: Spacing.medium) {
-                Text("Política de Devoluciones")
+                Text(localizationManager.localizedString(for: .returnPolicy))
                     .font(.headline.weight(.semibold))
                     .foregroundColor(.primary)
                 
-                Text("Este vendedor acepta devoluciones dentro de los 7 días posteriores a la recepción del producto, siempre que esté en las mismas condiciones.")
+                Text(localizationManager.localizedString(for: .returnPolicyDescription))
                     .font(.body)
                     .foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            
             
             // Botón de contacto
             if user.id != getCurrentUserId() { // Asumiendo que tienes una función para obtener el ID del usuario actual
@@ -452,7 +453,7 @@ struct UserProfileDetailView: View {
                         Image(systemName: "message.fill")
                             .font(.body)
                         
-                        Text("Contactar")
+                        Text(localizationManager.localizedString(for: .contactButton))
                             .font(.body.weight(.medium))
                     }
                     .foregroundColor(.white)
@@ -543,7 +544,7 @@ struct UserProfileDetailView: View {
         return 0
     }
     
-    private func memberSinceText(from dateString: String) -> String {
+    private func createdAt(from dateString: String) -> String {
         let components = dateString.components(separatedBy: "-")
         return components.first ?? "2025"
     }
@@ -612,11 +613,11 @@ enum ProfileTab: CaseIterable {
     case reviews
     case info
     
-    var title: String {
+    var localizedStringKey: LocalizedStringKey {
         switch self {
-        case .onSale: return "En venta"
-        case .reviews: return "Valoraciones"
-        case .info: return "Info"
+        case .onSale: return .onSaleTab
+        case .reviews: return .reviewsTab
+        case .info: return .infoTab
         }
     }
 }
@@ -642,6 +643,8 @@ struct UserProduct: Identifiable {
 // MARK: - User Product Card
 struct UserProductCard: View {
     let product: UserProduct
+    
+    @Environment(\.localizationManager) private var localizationManager
     @EnvironmentObject private var themeManager: ThemeManager
     
     var body: some View {
@@ -669,7 +672,7 @@ struct UserProductCard: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(Color.red.opacity(0.8))
                                 .overlay(
-                                    Text("Inactivo")
+                                    Text(localizationManager.localizedString(for: .inactiveString))
                                         .font(.caption.weight(.medium))
                                         .foregroundColor(.white)
                                 )
@@ -697,7 +700,7 @@ struct UserProductCard: View {
             
             // Featured Button
             if product.status == .active {
-                Button("Destácalo ya") {
+                Button(localizationManager.localizedString(for: .highlightItNow)) {
                     // Acción para destacar producto
                 }
                 .font(.caption.weight(.medium))

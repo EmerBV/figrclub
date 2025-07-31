@@ -206,6 +206,11 @@ enum LocalizedStringKey: String, CaseIterable {
     case recentString = "recent_string"
     case photoGallery = "photo_gallery"
     
+    // MARK: - Notifications
+    case messagesString = "messages_string"
+    case notificationsString = "notifications_string"
+    case unreadString = "unread_string"
+    
     // MARK: - Profile
     case inFigrClubSince = "in_figrclub_since"
     case contentString = "content_string"
@@ -216,8 +221,29 @@ enum LocalizedStringKey: String, CaseIterable {
     case transactionsString = "transactions_string"
     case shoppingsString = "shoppings_string"
     case salesString = "sales_string"
+    case shippingString = "shipping_string"
     case accountString = "account_string"
     case favoritesString = "favorites_string"
+    case seeLocationString = "see_location_string"
+    case onSaleTab = "on_sale_tab"
+    case reviewsTab = "reviews_tab"
+    case infoTab = "info_tab"
+    case basedOnString = "based_on_string"
+    case profileInfo = "profile_info"
+    case memberSince = "member_since"
+    case lastActivity = "last_activity"
+    case locationString = "location_string"
+    case notSpecified = "not_specified"
+    case salesStatistics = "sales_statistics"
+    case productsSold = "products_sold"
+    case activeProducts = "active_products"
+    case averageRating = "average_rating"
+    case returnPolicy = "return_policy"
+    case returnPolicyDescription = "return_policy_description"
+    case contactButton = "contact_button"
+    case highlightItNow = "highlight_it_now"
+    case inactiveString = "inactive_string"
+    
     
     // MARK: - Computed Properties
     var fallbackValue: String {
@@ -418,6 +444,11 @@ enum LocalizedStringKey: String, CaseIterable {
         case .recentString: return "Recientes"
         case .photoGallery: return "Galería de fotos"
             
+            // Notifications
+        case .messagesString: return "Mensajes"
+        case .notificationsString: return "Notificaciones"
+        case .unreadString: return "No leído"
+            
             // Profile
         case .inFigrClubSince: return "En FigrClub desde %@"
         case .contentString: return "Contenido"
@@ -428,8 +459,28 @@ enum LocalizedStringKey: String, CaseIterable {
         case .transactionsString: return "Transacciones"
         case .shoppingsString: return "Compras"
         case .salesString: return "Ventas"
+        case .shippingString: return "Envíos"
         case .accountString: return "Cuenta"
         case .favoritesString: return "Favoritos"
+        case .seeLocationString: return "Ver ubicación"
+        case .onSaleTab: return "En venta"
+        case .reviewsTab: return "Valoraciones"
+        case .infoTab: return "Info"
+        case .basedOnString: return "Basado en %d valoraciones"
+        case .profileInfo: return "Información de perfil"
+        case .memberSince: return "Miembro desde"
+        case .lastActivity: return "Última actividad"
+        case .locationString: return "Ubicación"
+        case .notSpecified: return "No especificada"
+        case .salesStatistics: return "Estadísticas de venta"
+        case .productsSold: return "Productos vendidos"
+        case .activeProducts: return "Productos activos"
+        case .averageRating: return "Valoración promedio"
+        case .returnPolicy: return "Política de devoluciones"
+        case .returnPolicyDescription: return "Este vendedor acepta devoluciones dentro de los 7 días posteriores a la recepción del producto, siempre que esté en las mismas condiciones."
+        case .contactButton: return "Contactar"
+        case .highlightItNow: return "Destácalo ya"
+        case .inactiveString: return "Inactivo"
         
         }
     }

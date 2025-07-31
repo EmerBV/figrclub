@@ -201,6 +201,11 @@
 "recent_string" = "Recent";
 "photo_gallery" = "Photo gallery";
 
+// MARK: - Notifications
+"messages_string" = "Messages";
+"notifications_string" = "Notifications";
+"unread_string" = "Unread";
+
 // MARK: - Profile
 "in_figrclub_since" = "At FigrClub since %@";
 "content_string" = "Content";
@@ -211,5 +216,25 @@
 "transactions_string" = "Transactions";
 "shoppings_string" = "Shoppings";
 "sales_string" = "Sales";
+"shipping_string" = "Shipping";
 "account_string" = "Account";
 "favorites_string" = "Favorites";
+"see_location_string" = "See location";
+"on_sale_tab" = "On sale";
+"reviews_tab" = "Reviews";
+"info_tab" = "Info";
+"based_on_string" = "Based on %d reviews";
+"profile_info" = "Profile info";
+"member_since" = "Member since";
+"last_activity" = "Last activity";
+"location_string" = "Location";
+"not_specified" = "Not specified";
+"sales_statistics" = "Sales statistics";
+"products_sold" = "Products sold";
+"active_products" = "Active products";
+"average_rating" = "Average rating";
+"return_policy" = "Return policy";
+"return_policy_description" = "This seller accepts returns within 7 days of receiving the product, provided it is in the same condition.";
+"contact_button" = "Contact";
+"highlight_it_now" = "Highlight it now";
+"inactive_string" = "Inactive";

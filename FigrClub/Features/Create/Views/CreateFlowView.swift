@@ -11,7 +11,7 @@ import AVFoundation
 import Photos
 
 // MARK: - Content Creation Types
-enum CreationContentType: String, CaseIterable, Identifiable {
+enum CreationContentType: CaseIterable {
     case post
     case story
     case reel
@@ -25,10 +25,6 @@ enum CreationContentType: String, CaseIterable, Identifiable {
         case .liveStream: return .createLiveStream
         }
     }
-    
-    var id: String { rawValue }
-    
-    var title: String { rawValue }
 }
 
 // MARK: - Flash Mode Enum
@@ -392,7 +388,7 @@ struct CreateFlowView: View {
                 // Content type selector (center)
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 20) {
-                        ForEach(CreationContentType.allCases) { contentType in
+                        ForEach(CreationContentType.allCases, id: \.self) { contentType in
                             Button(action: {
                                 withAnimation(.easeInOut(duration: 0.3)) {
                                     selectedContentType = contentType

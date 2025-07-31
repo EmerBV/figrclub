@@ -201,6 +201,11 @@
 "recent_string" = "Recientes";
 "photo_gallery" = "Galería de fotos";
 
+// MARK: - Notifications
+"messages_string" = "Mensajes";
+"notifications_string" = "Notificaciones";
+"unread_string" = "No leído";
+
 // MARK: - Profile
 "in_figrclub_since" = "En FigrClub desde %@";
 "content_string" = "Contenido";
@@ -211,5 +216,25 @@
 "transactions_string" = "Transacciones";
 "shoppings_string" = "Compras";
 "sales_string" = "Ventas";
+"shipping_string" = "Envíos";
 "account_string" = "Cuenta";
 "favorites_string" = "Favoritos";
+"see_location_string" = "Ver ubicación";
+"on_sale_tab" = "En venta";
+"reviews_tab" = "Valoraciones";
+"info_tab" = "Info";
+"based_on_string" = "Basado en %d valoraciones";
+"profile_info" = "Información de perfil";
+"member_since" = "Miembro desde";
+"last_activity" = "Última conexión";
+"location_string" = "Ubicación";
+"not_specified" = "No especificada";
+"sales_statistics" = "Estadísticas de venta";
+"products_sold" = "Productos vendidos";
+"active_products" = "Productos activos";
+"average_rating" = "Valoración promedio";
+"return_policy" = "Política de devoluciones";
+"return_policy_description" = "Este vendedor acepta devoluciones dentro de los 7 días posteriores a la recepción del producto, siempre que esté en las mismas condiciones.";
+"contact_button" = "Contactar";
+"highlight_it_now" = "Destácalo ya";
+"inactive_string" = "Inactivo";

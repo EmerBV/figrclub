@@ -36,7 +36,6 @@ struct NotificationsFlowView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                //headerSection
                 segmentedControl
                 contentSection
             }
@@ -59,49 +58,17 @@ struct NotificationsFlowView: View {
         }
     }
     
-    // MARK: - Header Section
-    private var headerSection: some View {
-        HStack {
-            Text("FigrClub")
-                .font(.system(size: 24, weight: .bold, design: .rounded))
-                .themedTextColor(.primary)
-            
-            Spacer()
-            
-            HStack(spacing: 20) {
-                Button {
-                    // TODO: Search notifications
-                } label: {
-                    Image(systemName: "magnifyingglass")
-                        .font(.title2)
-                        .themedTextColor(.primary)
-                }
-                
-                Button {
-                    // TODO: Settings
-                } label: {
-                    Image(systemName: "line.3.horizontal")
-                        .font(.title2)
-                        .themedTextColor(.primary)
-                }
-            }
-        }
-        .padding(.horizontal, LayoutConstants.horizontalPadding)
-        .padding(.top, LayoutConstants.topPadding)
-        .padding(.bottom, LayoutConstants.topPadding)
-    }
-    
     // MARK: - Segmented Control
     private var segmentedControl: some View {
         HStack(spacing: 0) {
             segmentButton(
-                title: "Mensajes",
+                title: localizationManager.localizedString(for: .messagesString),
                 segment: .messages,
                 isSelected: selectedSegment == .messages
             )
             
             segmentButton(
-                title: "Notificaciones",
+                title: localizationManager.localizedString(for: .notificationsString),
                 segment: .notifications,
                 isSelected: selectedSegment == .notifications,
                 badgeCount: unreadNotificationsCount
@@ -296,6 +263,8 @@ struct MessageRowView: View {
     let message: MessageNotification
     let currentUser: User
     
+    @Environment(\.localizationManager) private var localizationManager
+    
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
             // Avatar
@@ -335,7 +304,7 @@ struct MessageRowView: View {
                             .foregroundColor(.blue)
                             .font(.system(size: 12))
                         
-                        Text("Sin leer")
+                        Text(localizationManager.localizedString(for: .unreadString))
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(.blue)
                         
