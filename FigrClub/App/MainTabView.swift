@@ -159,7 +159,7 @@ struct MainTabView: View {
                     .buttonStyle(PlainButtonStyle())
                 }
             }
-            .padding(.horizontal, AppTheme.Spacing.medium)
+            .padding(.horizontal, AppTheme.Spacing.large)
             .padding(.top, AppTheme.Spacing.small)
             .padding(.bottom, AppTheme.Spacing.small)
         }

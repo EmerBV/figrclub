@@ -43,7 +43,7 @@ struct MarketplaceFlowView: View {
     
     // MARK: - Header Section
     private var headerSection: some View {
-        VStack(spacing: AppTheme.Spacing.medium) {
+        VStack(spacing: AppTheme.Spacing.large) {
             HStack {
                 Text("Marketplace")
                     .themedFont(.displayMedium)
@@ -76,12 +76,13 @@ struct MarketplaceFlowView: View {
                     }
                 }
             }
-            //.padding(12)
-            .figrSpacing(.medium)
+            .padding(AppTheme.Spacing.large)
             .background(Color(.systemGray6))
             .cornerRadius(AppTheme.CornerRadius.medium)
         }
-        .padding(.horizontal, AppTheme.Spacing.medium)
+        .padding(.horizontal, AppTheme.Spacing.large)
+        .padding(.top, AppTheme.Spacing.large)
+
     }
     
     // MARK: - Categories Section
@@ -100,7 +101,7 @@ struct MarketplaceFlowView: View {
                         }
                     }
                 }
-                .padding(.horizontal, AppTheme.Spacing.medium)
+                .padding(.horizontal, AppTheme.Spacing.large)
             }
             .padding(.vertical, AppTheme.Spacing.small)
             
@@ -138,7 +139,7 @@ struct MarketplaceFlowView: View {
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.blue)
             }
-            .padding(.horizontal, AppTheme.Spacing.medium)
+            .padding(.horizontal, AppTheme.Spacing.large)
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
@@ -149,7 +150,7 @@ struct MarketplaceFlowView: View {
                         }
                     }
                 }
-                .padding(.horizontal, AppTheme.Spacing.medium)
+                .padding(.horizontal, AppTheme.Spacing.large)
             }
         }
     }
@@ -169,13 +170,13 @@ struct MarketplaceFlowView: View {
                     .font(.system(size: 14))
                     .themedTextColor(.secondary)
             }
-            .padding(.horizontal, AppTheme.Spacing.medium)
+            .padding(.horizontal, AppTheme.Spacing.large)
             .padding(.vertical, 12)
             
             // Grid de productos
             LazyVGrid(
                 columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2),
-                spacing: AppTheme.Spacing.medium
+                spacing: AppTheme.Spacing.large
             ) {
                 ForEach(filteredProducts) { product in
                     ProductCard(product: product) {
@@ -184,9 +185,9 @@ struct MarketplaceFlowView: View {
                     }
                 }
             }
-            .padding(.horizontal, AppTheme.Spacing.medium)
+            .padding(.horizontal, AppTheme.Spacing.large)
         }
-        .padding(.bottom, AppTheme.Spacing.medium)
+        .padding(.bottom, AppTheme.Spacing.large)
     }
     
     // MARK: - Computed Properties
@@ -231,7 +232,7 @@ struct CategoryChip: View {
             Text(localizationManager.localizedString(for: category.localizedStringKey))
                 .themedFont(.titleSmall)
                 .foregroundColor(isSelected ? .white : .primary)
-                .padding(.horizontal, AppTheme.Spacing.medium)
+                .padding(.horizontal, AppTheme.Spacing.large)
                 .padding(.vertical, AppTheme.Spacing.small)
                 .background(
                     RoundedRectangle(cornerRadius: 20)
@@ -264,14 +265,14 @@ struct FeaturedProductCard: View {
                     // Badge de destacado
                     Text("⭐")
                         .font(.system(size: 12))
-                        .figrSpacing(.tiny)
+                        .figrSpacing(.xSmall)
                         .background(Color.yellow)
                         .cornerRadius(6)
                         .offset(x: -6, y: 6)
                 }
                 
                 // Información del producto
-                VStack(alignment: .leading, spacing: AppTheme.Spacing.tiny) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xSmall) {
                     Text(product.title)
                         .font(.system(size: 14, weight: .semibold))
                         .themedTextColor(.primary)
@@ -293,7 +294,7 @@ struct FeaturedProductCard: View {
                             .lineLimit(1)
                     }
                 }
-                .figrSpacing(.tiny)
+                .figrSpacing(.xSmall)
                 .frame(width: 160, alignment: .leading)
             }
             .frame(width: 160)
@@ -341,7 +342,7 @@ struct ProductCard: View {
                 }
                 
                 // Información del producto
-                VStack(alignment: .leading, spacing: AppTheme.Spacing.tiny) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xSmall) {
                     Text(product.title)
                         .font(.system(size: 14, weight: .semibold))
                         .themedTextColor(.primary)
@@ -427,7 +428,7 @@ struct FiltersSheet: View {
                                 Text(localizationManager.localizedString(for: category.localizedStringKey))
                                     .font(.system(size: 14, weight: .medium))
                                     .foregroundColor(selectedCategory == category ? .white : .primary)
-                                    .padding(.horizontal, AppTheme.Spacing.buttonPadding)
+                                    .padding(.horizontal, AppTheme.Spacing.medium)
                                     .padding(.vertical, AppTheme.Spacing.small)
                                     .frame(maxWidth: .infinity)
                                     .background(
@@ -443,7 +444,7 @@ struct FiltersSheet: View {
                 Spacer()
                 
                 // Botones de acción
-                VStack(spacing: AppTheme.Spacing.buttonPadding) {
+                VStack(spacing: AppTheme.Spacing.medium) {
                     Button(localizationManager.localizedString(for: .applyFilterString)) {
                         dismiss()
                     }

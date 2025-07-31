@@ -10,7 +10,9 @@ import SwiftUI
 struct EmailVerificationView: View {
     let email: String
     let onContinue: () -> Void
+    
     @Environment(\.localizationManager) private var localizationManager
+    @EnvironmentObject private var themeManager: ThemeManager
     
     var body: some View {
         VStack(spacing: 32) {
@@ -71,19 +73,8 @@ struct EmailVerificationView: View {
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 32)
-        .background(Color(.systemBackground))
+        .themedBackground()
         .navigationBarHidden(true)
     }
 }
 
-// MARK: - Preview
-#if DEBUG
-struct EmailVerificationView_Previews: PreviewProvider {
-    static var previews: some View {
-        EmailVerificationView(
-            email: "usuario@ejemplo.com",
-            onContinue: {}
-        )
-    }
-}
-#endif 

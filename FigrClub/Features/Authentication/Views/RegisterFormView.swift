@@ -21,14 +21,14 @@ struct RegisterFormView: View {
     
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(spacing: AppTheme.Spacing.xlarge) {
+            VStack(spacing: AppTheme.Spacing.xxLarge) {
                 headerSection
                 formSection
                 actionButtonsSection
             }
             .padding(.horizontal, AppTheme.Spacing.screenPadding)
-            .padding(.top, AppTheme.Spacing.xxlarge)
-            .padding(.bottom, AppTheme.Spacing.xlarge)
+            .padding(.top, AppTheme.Spacing.xxxLarge)
+            .padding(.bottom, AppTheme.Spacing.xxLarge)
         }
         .themedBackground()
         .sheet(isPresented: $showingTermsOfService) {
@@ -41,7 +41,7 @@ struct RegisterFormView: View {
     
     // MARK: - Header Section
     private var headerSection: some View {
-        VStack(spacing: AppTheme.Spacing.large) {
+        VStack(spacing: AppTheme.Spacing.xLarge) {
             logoSection
             welcomeSection
         }
@@ -77,7 +77,7 @@ struct RegisterFormView: View {
     
     // MARK: - Form Section
     private var formSection: some View {
-        VStack(spacing: AppTheme.Spacing.large) {
+        VStack(spacing: AppTheme.Spacing.xLarge) {
             emailField
             usernameField
             fullnameField
@@ -170,7 +170,7 @@ struct RegisterFormView: View {
     }
     
     private var termsAndConditionsView: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.large) {
             // Header
             Text(localizationManager.localizedString(for: .legalDocuments))
                 .themedFont(.titleMedium)
@@ -264,7 +264,7 @@ struct RegisterFormView: View {
     }
     
     private var consentsSection: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.large) {
             Text(localizationManager.localizedString(for: .consents))
                 .themedFont(.titleMedium)
                 .themedTextColor(.primary)
@@ -342,7 +342,7 @@ struct RegisterFormView: View {
     }
     
     private var actionButtonsSection: some View {
-        VStack(spacing: AppTheme.Spacing.large) {
+        VStack(spacing: AppTheme.Spacing.xLarge) {
             registerButton
             dividerSection
             switchToLoginButton
@@ -386,13 +386,13 @@ struct RegisterFormView: View {
             Text(localizationManager.localizedString(for: .or))
                 .themedFont(.bodySmall)
                 .themedTextColor(.secondary)
-                .padding(.horizontal, AppTheme.Spacing.medium)
+                .padding(.horizontal, AppTheme.Spacing.large)
             
             Rectangle()
                 .fill(themeManager.currentSecondaryTextColor.opacity(0.3))
                 .frame(height: 1)
         }
-        .padding(.horizontal, AppTheme.Spacing.medium)
+        .padding(.horizontal, AppTheme.Spacing.large)
     }
     
     private var switchToLoginButton: some View {

@@ -11,21 +11,31 @@ import SwiftUI
 struct AppTheme {
     
     // MARK: - Spacing System
-    struct Spacing {
-        static let tiny: CGFloat = 4
+    enum Spacing {
+        static let xxSmall: CGFloat = 2
+        static let xSmall: CGFloat = 4
         static let small: CGFloat = 8
-        static let medium: CGFloat = 16
-        static let large: CGFloat = 24
-        static let xlarge: CGFloat = 32
-        static let xxlarge: CGFloat = 48
+        static let medium: CGFloat = 12
+        static let large: CGFloat = 16
+        static let xLarge: CGFloat = 24
+        static let xxLarge: CGFloat = 32
+        static let xxxLarge: CGFloat = 48
         
         // Specific use cases
-        static let buttonPadding: CGFloat = 12
         static let screenPadding: CGFloat = 20
     }
     
+    enum LayoutConstants {
+        static let segmentControlHeight: CGFloat = 44
+        static let badgeSize: CGFloat = 20
+        static let itemSpacing: CGFloat = 16
+        static let horizontalPadding: CGFloat = 16
+        static let topPadding: CGFloat = 8
+        static let avatarSize: CGFloat = 56
+    }
+    
     // MARK: - Corner Radius System
-    struct CornerRadius {
+    enum CornerRadius {
         static let small: CGFloat = 8
         static let medium: CGFloat = 12
         static let large: CGFloat = 16
@@ -169,8 +179,8 @@ struct PrimaryButtonStyle: ButtonStyle {
         configuration.label
             .font(.figrButtonMedium)
             .foregroundColor(.figrButtonText)
-            .padding(.horizontal, AppTheme.Spacing.large)
-            .padding(.vertical, AppTheme.Spacing.buttonPadding)
+            .padding(.horizontal, AppTheme.Spacing.xLarge)
+            .padding(.vertical, AppTheme.Spacing.medium)
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
                     .fill(Color.figrPrimary)
@@ -191,8 +201,8 @@ struct SecondaryButtonStyle: ButtonStyle {
         configuration.label
             .font(.figrButtonMedium)
             .foregroundColor(.figrTextPrimary)
-            .padding(.horizontal, AppTheme.Spacing.large)
-            .padding(.vertical, AppTheme.Spacing.buttonPadding)
+            .padding(.horizontal, AppTheme.Spacing.xLarge)
+            .padding(.vertical, AppTheme.Spacing.medium)
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
                     .fill(Color.figrSecondary.opacity(0.15))
@@ -207,8 +217,8 @@ struct OutlineButtonStyle: ButtonStyle {
         configuration.label
             .font(.figrButtonMedium)
             .foregroundColor(.figrPrimary)
-            .padding(.horizontal, AppTheme.Spacing.large)
-            .padding(.vertical, AppTheme.Spacing.buttonPadding)
+            .padding(.horizontal, AppTheme.Spacing.xLarge)
+            .padding(.vertical, AppTheme.Spacing.medium)
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
                     .stroke(Color.figrPrimary, lineWidth: 1.5)
@@ -218,50 +228,12 @@ struct OutlineButtonStyle: ButtonStyle {
     }
 }
 
-// MARK: - Image Styles
-extension Image {
-    func figrIcon(size: CGFloat = AppTheme.IconSize.medium) -> some View {
-        self
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(width: size, height: size)
-    }
-    
-    func figrProfileImage(size: CGFloat = 50) -> some View {
-        self
-            .resizable()
-            .aspectRatio(contentMode: .fill)
-            .frame(width: size, height: size)
-            .clipShape(Circle())
-            .overlay(
-                Circle()
-                    .stroke(Color.figrBorder, lineWidth: 1)
-            )
-    }
-    
-    func figrProductImage(cornerRadius: CGFloat = AppTheme.CornerRadius.image) -> some View {
-        self
-            .resizable()
-            .aspectRatio(contentMode: .fill)
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-            .overlay(
-                RoundedRectangle(cornerRadius: cornerRadius)
-                    .stroke(Color.figrBorder.opacity(0.3), lineWidth: 0.5)
-            )
-    }
-}
-
-// MARK: - Text Field Styles
-extension TextFieldStyle where Self == FigrTextFieldStyle {
-    static var figr: FigrTextFieldStyle { FigrTextFieldStyle() }
-}
-
 struct FigrTextFieldStyle: TextFieldStyle {
     func _body(configuration: TextField<Self._Label>) -> some View {
         configuration
             .font(.figrBodyMedium)
-            .padding(.horizontal, AppTheme.Spacing.medium)
-            .padding(.vertical, AppTheme.Spacing.buttonPadding)
+            .padding(.horizontal, AppTheme.Spacing.large)
+            .padding(.vertical, AppTheme.Spacing.medium)
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.input)
                     .fill(Color.figrCard)
@@ -278,7 +250,7 @@ struct FigrVStack<Content: View>: View {
     let spacing: CGFloat
     let content: Content
     
-    init(spacing: CGFloat = AppTheme.Spacing.medium, @ViewBuilder content: () -> Content) {
+    init(spacing: CGFloat = AppTheme.Spacing.large, @ViewBuilder content: () -> Content) {
         self.spacing = spacing
         self.content = content()
     }
@@ -294,7 +266,7 @@ struct FigrHStack<Content: View>: View {
     let spacing: CGFloat
     let content: Content
     
-    init(spacing: CGFloat = AppTheme.Spacing.medium, @ViewBuilder content: () -> Content) {
+    init(spacing: CGFloat = AppTheme.Spacing.large, @ViewBuilder content: () -> Content) {
         self.spacing = spacing
         self.content = content()
     }
@@ -455,23 +427,6 @@ struct FigrRarityBadge: View {
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
                     .fill(rarity.color)
             )
-    }
-}
-
-// MARK: - Navigation Theme
-extension NavigationView {
-    func figrNavigationStyle() -> some View {
-        self
-            .navigationBarTitleDisplayMode(.large)
-            .accentColor(.figrPrimary)
-    }
-}
-
-// MARK: - Tab View Theme
-extension TabView {
-    func figrTabViewStyle() -> some View {
-        self
-            .accentColor(.figrPrimary)
     }
 }
 

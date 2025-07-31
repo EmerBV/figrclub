@@ -24,8 +24,8 @@ struct ProfileFlowView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
                     headerSection
-                        .padding(.horizontal, Spacing.large)
-                        .padding(.bottom, Spacing.large)
+                        .padding(.horizontal, AppTheme.Spacing.large)
+                        .padding(.bottom, AppTheme.Spacing.large)
                     optionsSection
                 }
             }
@@ -63,14 +63,14 @@ struct ProfileFlowView: View {
     
     // MARK: - Header Section
     private var headerSection: some View {
-        VStack(spacing: Spacing.medium) {
+        VStack(spacing: AppTheme.Spacing.medium) {
             HStack {
                 // Imagen de perfil
                 profileImageView
                 
-                VStack(alignment: .leading, spacing: Spacing.xSmall) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xSmall) {
                     // Nombre y verificación
-                    HStack(spacing: Spacing.xSmall) {
+                    HStack(spacing: AppTheme.Spacing.xSmall) {
                         Text(user.displayName)
                             .font(.title2.weight(.bold))
                             .foregroundColor(.primary)
@@ -83,7 +83,7 @@ struct ProfileFlowView: View {
                     }
                     
                     // Rating con estrellas
-                    HStack(spacing: Spacing.xxSmall) {
+                    HStack(spacing: AppTheme.Spacing.xxSmall) {
                         ForEach(0..<5) { index in
                             Image(systemName: "star.fill")
                                 .font(.caption2)
@@ -114,7 +114,7 @@ struct ProfileFlowView: View {
                 }
             }
         }
-        .padding(.top, Spacing.xLarge)
+        .padding(.top, AppTheme.Spacing.xLarge)
     }
     
     // MARK: - Profile Image View
@@ -245,7 +245,7 @@ struct ProfileFlowView: View {
             
             // Botón de cerrar sesión
             logoutButton
-                .padding(.bottom, Spacing.xLarge)
+                .padding(.bottom, AppTheme.Spacing.xLarge)
         }
     }
     
@@ -259,15 +259,15 @@ struct ProfileFlowView: View {
             
             Spacer()
         }
-        .padding(.horizontal, Spacing.large)
-        .padding(.top, Spacing.large)
-        .padding(.bottom, Spacing.small)
+        .padding(.horizontal, AppTheme.Spacing.large)
+        .padding(.top, AppTheme.Spacing.large)
+        .padding(.bottom, AppTheme.Spacing.small)
     }
     
     // MARK: - Option Row
     private func optionRow(icon: String, title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: Spacing.medium) {
+            HStack(spacing: AppTheme.Spacing.medium) {
                 Image(systemName: icon)
                     .font(.title3)
                     .foregroundColor(.primary)
@@ -283,8 +283,8 @@ struct ProfileFlowView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            .padding(.horizontal, Spacing.large)
-            .padding(.vertical, Spacing.medium)
+            .padding(.horizontal, AppTheme.Spacing.large)
+            .padding(.vertical, AppTheme.Spacing.medium)
             .background(
                 Rectangle()
                     .fill(themeManager.currentBackgroundColor)
@@ -299,7 +299,7 @@ struct ProfileFlowView: View {
         Button {
             showLogoutConfirmation = true
         } label: {
-            HStack(spacing: Spacing.medium) {
+            HStack(spacing: AppTheme.Spacing.medium) {
                 if isLoggingOut {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .red))
@@ -318,12 +318,12 @@ struct ProfileFlowView: View {
                 
                 Spacer()
             }
-            .padding(.horizontal, Spacing.large)
-            .padding(.vertical, Spacing.medium)
+            .padding(.horizontal, AppTheme.Spacing.large)
+            .padding(.vertical, AppTheme.Spacing.medium)
         }
         .buttonStyle(PlainButtonStyle())
         .disabled(isLoggingOut)
-        .padding(.top, Spacing.medium)
+        .padding(.top, AppTheme.Spacing.medium)
     }
     
     // MARK: - Helper Methods

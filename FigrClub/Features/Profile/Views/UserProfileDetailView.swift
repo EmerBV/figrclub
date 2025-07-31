@@ -31,16 +31,16 @@ struct UserProfileDetailView: View {
                 VStack(spacing: 0) {
                     // Header section
                     headerSection
-                        .padding(.bottom, Spacing.large)
+                        .padding(.bottom, AppTheme.Spacing.large)
                     
                     // Tab selector
                     tabSelector
-                        .padding(.horizontal, Spacing.large)
-                        .padding(.bottom, Spacing.medium)
+                        .padding(.horizontal, AppTheme.Spacing.large)
+                        .padding(.bottom, AppTheme.Spacing.medium)
                     
                     // Content based on selected tab
                     tabContent
-                        .padding(.horizontal, Spacing.large)
+                        .padding(.horizontal, AppTheme.Spacing.large)
                 }
             }
             .navigationTitle("")
@@ -55,7 +55,7 @@ struct UserProfileDetailView: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    HStack(spacing: Spacing.medium) {
+                    HStack(spacing: AppTheme.Spacing.medium) {
                         Button(action: { /* Editar perfil */ }) {
                             Image(systemName: "pencil")
                                 .font(.title2)
@@ -85,16 +85,16 @@ struct UserProfileDetailView: View {
             backgroundImageView
             
             // Contenido principal
-            VStack(spacing: Spacing.medium) {
+            VStack(spacing: AppTheme.Spacing.medium) {
                 // Primera fila: información del usuario y foto de perfil
-                HStack(alignment: .top, spacing: Spacing.medium) {
+                HStack(alignment: .top, spacing: AppTheme.Spacing.medium) {
                     // Información del usuario (lado izquierdo)
-                    VStack(alignment: .leading, spacing: Spacing.medium) {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
                         // Información básica
                         userInfoSection
                         
                         // Estadísticas en VStack
-                        VStack(alignment: .leading, spacing: Spacing.small) {
+                        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
                             statisticsRow
                         }
                         
@@ -108,7 +108,7 @@ struct UserProfileDetailView: View {
                     profileImageView
                 }
             }
-            .padding(Spacing.large)
+            .padding(AppTheme.Spacing.large)
         }
         .frame(height: 220) // Altura fija para el header con fondo
         .frame(maxWidth: .infinity)
@@ -145,7 +145,7 @@ struct UserProfileDetailView: View {
     
     // MARK: - User Info Section
     private var userInfoSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.xSmall) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.xSmall) {
             // Nombre
             Text(user.displayName)
                 .font(.title.weight(.bold))
@@ -153,7 +153,7 @@ struct UserProfileDetailView: View {
                 .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
             
             // Rating stars
-            HStack(spacing: Spacing.xxSmall) {
+            HStack(spacing: AppTheme.Spacing.xxSmall) {
                 ForEach(0..<5) { index in
                     Image(systemName: "star.fill")
                         .font(.caption)
@@ -219,8 +219,8 @@ struct UserProfileDetailView: View {
     
     // MARK: - Statistics Row
     private var statisticsRow: some View {
-        VStack(alignment: .leading, spacing: Spacing.small) {
-            HStack(spacing: Spacing.large) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
+            HStack(spacing: AppTheme.Spacing.large) {
                 statisticItem(
                     icon: "chart.bar.fill",
                     value: "\(sampleProducts.filter { $0.status == .active }.count)",
@@ -245,7 +245,7 @@ struct UserProfileDetailView: View {
     }
     
     private func statisticItem(icon: String, value: String, label: String) -> some View {
-        HStack(spacing: Spacing.xSmall) {
+        HStack(spacing: AppTheme.Spacing.xSmall) {
             Image(systemName: icon)
                 .font(.caption)
                 .foregroundColor(.primary)
@@ -265,7 +265,7 @@ struct UserProfileDetailView: View {
     
     // MARK: - Location View
     private var locationView: some View {
-        HStack(spacing: Spacing.xSmall) {
+        HStack(spacing: AppTheme.Spacing.xSmall) {
             Image(systemName: "location.fill")
                 .font(.caption)
                 .foregroundColor(.primary)
@@ -292,7 +292,7 @@ struct UserProfileDetailView: View {
         HStack(spacing: 0) {
             ForEach(ProfileTab.allCases, id: \.self) { tab in
                 Button(action: { selectedTab = tab }) {
-                    VStack(spacing: Spacing.xSmall) {
+                    VStack(spacing: AppTheme.Spacing.xSmall) {
                         Text(localizationManager.localizedString(for: tab.localizedStringKey))
                             .font(.body.weight(selectedTab == tab ? .semibold : .regular))
                             .foregroundColor(selectedTab == tab ? .primary : .secondary)
@@ -328,7 +328,7 @@ struct UserProfileDetailView: View {
     
     // MARK: - On Sale Content
     private var onSaleContent: some View {
-        VStack(spacing: Spacing.large) {
+        VStack(spacing: AppTheme.Spacing.large) {
             // Search Section
             searchSection
             
@@ -337,9 +337,9 @@ struct UserProfileDetailView: View {
             
             // Products Grid
             LazyVGrid(columns: [
-                GridItem(.flexible(), spacing: Spacing.medium),
-                GridItem(.flexible(), spacing: Spacing.medium)
-            ], spacing: Spacing.medium) {
+                GridItem(.flexible(), spacing: AppTheme.Spacing.medium),
+                GridItem(.flexible(), spacing: AppTheme.Spacing.medium)
+            ], spacing: AppTheme.Spacing.medium) {
                 ForEach(filteredProducts) { product in
                     UserProductCard(product: product)
                 }
@@ -365,15 +365,15 @@ struct UserProfileDetailView: View {
     
     // MARK: - Reviews Content
     private var reviewsContent: some View {
-        VStack(alignment: .leading, spacing: Spacing.medium) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
             // Rating summary
-            HStack(spacing: Spacing.medium) {
-                VStack(alignment: .leading, spacing: Spacing.xSmall) {
+            HStack(spacing: AppTheme.Spacing.medium) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xSmall) {
                     Text("4.8")
                         .font(.largeTitle.weight(.bold))
                         .foregroundColor(.primary)
                     
-                    HStack(spacing: Spacing.xxSmall) {
+                    HStack(spacing: AppTheme.Spacing.xxSmall) {
                         ForEach(0..<5) { index in
                             Image(systemName: "star.fill")
                                 .font(.caption)
@@ -388,7 +388,7 @@ struct UserProfileDetailView: View {
                 
                 Spacer()
             }
-            .padding(.bottom, Spacing.medium)
+            .padding(.bottom, AppTheme.Spacing.medium)
             
             // Sample reviews
             ForEach(0..<3) { index in
@@ -404,14 +404,14 @@ struct UserProfileDetailView: View {
     
     // MARK: - Info Content
     private var infoContent: some View {
-        VStack(alignment: .leading, spacing: Spacing.large) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.large) {
             // Información personal
-            VStack(alignment: .leading, spacing: Spacing.medium) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
                 Text(localizationManager.localizedString(for: .profileInfo))
                     .font(.headline.weight(.semibold))
                     .foregroundColor(.primary)
                 
-                VStack(spacing: Spacing.small) {
+                VStack(spacing: AppTheme.Spacing.small) {
                     InfoRow(title: localizationManager.localizedString(for: .memberSince), value: createdAt(from: user.createdAt))
                     InfoRow(title: localizationManager.localizedString(for: .lastActivity), value: user.lastActivityAt ?? "")
                     InfoRow(title: localizationManager.localizedString(for: .locationString), value: user.city ?? localizationManager.localizedString(for: .notSpecified))
@@ -420,12 +420,12 @@ struct UserProfileDetailView: View {
             }
             
             // Estadísticas de venta
-            VStack(alignment: .leading, spacing: Spacing.medium) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
                 Text(localizationManager.localizedString(for: .salesStatistics))
                     .font(.headline.weight(.semibold))
                     .foregroundColor(.primary)
                 
-                VStack(spacing: Spacing.small) {
+                VStack(spacing: AppTheme.Spacing.small) {
                     InfoRow(title: localizationManager.localizedString(for: .productsSold), value: "\(sampleProducts.filter { $0.status == .sold }.count)")
                     InfoRow(title: localizationManager.localizedString(for: .activeProducts), value: "\(sampleProducts.filter { $0.status == .active }.count)")
                     InfoRow(title: localizationManager.localizedString(for: .averageRating), value: "4.8 ⭐")
@@ -434,7 +434,7 @@ struct UserProfileDetailView: View {
             
             // Política de devoluciones
             
-            VStack(alignment: .leading, spacing: Spacing.medium) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
                 Text(localizationManager.localizedString(for: .returnPolicy))
                     .font(.headline.weight(.semibold))
                     .foregroundColor(.primary)
@@ -458,16 +458,16 @@ struct UserProfileDetailView: View {
                     }
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, Spacing.medium)
+                    .padding(.vertical, AppTheme.Spacing.medium)
                     .background(themeManager.accentColor)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                .padding(.top, Spacing.small)
+                .padding(.top, AppTheme.Spacing.small)
             } else {
                 // Espacio vacío para mantener consistencia cuando no hay botón
                 Spacer()
                     .frame(height: 32)
-                    .padding(.top, Spacing.small)
+                    .padding(.top, AppTheme.Spacing.small)
             }
         }
         .frame(maxWidth: .infinity)
@@ -476,7 +476,7 @@ struct UserProfileDetailView: View {
     
     // MARK: - Search Section
     private var searchSection: some View {
-        HStack(spacing: Spacing.small) {
+        HStack(spacing: AppTheme.Spacing.small) {
             Image(systemName: "magnifyingglass")
                 .font(.body)
                 .foregroundColor(.secondary)
@@ -495,8 +495,8 @@ struct UserProfileDetailView: View {
                 }
             }
         }
-        .padding(.horizontal, Spacing.medium)
-        .padding(.vertical, Spacing.small)
+        .padding(.horizontal, AppTheme.Spacing.medium)
+        .padding(.vertical, AppTheme.Spacing.small)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(.systemGray6))
@@ -505,9 +505,9 @@ struct UserProfileDetailView: View {
     
     // MARK: - Categories Section
     private var categoriesSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.medium) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Spacing.small) {
+                HStack(spacing: AppTheme.Spacing.small) {
                     ForEach(ProductCategory.allCases, id: \.self) { category in
                         CategoryChip(
                             category: category,
@@ -519,12 +519,12 @@ struct UserProfileDetailView: View {
                         }
                     }
                 }
-                .padding(.horizontal, Spacing.large)
+                .padding(.horizontal, AppTheme.Spacing.large)
             }
             
             Divider()
                 .background(Color.gray.opacity(0.3))
-                .padding(.horizontal, Spacing.large)
+                .padding(.horizontal, AppTheme.Spacing.large)
         }
     }
     
@@ -572,7 +572,7 @@ struct ReviewCard: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.small) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             HStack {
                 Text(userName)
                     .font(.body.weight(.medium))
@@ -580,7 +580,7 @@ struct ReviewCard: View {
                 
                 Spacer()
                 
-                HStack(spacing: Spacing.xxSmall) {
+                HStack(spacing: AppTheme.Spacing.xxSmall) {
                     ForEach(0..<5) { index in
                         Image(systemName: "star.fill")
                             .font(.caption2)
@@ -598,7 +598,7 @@ struct ReviewCard: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
-        .padding(Spacing.medium)
+        .padding(AppTheme.Spacing.medium)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(themeManager.accentColor)
@@ -681,7 +681,7 @@ struct UserProductCard: View {
                 )
             
             // Product Info
-            VStack(alignment: .leading, spacing: Spacing.xSmall) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xSmall) {
                 Text("\(Int(product.price)) €")
                     .font(.headline.weight(.bold))
                     .foregroundColor(.primary)
@@ -694,7 +694,7 @@ struct UserProductCard: View {
                     .frame(minHeight: 32) // Altura mínima para consistencia
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, Spacing.small)
+            .padding(.top, AppTheme.Spacing.small)
             
             Spacer(minLength: 0)
             
@@ -705,18 +705,18 @@ struct UserProductCard: View {
                 }
                 .font(.caption.weight(.medium))
                 .foregroundColor(.blue)
-                .padding(.vertical, Spacing.xSmall)
-                .padding(.horizontal, Spacing.medium)
+                .padding(.vertical, AppTheme.Spacing.xSmall)
+                .padding(.horizontal, AppTheme.Spacing.medium)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
                         .stroke(Color.blue, lineWidth: 1)
                 )
-                .padding(.top, Spacing.small)
+                .padding(.top, AppTheme.Spacing.small)
             } else {
                 // Espacio vacío para mantener consistencia cuando no hay botón
                 Spacer()
                     .frame(height: 32)
-                    .padding(.top, Spacing.small)
+                    .padding(.top, AppTheme.Spacing.small)
             }
         }
         .frame(maxWidth: .infinity)
@@ -741,7 +741,7 @@ struct InfoRow: View {
                 .font(.body)
                 .foregroundColor(.primary)
         }
-        .padding(.vertical, Spacing.xSmall)
+        .padding(.vertical, AppTheme.Spacing.xSmall)
     }
 }
 

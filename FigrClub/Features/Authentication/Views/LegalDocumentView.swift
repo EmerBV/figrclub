@@ -75,7 +75,7 @@ struct LegalDocumentView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
             
-            Button("Reintentar") {
+            Button(localizationManager.localizedString(for: .retry)) {
                 Task {
                     await viewModel.retryLoading()
                 }

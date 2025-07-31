@@ -161,8 +161,8 @@ struct ThemedTextFieldModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .themedFont(.bodyMedium)
-            .padding(.horizontal, AppTheme.Spacing.medium)
-            .padding(.vertical, AppTheme.Spacing.buttonPadding)
+            .padding(.horizontal, AppTheme.Spacing.large)
+            .padding(.vertical, AppTheme.Spacing.medium)
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.input)
                     .fill(themeManager.currentCardColor)
@@ -227,8 +227,8 @@ struct FigrSecondaryButtonModifier: ViewModifier {
         content
             .themedFont(.buttonMedium)
             .foregroundColor(themeManager.accentColor)
-            .padding(.horizontal, AppTheme.Spacing.large)
-            .padding(.vertical, AppTheme.Spacing.medium)
+            .padding(.horizontal, AppTheme.Spacing.xLarge)
+            .padding(.vertical, AppTheme.Spacing.large)
             .background(themeManager.currentCardColor)
             .cornerRadius(AppTheme.CornerRadius.button)
             .overlay(
@@ -245,8 +245,8 @@ struct FigrOutlineButtonModifier: ViewModifier {
         content
             .themedFont(.buttonMedium)
             .themedTextColor(.primary)
-            .padding(.horizontal, AppTheme.Spacing.large)
-            .padding(.vertical, AppTheme.Spacing.medium)
+            .padding(.horizontal, AppTheme.Spacing.xLarge)
+            .padding(.vertical, AppTheme.Spacing.large)
             .background(Color.clear)
             .cornerRadius(AppTheme.CornerRadius.button)
             .overlay(
@@ -282,7 +282,7 @@ struct FigrLoadingModifier: ViewModifier {
                         ZStack {
                             themeManager.currentBackgroundColor.opacity(0.8)
                             
-                            VStack(spacing: AppTheme.Spacing.medium) {
+                            VStack(spacing: AppTheme.Spacing.large) {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle(tint: themeManager.accentColor))
                                     .scaleEffect(1.2)
@@ -556,11 +556,11 @@ extension View {
     
     /// Aplica padding de sección
     func figrSectionPadding() -> some View {
-        self.padding(.vertical, AppTheme.Spacing.large)
+        self.padding(.vertical, AppTheme.Spacing.xLarge)
     }
     
     /// Aplica espaciado estándar
-    func figrSpacing(_ size: AppTheme.Spacing.Size = .medium) -> some View {
+    func figrSpacing(_ size: AppTheme.Spacing.Size = .large) -> some View {
         self.padding(size.value)
     }
     
@@ -576,7 +576,7 @@ extension View {
     }
     
     /// Aplica padding de tarjeta FigrClub
-    func figrCardPadding(_ padding: CGFloat = AppTheme.Spacing.medium) -> some View {
+    func figrCardPadding(_ padding: CGFloat = AppTheme.Spacing.large) -> some View {
         self.padding(padding)
     }
     
@@ -599,11 +599,11 @@ extension View {
     }
     
     func figrCardPadding() -> some View {
-        self.padding(AppTheme.Spacing.medium)
+        self.padding(AppTheme.Spacing.large)
     }
     
     func figrSectionSpacing() -> some View {
-        self.padding(.bottom, AppTheme.Spacing.large)
+        self.padding(.bottom, AppTheme.Spacing.xLarge)
     }
     
     func figrScreenContainer() -> some View {
@@ -615,16 +615,18 @@ extension View {
 
 extension AppTheme.Spacing {
     enum Size {
-        case tiny, small, medium, large, xlarge, xxlarge
+        case xxSmall, xSmall, small, medium, large, xLarge, xxLarge, xxxLarge
         
         var value: CGFloat {
             switch self {
-            case .tiny: return AppTheme.Spacing.tiny
+            case .xxSmall: return AppTheme.Spacing.xxSmall
+            case .xSmall: return AppTheme.Spacing.xSmall
             case .small: return AppTheme.Spacing.small
             case .medium: return AppTheme.Spacing.medium
             case .large: return AppTheme.Spacing.large
-            case .xlarge: return AppTheme.Spacing.xlarge
-            case .xxlarge: return AppTheme.Spacing.xxlarge
+            case .xLarge: return AppTheme.Spacing.xLarge
+            case .xxLarge: return AppTheme.Spacing.xxLarge
+            case .xxxLarge: return AppTheme.Spacing.xxxLarge
             }
         }
     }

@@ -14,10 +14,6 @@ struct AuthenticationFlowView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background
-                Color(.systemBackground)
-                    .ignoresSafeArea()
-                
                 // Content with explicit transition
                 if authViewModel.showEmailVerification {
                     EmailVerificationView(
@@ -74,17 +70,4 @@ struct AuthenticationFlowView: View {
         }
     }
 }
-
-// MARK: - Preview
-/*
-#if DEBUG
-struct AuthenticationFlowView_Previews: PreviewProvider {
-    static var previews: some View {
-        AuthenticationFlowView()
-            .environmentObject(DependencyInjector.shared.resolve(AuthStateManager.self))
-    }
-}
-#endif
- */
-
 

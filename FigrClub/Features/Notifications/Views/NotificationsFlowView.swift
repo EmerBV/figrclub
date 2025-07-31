@@ -22,17 +22,6 @@ struct NotificationsFlowView: View {
     @State private var showingNotificationDetail = false
     @State private var selectedNotificationId: String?
     
-    // MARK: - Constants
-    private enum LayoutConstants {
-        static let segmentControlHeight: CGFloat = 44
-        static let itemSpacing: CGFloat = 16
-        static let horizontalPadding: CGFloat = 16
-        static let topPadding: CGFloat = 8
-        static let cornerRadius: CGFloat = 12
-        static let avatarSize: CGFloat = 56
-        static let badgeSize: CGFloat = 20
-    }
-    
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -75,11 +64,12 @@ struct NotificationsFlowView: View {
             )
         }
         .background(
-            RoundedRectangle(cornerRadius: LayoutConstants.cornerRadius)
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
                 .fill(themeManager.currentBackgroundColor)
         )
-        .padding(.horizontal, LayoutConstants.horizontalPadding)
-        .padding(.bottom, LayoutConstants.topPadding)
+        .padding(.horizontal, AppTheme.Spacing.large)
+        .padding(.top, AppTheme.Spacing.large)
+        .padding(.bottom, AppTheme.Spacing.small)
     }
     
     private func segmentButton(
@@ -106,7 +96,7 @@ struct NotificationsFlowView: View {
                     if badgeCount > 0 {
                         Circle()
                             .fill(Color.red)
-                            .frame(width: LayoutConstants.badgeSize, height: LayoutConstants.badgeSize)
+                            .frame(width: AppTheme.LayoutConstants.badgeSize, height: AppTheme.LayoutConstants.badgeSize)
                             .overlay(
                                 Text("\(badgeCount)")
                                     .font(.system(size: 12, weight: .bold))
@@ -117,9 +107,9 @@ struct NotificationsFlowView: View {
                 
                 Spacer()
             }
-            .frame(height: LayoutConstants.segmentControlHeight)
+            .frame(height: AppTheme.LayoutConstants.segmentControlHeight)
             .background(
-                RoundedRectangle(cornerRadius: LayoutConstants.cornerRadius - 2)
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium - 2)
                     .fill(isSelected ? Color.black : Color.clear)
             )
         }
@@ -321,7 +311,7 @@ struct MessageRowView: View {
         
         Divider()
             .background(Color.gray.opacity(0.3))
-            .padding(.horizontal, Spacing.large)
+            .padding(.horizontal, AppTheme.Spacing.large)
     }
     
     private func formatDate(_ date: Date) -> String {
@@ -386,7 +376,7 @@ struct NotificationRowView: View {
         
         Divider()
             .background(Color.gray.opacity(0.3))
-            .padding(.horizontal, Spacing.large)
+            .padding(.horizontal, AppTheme.Spacing.large)
     }
     
     private func formatTimeAgo(_ date: Date) -> String {

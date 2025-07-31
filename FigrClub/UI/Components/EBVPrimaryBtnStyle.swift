@@ -21,7 +21,7 @@ struct EBVPrimaryBtnStyle: ButtonStyle {
             .foregroundColor(.white)
             .font(.callout.weight(.medium))
             .frame(maxWidth: .infinity)
-            .padding(.vertical, Spacing.medium)
+            .padding(.vertical, AppTheme.Spacing.medium)
             .background(
                 isEnabled ? Color.blue : Color.gray
             )

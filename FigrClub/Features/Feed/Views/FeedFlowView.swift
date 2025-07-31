@@ -111,9 +111,9 @@ struct FeedFlowView: View {
                 }
             }
         }
-        .padding(.horizontal, AppTheme.Spacing.medium)
-        .padding(.top, AppTheme.Spacing.medium)
-        .padding(.bottom, AppTheme.Spacing.medium)
+        .padding(.horizontal, AppTheme.Spacing.large)
+        .padding(.top, AppTheme.Spacing.large)
+        .padding(.bottom, AppTheme.Spacing.large)
     }
     
     // MARK: - Stories View
@@ -563,7 +563,7 @@ struct PostDetailSheet: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: Spacing.large) {
+            VStack(spacing: AppTheme.Spacing.large) {
                 Text("Post Detail")
                     .font(.title)
                 
@@ -599,7 +599,7 @@ struct UserProfileSheet: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: Spacing.large) {
+            VStack(spacing: AppTheme.Spacing.large) {
                 Text("User Profile")
                     .font(.title)
                 

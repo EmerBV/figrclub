@@ -20,21 +20,21 @@ struct LoginFormView: View {
     // MARK: - Body
     var body: some View {
         ScrollView {
-            VStack(spacing: AppTheme.Spacing.xlarge) {
+            VStack(spacing: AppTheme.Spacing.xxLarge) {
                 headerSection
                 formSection
                 actionButtonsSection
             }
             .padding(.horizontal, AppTheme.Spacing.screenPadding)
-            .padding(.top, AppTheme.Spacing.xxlarge)
-            .padding(.bottom, AppTheme.Spacing.xlarge)
+            .padding(.top, AppTheme.Spacing.xxxLarge)
+            .padding(.bottom, AppTheme.Spacing.xxLarge)
         }
         .themedBackground()
     }
     
     // MARK: - Header Section
     private var headerSection: some View {
-        VStack(spacing: AppTheme.Spacing.large) {
+        VStack(spacing: AppTheme.Spacing.xLarge) {
             logoSection
             welcomeSection
         }
@@ -68,7 +68,7 @@ struct LoginFormView: View {
     
     // MARK: - Form Section
     private var formSection: some View {
-        VStack(spacing: AppTheme.Spacing.large) {
+        VStack(spacing: AppTheme.Spacing.xLarge) {
             emailField
             passwordField
             forgotPasswordLink
@@ -120,7 +120,7 @@ struct LoginFormView: View {
     
     // MARK: - Action Buttons Section
     private var actionButtonsSection: some View {
-        VStack(spacing: AppTheme.Spacing.large) {
+        VStack(spacing: AppTheme.Spacing.xLarge) {
             loginButton
             dividerSection
             createAccountButton
@@ -163,13 +163,13 @@ struct LoginFormView: View {
             Text(localizationManager.localizedString(for: .or))
                 .themedFont(.bodySmall)
                 .themedTextColor(.secondary)
-                .padding(.horizontal, AppTheme.Spacing.medium)
+                .padding(.horizontal, AppTheme.Spacing.large)
             
             Rectangle()
                 .fill(themeManager.currentSecondaryTextColor.opacity(0.3))
                 .frame(height: 1)
         }
-        .padding(.horizontal, AppTheme.Spacing.medium)
+        .padding(.horizontal, AppTheme.Spacing.large)
     }
     
     private var createAccountButton: some View {

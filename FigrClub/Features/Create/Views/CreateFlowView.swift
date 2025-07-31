@@ -83,24 +83,25 @@ struct CreateFlowView: View {
     
     var body: some View {
         ZStack {
-            // Camera background (full screen)
+            // Camera background
             cameraBackgroundView
             
-            VStack(spacing: 0) {
+            VStack(spacing: AppTheme.Spacing.xLarge) {
                 // Top section with close button and settings
                 topNavigationSection
                 
                 // Side controls positioned higher
                 HStack {
                     leftSideControls
-                        .padding(.leading, 20)
                     
                     Spacer()
                     
                     rightSideControls
-                        .padding(.trailing, 20)
+
                 }
-                .padding(.top, 40)
+                .padding(.top, AppTheme.Spacing.xxxLarge)
+                .padding(.leading, AppTheme.Spacing.large)
+                .padding(.trailing, AppTheme.Spacing.large)
                 
                 Spacer()
                 
@@ -108,8 +109,6 @@ struct CreateFlowView: View {
                 bottomCaptureAndSelectorArea
             }
         }
-        .ignoresSafeArea(.all) // Full screen, hiding tab bar completely
-        .toolbar(.hidden, for: .tabBar) // Asegurar que no aparezca tab bar
         .sheet(isPresented: $showingImagePicker) {
             ImageLibraryView()
         }
@@ -153,7 +152,6 @@ struct CreateFlowView: View {
     private var cameraBackgroundView: some View {
         ZStack {
             if cameraManager.isConfigured && cameraManager.permissionGranted {
-                // Real camera preview
                 CameraPreviewView(
                     previewLayer: cameraManager.getPreviewLayer(),
                     onTap: { point in
@@ -239,9 +237,8 @@ struct CreateFlowView: View {
                 navigationCoordinator.dismissCreatePost()
             }) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 20, weight: .medium))
+                    .font(.system(size: 24, weight: .medium))
                     .foregroundColor(.white)
-                    .frame(width: 44, height: 44)
             }
             
             Spacer()
@@ -260,13 +257,12 @@ struct CreateFlowView: View {
                 // Show camera settings
             }) {
                 Image(systemName: "gearshape")
-                    .font(.system(size: 20, weight: .medium))
+                    .font(.system(size: 24, weight: .medium))
                     .foregroundColor(.white)
-                    .frame(width: 44, height: 44)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 50) // Account for status bar
+        .padding(.horizontal, AppTheme.Spacing.large)
+        .padding(.top, AppTheme.Spacing.large)
         .background(
             LinearGradient(
                 colors: [

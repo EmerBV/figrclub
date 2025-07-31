@@ -96,14 +96,14 @@ struct EBVLoadingView: View {
             backgroundColor
                 .ignoresSafeArea()
             
-            VStack(spacing: Spacing.large) {
+            VStack(spacing: AppTheme.Spacing.large) {
                 // Progress View
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle(tint: progressColor))
                     .scaleEffect(1.5)
                 
                 // Content Container
-                VStack(spacing: showIcon ? Spacing.small : 0) {
+                VStack(spacing: showIcon ? AppTheme.Spacing.small : 0) {
                     // Optional Icon
                     if showIcon, let iconName = message.icon {
                         Image(systemName: iconName)

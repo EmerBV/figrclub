@@ -104,34 +104,28 @@ struct ContentView: View {
     
     @ViewBuilder
     private var loadingViewForCurrentAuthState: some View {
-        VStack(spacing: Spacing.large) {
+        VStack(spacing: AppTheme.Spacing.large) {
             // Logo o branding
-            Image(systemName: "figure.2.and.child.holdinghands")
-                .font(.system(size: 64, weight: .thin))
-                .foregroundColor(themeManager.accentColor)
+            /*
+            Image("logo")
+                .frame(width: 60, height: 60)
                 .scaleEffect(1.2)
                 .animation(
                     .easeInOut(duration: 1.5).repeatForever(autoreverses: true),
                     value: UUID()
                 )
-            
-            VStack(spacing: Spacing.medium) {
-                Text("Preparando tu experiencia")
-                    .themedFont(.headlineMedium)
-                    .foregroundColor(themeManager.currentTextColor)
-                    .multilineTextAlignment(.center)
-                
-                Text(getLoadingMessage())
-                    .themedFont(.bodyMedium)
-                    .foregroundColor(themeManager.currentSecondaryTextColor)
-                    .multilineTextAlignment(.center)
-            }
+             */
+    
+            Text(getLoadingMessage())
+                .themedFont(.bodyMedium)
+                .foregroundColor(themeManager.currentSecondaryTextColor)
+                .multilineTextAlignment(.center)
             
             ProgressView()
                 .progressViewStyle(CircularProgressViewStyle(tint: themeManager.accentColor))
                 .scaleEffect(1.2)
         }
-        .padding(.horizontal, Spacing.xLarge)
+        .padding(.horizontal, AppTheme.Spacing.xLarge)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(themeManager.currentBackgroundColor)
     }
@@ -196,8 +190,8 @@ struct ContentView: View {
                     ))
                 }
             }
-            .padding(.trailing, Spacing.medium)
-            .padding(.bottom, Spacing.medium)
+            .padding(.trailing, AppTheme.Spacing.medium)
+            .padding(.bottom, AppTheme.Spacing.medium)
         }
         .onTapGesture(count: 3) {
             withAnimation(.easeInOut(duration: 0.3)) {
@@ -219,12 +213,12 @@ struct ContentView: View {
             themeManager.currentBackgroundColor.opacity(0.8)
                 .ignoresSafeArea()
             
-            VStack(spacing: Spacing.large) {
+            VStack(spacing: AppTheme.Spacing.large) {
                 Image(systemName: "exclamationmark.triangle")
                     .font(.system(size: 48, weight: .light))
                     .foregroundColor(.orange)
                 
-                VStack(spacing: Spacing.medium) {
+                VStack(spacing: AppTheme.Spacing.medium) {
                     Text("Tiempo de espera agotado")
                         .themedFont(.headlineMedium)
                         .foregroundColor(themeManager.currentTextColor)
@@ -235,7 +229,7 @@ struct ContentView: View {
                         .multilineTextAlignment(.center)
                 }
                 
-                HStack(spacing: Spacing.medium) {
+                HStack(spacing: AppTheme.Spacing.medium) {
                     Button("Reintentar") {
                         withAnimation(.easeInOut(duration: 0.5)) {
                             initializationTimeout = false
@@ -252,14 +246,14 @@ struct ContentView: View {
                     .buttonStyle(EBVAuthBtnStyle(isEnabled: true))
                 }
             }
-            .padding(.horizontal, Spacing.xLarge)
-            .padding(.vertical, Spacing.large)
+            .padding(.horizontal, AppTheme.Spacing.xLarge)
+            .padding(.vertical, AppTheme.Spacing.large)
             .background(
                 themeManager.currentCardColor
                     .cornerRadius(16)
             )
             .shadow(radius: 10)
-            .padding(.horizontal, Spacing.xLarge)
+            .padding(.horizontal, AppTheme.Spacing.xLarge)
         }
         .transition(.asymmetric(
             insertion: .scale.combined(with: .opacity),

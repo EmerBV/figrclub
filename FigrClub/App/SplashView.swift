@@ -11,6 +11,8 @@ struct SplashView: View {
     @State private var isAnimating = false
     @State private var progress: Double = 0.0
     
+    @Environment(\.localizationManager) private var localizationManager
+    
     var body: some View {
         ZStack {
             // Fondo degradado
@@ -40,9 +42,15 @@ struct SplashView: View {
                                 value: isAnimating
                             )
                         
-                        Image(systemName: "person.3.sequence.fill")
-                            .font(.system(size: 60, weight: .light))
-                            .foregroundColor(.white)
+                        Image("logo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 100, height: 100)
+                            .background(
+                                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
+                                    .fill(Color.clear)
+                                    .frame(width: 100, height: 100)
+                            )
                             .scaleEffect(isAnimating ? 1.0 : 0.8)
                     }
                     
@@ -50,11 +58,6 @@ struct SplashView: View {
                     Text("FigrClub")
                         .font(.system(size: 36, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
-                        .opacity(isAnimating ? 1.0 : 0.0)
-                    
-                    Text("Tu comunidad creativa")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
                         .opacity(isAnimating ? 1.0 : 0.0)
                 }
                 
@@ -66,7 +69,7 @@ struct SplashView: View {
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         .scaleEffect(1.2)
                     
-                    Text("Iniciando...")
+                    Text(localizationManager.localizedString(for: .loading))
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.white.opacity(0.8))
                 }
