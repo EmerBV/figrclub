@@ -79,7 +79,7 @@ struct FeedFlowView: View {
                 Text("FigrClub")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     //.themedTextColor(.primary)
-                    .foregroundColor(Color.figrPrimaryBlue)
+                    .foregroundColor(Color.figrPrimary)
             }
             
             Spacer()
@@ -189,7 +189,7 @@ struct UserStoryView: View {
                         .overlay(
                             Text(user.displayName.prefix(1).uppercased())
                                 .font(.system(size: 20, weight: .bold))
-                                .foregroundColor(.blue)
+                                .foregroundColor(Color.figrPrimary)
                         )
                 }
                 
@@ -240,12 +240,12 @@ struct StoryView: View {
             
             Text(story.username)
                 .font(.caption)
-                .foregroundColor(.primary)
+                .themedTextColor(.primary)
                 .lineLimit(1)
                 .frame(width: 66)
         }
-        .padding(.top, 8)
-        .padding(.bottom, 8)
+        .padding(.top, AppTheme.Spacing.small)
+        .padding(.bottom, AppTheme.Spacing.small)
     }
 }
 

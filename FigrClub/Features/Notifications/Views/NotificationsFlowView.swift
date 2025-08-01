@@ -287,12 +287,12 @@ struct MessageRowView: View {
                 if !message.isRead {
                     HStack {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.blue)
+                            .foregroundColor(Color.figrPrimary)
                             .font(.system(size: 12))
                         
                         Text(localizationManager.localizedString(for: .unreadString))
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.blue)
+                            .foregroundColor(Color.figrPrimary)
                         
                         Spacer()
                     }

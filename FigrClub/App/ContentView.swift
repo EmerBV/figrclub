@@ -175,7 +175,7 @@ struct ContentView: View {
                                 themeManager.toggleColorScheme()
                             }
                         }
-                        .buttonStyle(EBVPrimaryBtnStyle(isEnabled: true))
+                        .buttonStyle(.primary)
                         .scaleEffect(0.8)
                     }
                     .padding(8)
@@ -236,14 +236,14 @@ struct ContentView: View {
                             appCoordinator.resetToInitialState()
                         }
                     }
-                    .buttonStyle(EBVPrimaryBtnStyle(isEnabled: true))
+                    .buttonStyle(.primary)
                     
                     Button("Continuar") {
                         withAnimation(.easeInOut(duration: 0.5)) {
                             initializationTimeout = false
                         }
                     }
-                    .buttonStyle(EBVAuthBtnStyle(isEnabled: true))
+                    .buttonStyle(.primary)
                 }
             }
             .padding(.horizontal, AppTheme.Spacing.xLarge)

@@ -279,7 +279,7 @@ struct UserProfileDetailView: View {
                 // Acción para mostrar ubicación
             }
             .font(.body)
-            .foregroundColor(.blue)
+            .foregroundColor(Color.figrPrimary)
             .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
             
             //Spacer()
@@ -703,7 +703,7 @@ struct UserProductCard: View {
                     // Acción para destacar producto
                 }
                 .font(.caption.weight(.medium))
-                .foregroundColor(.blue)
+                .foregroundColor(Color.figrPrimary)
                 .padding(.vertical, AppTheme.Spacing.xSmall)
                 .padding(.horizontal, AppTheme.Spacing.medium)
                 .background(

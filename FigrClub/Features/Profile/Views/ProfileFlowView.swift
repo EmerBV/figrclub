@@ -77,7 +77,7 @@ struct ProfileFlowView: View {
                         if user.isVerified {
                             Image(systemName: "checkmark.seal.fill")
                                 .font(.caption)
-                                .foregroundColor(.blue)
+                                .foregroundColor(Color.figrPrimary)
                         }
                     }
                     

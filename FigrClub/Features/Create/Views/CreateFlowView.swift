@@ -705,7 +705,7 @@ struct MediaEditView: View {
                         // Process and save media
                         dismiss()
                     }
-                    .foregroundColor(.blue)
+                    .foregroundColor(Color.figrPrimary)
                     .fontWeight(.semibold)
                 }
                 .padding()
@@ -741,7 +741,7 @@ struct ImageLibraryView: View {
                         // Handle selection
                         dismiss()
                     }
-                    .foregroundColor(.blue)
+                    .foregroundColor(Color.figrPrimary)
                     .fontWeight(.semibold)
                 }
                 .padding()

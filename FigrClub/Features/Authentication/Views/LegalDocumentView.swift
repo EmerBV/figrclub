@@ -36,7 +36,7 @@ struct LegalDocumentView: View {
                     Button(localizationManager.localizedString(for: .close)) {
                         dismiss()
                     }
-                    .foregroundColor(.primary)
+                    .themedTextColor(.primary)
                 }
             }
         }
@@ -80,7 +80,7 @@ struct LegalDocumentView: View {
                     await viewModel.retryLoading()
                 }
             }
-            .buttonStyle(EBVPrimaryBtnStyle())
+            .buttonStyle(.primary)
             .padding(.top, 16)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

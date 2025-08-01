@@ -57,7 +57,7 @@ struct SplashView: View {
                     // Título de la app
                     Text("FigrClub")
                         .font(.system(size: 36, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
+                        .foregroundColor(Color.figrPrimary)
                         .opacity(isAnimating ? 1.0 : 0.0)
                 }
                 

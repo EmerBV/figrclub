@@ -25,7 +25,7 @@ struct MarketplaceFlowView: View {
     
     var body: some View {
         FigrNavigationStack {
-            VStack(spacing: 12) {
+            VStack(spacing: AppTheme.Spacing.medium) {
                 headerSection
                 categoriesSection
                 productsSection
@@ -88,7 +88,7 @@ struct MarketplaceFlowView: View {
     private var categoriesSection: some View {
         VStack(spacing: 0) {
             FigrHorizontalScrollView {
-                HStack(spacing: 12) {
+                HStack(spacing: AppTheme.Spacing.medium) {
                     ForEach(ProductCategory.allCases, id: \.self) { category in
                         CategoryChip(
                             category: category,
@@ -121,7 +121,7 @@ struct MarketplaceFlowView: View {
     
     // MARK: - Featured Products View
     private var featuredProductsView: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
             HStack {
                 Text(localizationManager.localizedString(for: .featuredString))
                     .themedFont(.headlineMedium)
@@ -132,13 +132,13 @@ struct MarketplaceFlowView: View {
                 Button(localizationManager.localizedString(for: .seeAllString)) {
                     // TODO: Navegar a destacados
                 }
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.blue)
+                .themedFont(.titleSmall)
+                .foregroundColor(Color.figrPrimary)
             }
             .padding(.horizontal, AppTheme.Spacing.large)
             
             FigrHorizontalScrollView {
-                HStack(spacing: 16) {
+                HStack(spacing: AppTheme.Spacing.large) {
                     ForEach(featuredProducts.prefix(5)) { product in
                         FeaturedProductCard(product: product) {
                             // TODO: Navegar a detalle del producto
@@ -153,7 +153,7 @@ struct MarketplaceFlowView: View {
     
     // MARK: - Products Grid View
     private var productsGridView: some View {
-        LazyVStack(spacing: 0) {
+        VStack(spacing: 0) {
             // Header de sección
             HStack {
                 Text(localizationManager.localizedString(for: .allProductsString))
@@ -167,11 +167,11 @@ struct MarketplaceFlowView: View {
                     .themedTextColor(.secondary)
             }
             .padding(.horizontal, AppTheme.Spacing.large)
-            .padding(.vertical, 12)
+            .padding(.vertical, AppTheme.Spacing.medium)
             
             // Grid de productos
             LazyVGrid(
-                columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2),
+                columns: Array(repeating: GridItem(.flexible(), spacing: AppTheme.Spacing.medium), count: 2),
                 spacing: AppTheme.Spacing.large
             ) {
                 ForEach(filteredProducts) { product in
@@ -232,7 +232,7 @@ struct CategoryChip: View {
                 .padding(.vertical, AppTheme.Spacing.small)
                 .background(
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(isSelected ? Color.blue : Color(.systemGray6))
+                        .fill(isSelected ? Color.figrPrimary : Color(.systemGray6))
                 )
         }
         .buttonStyle(PlainButtonStyle())
@@ -277,8 +277,12 @@ struct FeaturedProductCard: View {
                         .multilineTextAlignment(.leading)
                     
                     Text(localizationManager.currencyString(from: product.price))
+                    /*
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.blue)
+                     */
+                        .themedFont(.priceMedium)
+                        .foregroundColor(Color.figrPrimary)
                     
                     HStack(spacing: 4) {
                         KFImage(URL(string: product.sellerProfileImage))
@@ -317,7 +321,7 @@ struct ProductCard: View {
                         .aspectRatio(contentMode: .fill)
                         .frame(height: 180)
                         .clipped()
-                        .cornerRadius(12)
+                        .cornerRadius(AppTheme.CornerRadius.medium)
                     
                     // Botón de favorito
                     Button {
@@ -347,8 +351,12 @@ struct ProductCard: View {
                         .multilineTextAlignment(.leading)
                     
                     Text(localizationManager.currencyString(from: product.price))
+                    /*
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.blue)
+                     */
+                        .themedFont(.priceMedium)
+                        .foregroundColor(Color.figrPrimary)
                     
                     // Condición del producto
                     Text(product.condition.displayName)
@@ -422,14 +430,14 @@ struct FiltersSheet: View {
                                 selectedCategory = category
                             } label: {
                                 Text(localizationManager.localizedString(for: category.localizedStringKey))
-                                    .font(.system(size: 14, weight: .medium))
+                                    .themedFont(.buttonSmall)
                                     .foregroundColor(selectedCategory == category ? .white : .primary)
                                     .padding(.horizontal, AppTheme.Spacing.medium)
                                     .padding(.vertical, AppTheme.Spacing.small)
                                     .frame(maxWidth: .infinity)
                                     .background(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(selectedCategory == category ? Color.blue : Color(.systemGray6))
+                                        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
+                                            .fill(selectedCategory == category ? Color.figrPrimary : Color(.systemGray6))
                                     )
                             }
                             .buttonStyle(PlainButtonStyle())
@@ -444,13 +452,13 @@ struct FiltersSheet: View {
                     Button(localizationManager.localizedString(for: .applyFilterString)) {
                         dismiss()
                     }
-                    .buttonStyle(EBVPrimaryBtnStyle())
+                    .buttonStyle(.primary)
                     
                     Button(localizationManager.localizedString(for: .clearFilterString)) {
                         selectedCategory = .all
                     }
                     .themedFont(.titleMedium)
-                    .foregroundColor(.blue)
+                    .foregroundColor(.figrButtonPrimary)
                 }
             }
             .padding(20)
@@ -461,6 +469,7 @@ struct FiltersSheet: View {
                     Button(localizationManager.localizedString(for: .close)) {
                         dismiss()
                     }
+                    .themedTextColor(.primary)
                 }
             }
         }

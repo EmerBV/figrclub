@@ -42,6 +42,7 @@ struct LanguageSettingsView: View {
                     Button(localizationManager.localizedString(for: .close)) {
                         dismiss()
                     }
+                    .themedTextColor(.primary)
                 }
             }
             .onAppear {
