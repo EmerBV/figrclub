@@ -8,6 +8,9 @@
 import SwiftUI
 
 extension Color {
+    // MARK: - HEX Colors
+    static let figrPrimaryBlue = Color(hex: "#274563")
+    
     // MARK: - Primary Brand Colors
     static let figrPrimary = Color(red: 0.2, green: 0.3, blue: 0.5) // Azul profundo profesional #334D80
     static let figrSecondary = Color(red: 0.85, green: 0.65, blue: 0.2) // Dorado premium #D9A533

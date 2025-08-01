@@ -23,12 +23,11 @@ struct NotificationsFlowView: View {
     @State private var selectedNotificationId: String?
     
     var body: some View {
-        NavigationStack {
+        FigrNavigationStack {
             VStack(spacing: 0) {
                 segmentedControl
                 contentSection
             }
-            .themedBackground()
             .navigationBarHidden(true)
             .refreshable {
                 await refreshNotifications()
@@ -130,7 +129,7 @@ struct NotificationsFlowView: View {
     
     // MARK: - Messages List View
     private var messagesListView: some View {
-        ScrollView(showsIndicators: false) {
+        FigrVerticalScrollView {
             LazyVStack(spacing: 0) {
                 ForEach(filteredMessages) { message in
                     MessageRowView(
@@ -147,7 +146,7 @@ struct NotificationsFlowView: View {
     
     // MARK: - Notifications List View
     private var notificationsListView: some View {
-        ScrollView(showsIndicators: false) {
+        FigrVerticalScrollView {
             LazyVStack(spacing: 0) {
                 ForEach(filteredNotifications) { notification in
                     NotificationRowView(
@@ -519,7 +518,7 @@ struct NotificationDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationStack {
+        FigrNavigationStack {
             VStack {
                 Text("Detalle de notificación")
                     .font(.title2)

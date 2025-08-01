@@ -19,7 +19,7 @@ struct LoginFormView: View {
     
     // MARK: - Body
     var body: some View {
-        ScrollView {
+        FigrVerticalScrollView {
             VStack(spacing: AppTheme.Spacing.xxLarge) {
                 headerSection
                 formSection
@@ -29,7 +29,6 @@ struct LoginFormView: View {
             .padding(.top, AppTheme.Spacing.xxxLarge)
             .padding(.bottom, AppTheme.Spacing.xxLarge)
         }
-        .themedBackground()
     }
     
     // MARK: - Header Section

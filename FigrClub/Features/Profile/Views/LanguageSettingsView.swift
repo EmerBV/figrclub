@@ -20,7 +20,7 @@ struct LanguageSettingsView: View {
     }
     
     var body: some View {
-        NavigationView {
+        FigrNavigationStack {
             VStack(spacing: 24) {
                 // Header
                 headerSection
@@ -172,11 +172,13 @@ struct LanguageSettingsView: View {
 }
 
 // MARK: - Preview
-#if DEBUG
-struct LanguageSettingsView_Previews: PreviewProvider {
-    static var previews: some View {
-        LanguageSettingsView()
-            .localizationManager(LocalizationManager.preview())
-    }
-}
-#endif 
+/*
+ #if DEBUG
+ struct LanguageSettingsView_Previews: PreviewProvider {
+ static var previews: some View {
+ LanguageSettingsView()
+ .localizationManager(LocalizationManager.preview())
+ }
+ }
+ #endif
+ */

@@ -23,8 +23,8 @@ struct FeedFlowView: View {
     @State private var stories: [SampleStory] = sampleStories
     
     var body: some View {
-        NavigationStack {
-            ScrollView(showsIndicators: false) {
+        FigrNavigationStack {
+            FigrVerticalScrollView {
                 LazyVStack(spacing: 0) {
                     headerSection
                     storiesSection
@@ -35,7 +35,6 @@ struct FeedFlowView: View {
                     }
                 }
             }
-            .themedBackground()
             .navigationBarHidden(true)
             .refreshable {
                 await refreshFeed()
@@ -75,10 +74,16 @@ struct FeedFlowView: View {
     
     private var headerSection: some View {
         HStack {
-            // Logo de FigrClub
-            Text("FigrClub")
-                .font(.system(size: 24, weight: .bold, design: .rounded))
-                .themedTextColor(.primary)
+            HStack(spacing: 0) {
+                Image("logo")
+                    .resizable()
+                    .frame(width: 44, height: 44)
+
+                Text("FigrClub")
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    //.themedTextColor(.primary)
+                    .foregroundColor(Color.figrPrimaryBlue)
+            }
             
             Spacer()
             
@@ -118,7 +123,7 @@ struct FeedFlowView: View {
     
     // MARK: - Stories View
     private var storiesSection: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        FigrHorizontalScrollView {
             HStack(spacing: 16) {
                 // Tu historia
                 UserStoryView(user: user)
@@ -562,7 +567,7 @@ struct PostDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationStack {
+        FigrNavigationStack {
             VStack(spacing: AppTheme.Spacing.large) {
                 Text("Post Detail")
                     .font(.title)
@@ -598,7 +603,7 @@ struct UserProfileSheet: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationStack {
+        FigrNavigationStack {
             VStack(spacing: AppTheme.Spacing.large) {
                 Text("User Profile")
                     .font(.title)

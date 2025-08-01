@@ -97,7 +97,7 @@ struct CreateFlowView: View {
                     Spacer()
                     
                     rightSideControls
-
+                    
                 }
                 .padding(.top, AppTheme.Spacing.xxxLarge)
                 .padding(.leading, AppTheme.Spacing.large)
@@ -382,7 +382,7 @@ struct CreateFlowView: View {
                 Spacer()
                 
                 // Content type selector (center)
-                ScrollView(.horizontal, showsIndicators: false) {
+                FigrHorizontalScrollView {
                     HStack(spacing: 20) {
                         ForEach(CreationContentType.allCases, id: \.self) { contentType in
                             Button(action: {
@@ -670,52 +670,48 @@ struct MediaEditView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Color.black.ignoresSafeArea()
-                
-                VStack {
-                    // Preview area
-                    if let image = image {
-                        Image(uiImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else if let videoURL = videoURL {
-                        // Video player would go here
-                        VStack {
-                            Spacer()
-                            Text(localizationManager.localizedString(for: .createLiveStream))
-                                .foregroundColor(.white)
-                                .font(.title2)
-                            Text(videoURL.lastPathComponent)
-                                .foregroundColor(.white.opacity(0.7))
-                                .font(.caption)
-                            Spacer()
-                        }
-                    }
-                    
-                    // Bottom controls
-                    HStack {
-                        Button(localizationManager.localizedString(for: .cancel)) {
-                            dismiss()
-                        }
-                        .foregroundColor(.white)
-                        
+        FigrNavigationStack {
+            VStack {
+                // Preview area
+                if let image = image {
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if let videoURL = videoURL {
+                    // Video player would go here
+                    VStack {
                         Spacer()
-                        
-                        Button(localizationManager.localizedString(for: .next)) {
-                            // Process and save media
-                            dismiss()
-                        }
-                        .foregroundColor(.blue)
-                        .fontWeight(.semibold)
+                        Text(localizationManager.localizedString(for: .createLiveStream))
+                            .foregroundColor(.white)
+                            .font(.title2)
+                        Text(videoURL.lastPathComponent)
+                            .foregroundColor(.white.opacity(0.7))
+                            .font(.caption)
+                        Spacer()
                     }
-                    .padding()
                 }
+                
+                // Bottom controls
+                HStack {
+                    Button(localizationManager.localizedString(for: .cancel)) {
+                        dismiss()
+                    }
+                    .foregroundColor(.white)
+                    
+                    Spacer()
+                    
+                    Button(localizationManager.localizedString(for: .next)) {
+                        // Process and save media
+                        dismiss()
+                    }
+                    .foregroundColor(.blue)
+                    .fontWeight(.semibold)
+                }
+                .padding()
             }
-            .navigationBarHidden(true)
         }
+        .navigationBarHidden(true)
     }
 }
 
@@ -725,45 +721,41 @@ struct ImageLibraryView: View {
     @Environment(\.localizationManager) private var localizationManager
     
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Color.black.ignoresSafeArea()
-                
-                VStack {
-                    HStack {
-                        Button(localizationManager.localizedString(for: .cancel)) {
-                            dismiss()
-                        }
-                        .foregroundColor(.white)
-                        
-                        Spacer()
-                        
-                        Text(localizationManager.localizedString(for: .recentString))
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
-                        
-                        Spacer()
-                        
-                        Button(localizationManager.localizedString(for: .next)) {
-                            // Handle selection
-                            dismiss()
-                        }
-                        .foregroundColor(.blue)
-                        .fontWeight(.semibold)
+        FigrNavigationStack {
+            VStack {
+                HStack {
+                    Button(localizationManager.localizedString(for: .cancel)) {
+                        dismiss()
                     }
-                    .padding()
+                    .foregroundColor(.white)
                     
                     Spacer()
                     
-                    // Photo library grid would go here
-                    Text(localizationManager.localizedString(for: .photoGallery))
-                        .foregroundColor(.white.opacity(0.6))
-                        .font(.title2)
+                    Text(localizationManager.localizedString(for: .recentString))
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
                     
                     Spacer()
+                    
+                    Button(localizationManager.localizedString(for: .next)) {
+                        // Handle selection
+                        dismiss()
+                    }
+                    .foregroundColor(.blue)
+                    .fontWeight(.semibold)
                 }
+                .padding()
+                
+                Spacer()
+                
+                // Photo library grid would go here
+                Text(localizationManager.localizedString(for: .photoGallery))
+                    .foregroundColor(.white.opacity(0.6))
+                    .font(.title2)
+                
+                Spacer()
             }
-            .navigationBarHidden(true)
         }
+        .navigationBarHidden(true)
     }
 }

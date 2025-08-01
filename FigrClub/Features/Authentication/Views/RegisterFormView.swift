@@ -20,7 +20,7 @@ struct RegisterFormView: View {
     @State private var showingPrivacyPolicy = false
     
     var body: some View {
-        ScrollView(showsIndicators: false) {
+        FigrVerticalScrollView {
             VStack(spacing: AppTheme.Spacing.xxLarge) {
                 headerSection
                 formSection
@@ -30,7 +30,6 @@ struct RegisterFormView: View {
             .padding(.top, AppTheme.Spacing.xxxLarge)
             .padding(.bottom, AppTheme.Spacing.xxLarge)
         }
-        .themedBackground()
         .sheet(isPresented: $showingTermsOfService) {
             LegalDocumentView.termsOfService(errorHandler: errorHandler)
         }

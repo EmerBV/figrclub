@@ -278,23 +278,161 @@ struct FigrHStack<Content: View>: View {
     }
 }
 
-// MARK: - Screen Container
-struct FigrScreenContainer<Content: View>: View {
+// MARK: - Navigation Helpers
+struct FigrNavigationStack<Content: View>: View {
     let content: Content
     
     init(@ViewBuilder content: () -> Content) {
         self.content = content()
     }
     
-    @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject private var themeManager: ThemeManager
     
     var body: some View {
-        content
-            .padding(.horizontal, AppTheme.Spacing.screenPadding)
-            .background(
-                (colorScheme == .dark ? Color.figrDarkBackground : Color.figrBackground)
+        NavigationStack {
+            ZStack {
+                // Fondo temático automático
+                themeManager.currentBackgroundColor
                     .ignoresSafeArea()
-            )
+                
+                content
+            }
+        }
+    }
+}
+
+struct FigrNavigationView<Content: View>: View {
+    let content: Content
+    
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+    
+    @EnvironmentObject private var themeManager: ThemeManager
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                // Fondo temático automático
+                themeManager.currentBackgroundColor
+                    .ignoresSafeArea()
+                
+                content
+            }
+        }
+        .navigationViewStyle(.stack) // Fuerza stack style en iPad
+    }
+}
+
+// MARK: - Screen Container con Navigation
+struct FigrScreenContainer<Content: View>: View {
+    let content: Content
+    let useNavigationStack: Bool
+    
+    init(useNavigationStack: Bool = true, @ViewBuilder content: () -> Content) {
+        self.useNavigationStack = useNavigationStack
+        self.content = content()
+    }
+    
+    @EnvironmentObject private var themeManager: ThemeManager
+    
+    var body: some View {
+        Group {
+            if useNavigationStack {
+                NavigationStack {
+                    containerContent
+                }
+            } else {
+                NavigationView {
+                    containerContent
+                }
+                .navigationViewStyle(.stack)
+            }
+        }
+    }
+    
+    private var containerContent: some View {
+        ZStack {
+            // Fondo temático
+            themeManager.currentBackgroundColor
+                .ignoresSafeArea()
+            
+            // Contenido con padding estándar
+            content
+                .padding(.horizontal, AppTheme.Spacing.screenPadding)
+        }
+    }
+}
+
+// MARK: - ScrollView Helpers
+struct FigrScrollView<Content: View>: View {
+    let axes: Axis.Set
+    let content: Content
+    
+    init(_ axes: Axis.Set = .vertical, @ViewBuilder content: () -> Content) {
+        self.axes = axes
+        self.content = content()
+    }
+    
+    var body: some View {
+        ScrollView(axes, showsIndicators: false) {
+            content
+        }
+    }
+}
+
+// MARK: - ScrollView con RefreshAction
+struct FigrRefreshableScrollView<Content: View>: View {
+    let axes: Axis.Set
+    let refreshAction: () async -> Void
+    let content: Content
+    
+    init(
+        _ axes: Axis.Set = .vertical,
+        refreshAction: @escaping () async -> Void,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.axes = axes
+        self.refreshAction = refreshAction
+        self.content = content()
+    }
+    
+    var body: some View {
+        ScrollView(axes, showsIndicators: false) {
+            content
+        }
+        .refreshable {
+            await refreshAction()
+        }
+    }
+}
+
+// MARK: - ScrollView Shortcuts Específicos
+struct FigrVerticalScrollView<Content: View>: View {
+    let content: Content
+    
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+    
+    var body: some View {
+        ScrollView(.vertical, showsIndicators: false) {
+            content
+        }
+    }
+}
+
+struct FigrHorizontalScrollView<Content: View>: View {
+    let content: Content
+    
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+    
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            content
+        }
     }
 }
 

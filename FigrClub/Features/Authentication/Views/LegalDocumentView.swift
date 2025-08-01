@@ -17,7 +17,7 @@ struct LegalDocumentView: View {
     @EnvironmentObject private var themeManager: ThemeManager
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 if viewModel.isLoading {
                     loadingView

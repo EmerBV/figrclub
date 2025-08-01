@@ -20,8 +20,8 @@ struct ProfileFlowView: View {
     @State private var showLogoutConfirmation = false
     
     var body: some View {
-        NavigationView {
-            ScrollView(showsIndicators: false) {
+        FigrNavigationStack {
+            FigrVerticalScrollView {
                 VStack(spacing: 0) {
                     headerSection
                         .padding(.horizontal, AppTheme.Spacing.large)
@@ -31,7 +31,6 @@ struct ProfileFlowView: View {
             }
             .navigationTitle("")
             .navigationBarHidden(true)
-            .themedBackground()
         }
         .alert(localizationManager.localizedString(for: .logout), isPresented: $showLogoutConfirmation) {
             Button(localizationManager.localizedString(for: .cancel), role: .cancel) {
@@ -285,11 +284,13 @@ struct ProfileFlowView: View {
             }
             .padding(.horizontal, AppTheme.Spacing.large)
             .padding(.vertical, AppTheme.Spacing.medium)
+            /*
             .background(
                 Rectangle()
                     .fill(themeManager.currentBackgroundColor)
                     .contentShape(Rectangle())
             )
+             */
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -356,7 +357,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
+        FigrNavigationStack {
             VStack {
                 Text("Configuración")
                     .font(.title)
@@ -387,7 +388,7 @@ struct EditProfileView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
+        FigrNavigationStack {
             VStack {
                 Text("Editar Perfil")
                     .font(.title)

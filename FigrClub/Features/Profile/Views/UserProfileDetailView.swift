@@ -26,8 +26,8 @@ struct UserProfileDetailView: View {
     @State private var sampleProducts: [UserProduct] = UserProfileDetailView.generateSampleProducts()
     
     var body: some View {
-        NavigationView {
-            ScrollView(showsIndicators: false) {
+        FigrNavigationStack {
+            FigrVerticalScrollView {
                 VStack(spacing: 0) {
                     // Header section
                     headerSection
@@ -70,7 +70,7 @@ struct UserProfileDetailView: View {
                     }
                 }
             }
-            .themedBackground()
+            //.themedBackground()
         }
         .navigationBarBackButtonHidden()
         .onAppear {
@@ -506,7 +506,7 @@ struct UserProfileDetailView: View {
     // MARK: - Categories Section
     private var categoriesSection: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
-            ScrollView(.horizontal, showsIndicators: false) {
+            FigrHorizontalScrollView {
                 HStack(spacing: AppTheme.Spacing.small) {
                     ForEach(ProductCategory.allCases, id: \.self) { category in
                         CategoryChip(

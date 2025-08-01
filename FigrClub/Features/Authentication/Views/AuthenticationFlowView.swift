@@ -11,9 +11,14 @@ struct AuthenticationFlowView: View {
     @StateObject private var authViewModel = DependencyInjector.shared.resolve(AuthViewModel.self)
     @StateObject private var errorHandler = DependencyInjector.shared.resolve(GlobalErrorHandler.self)
     
+    @EnvironmentObject private var themeManager: ThemeManager
+    
     var body: some View {
         NavigationStack {
             ZStack {
+                themeManager.currentBackgroundColor
+                    .ignoresSafeArea()
+                
                 // Content with explicit transition
                 if authViewModel.showEmailVerification {
                     EmailVerificationView(

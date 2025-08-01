@@ -24,13 +24,12 @@ struct MarketplaceFlowView: View {
     @State private var featuredProducts: [MarketplaceProduct] = []
     
     var body: some View {
-        NavigationStack {
+        FigrNavigationStack {
             VStack(spacing: 12) {
                 headerSection
                 categoriesSection
                 productsSection
             }
-            .themedBackground()
             .navigationBarHidden(true)
         }
         .sheet(isPresented: $showFilters) {
@@ -82,13 +81,13 @@ struct MarketplaceFlowView: View {
         }
         .padding(.horizontal, AppTheme.Spacing.large)
         .padding(.top, AppTheme.Spacing.large)
-
+        
     }
     
     // MARK: - Categories Section
     private var categoriesSection: some View {
         VStack(spacing: 0) {
-            ScrollView(.horizontal, showsIndicators: false) {
+            FigrHorizontalScrollView {
                 HStack(spacing: 12) {
                     ForEach(ProductCategory.allCases, id: \.self) { category in
                         CategoryChip(
@@ -112,14 +111,11 @@ struct MarketplaceFlowView: View {
     
     // MARK: - Products Section
     private var productsSection: some View {
-        ScrollView(.vertical, showsIndicators: false) {
+        FigrRefreshableScrollView(refreshAction: refreshMarketplace) {
             LazyVStack(spacing: 0) {
                 featuredProductsView
                 productsGridView
             }
-        }
-        .refreshable {
-            await refreshMarketplace()
         }
     }
     
@@ -141,7 +137,7 @@ struct MarketplaceFlowView: View {
             }
             .padding(.horizontal, AppTheme.Spacing.large)
             
-            ScrollView(.horizontal, showsIndicators: false) {
+            FigrHorizontalScrollView {
                 HStack(spacing: 16) {
                     ForEach(featuredProducts.prefix(5)) { product in
                         FeaturedProductCard(product: product) {
@@ -412,7 +408,7 @@ struct FiltersSheet: View {
     @Environment(\.localizationManager) private var localizationManager
     
     var body: some View {
-        NavigationStack {
+        FigrNavigationStack {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.screenPadding) {
                 // Categorías
                 VStack(alignment: .leading, spacing: 12) {
@@ -467,7 +463,6 @@ struct FiltersSheet: View {
                     }
                 }
             }
-            .themedBackground()
         }
     }
 }
