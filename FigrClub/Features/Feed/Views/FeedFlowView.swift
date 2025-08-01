@@ -24,7 +24,7 @@ struct FeedFlowView: View {
     
     var body: some View {
         FigrNavigationStack {
-            FigrVerticalScrollView {
+            FigrRefreshableScrollView(refreshAction: refreshFeed) {
                 LazyVStack(spacing: 0) {
                     headerSection
                     storiesSection
@@ -36,9 +36,6 @@ struct FeedFlowView: View {
                 }
             }
             .navigationBarHidden(true)
-            .refreshable {
-                await refreshFeed()
-            }
         }
         // Navegación modal
         .sheet(isPresented: $navigationCoordinator.showingPostDetail) {
@@ -116,15 +113,14 @@ struct FeedFlowView: View {
                 }
             }
         }
-        .padding(.horizontal, AppTheme.Spacing.large)
         .padding(.top, AppTheme.Spacing.large)
-        .padding(.bottom, AppTheme.Spacing.large)
+        .padding(.horizontal, AppTheme.Spacing.large)
     }
     
     // MARK: - Stories View
     private var storiesSection: some View {
         FigrHorizontalScrollView {
-            HStack(spacing: 16) {
+            FigrHStack {
                 // Tu historia
                 UserStoryView(user: user)
                 
@@ -133,9 +129,9 @@ struct FeedFlowView: View {
                     StoryView(story: story)
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, AppTheme.Spacing.large)
         }
-        .padding(.vertical, 8)
+        .padding(.bottom, AppTheme.Spacing.large)
     }
     
     // MARK: - Private Methods

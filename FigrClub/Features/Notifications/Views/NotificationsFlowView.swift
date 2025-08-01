@@ -29,9 +29,6 @@ struct NotificationsFlowView: View {
                 contentSection
             }
             .navigationBarHidden(true)
-            .refreshable {
-                await refreshNotifications()
-            }
         }
         .sheet(isPresented: $showingNotificationDetail) {
             if let notificationId = selectedNotificationId {
@@ -129,7 +126,7 @@ struct NotificationsFlowView: View {
     
     // MARK: - Messages List View
     private var messagesListView: some View {
-        FigrVerticalScrollView {
+        FigrRefreshableScrollView(refreshAction: refreshNotifications) {
             LazyVStack(spacing: 0) {
                 ForEach(filteredMessages) { message in
                     MessageRowView(
@@ -146,7 +143,7 @@ struct NotificationsFlowView: View {
     
     // MARK: - Notifications List View
     private var notificationsListView: some View {
-        FigrVerticalScrollView {
+        FigrRefreshableScrollView(refreshAction: refreshNotifications) {
             LazyVStack(spacing: 0) {
                 ForEach(filteredNotifications) { notification in
                     NotificationRowView(

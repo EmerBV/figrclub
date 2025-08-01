@@ -710,8 +710,8 @@ struct MediaEditView: View {
                 }
                 .padding()
             }
+            .navigationBarHidden(true)
         }
-        .navigationBarHidden(true)
     }
 }
 
@@ -755,7 +755,7 @@ struct ImageLibraryView: View {
                 
                 Spacer()
             }
+            .navigationBarHidden(true)
         }
-        .navigationBarHidden(true)
     }
 }

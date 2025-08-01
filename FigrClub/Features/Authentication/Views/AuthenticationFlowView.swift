@@ -48,6 +48,7 @@ struct AuthenticationFlowView: View {
                         .zIndex(authViewModel.isShowingLogin ? 0 : 1)
                 }
             }
+            .navigationBarHidden(true)
             .animation(.easeInOut(duration: 0.4), value: authViewModel.isShowingLogin)
             .animation(.easeInOut(duration: 0.4), value: authViewModel.showEmailVerification)
         }

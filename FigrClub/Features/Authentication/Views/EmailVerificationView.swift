@@ -73,8 +73,6 @@ struct EmailVerificationView: View {
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 32)
-        .themedBackground()
-        .navigationBarHidden(true)
     }
 }
 
