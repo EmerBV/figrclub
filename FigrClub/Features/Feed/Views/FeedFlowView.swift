@@ -10,6 +10,13 @@ import Kingfisher
 
 struct FeedFlowView: View {
     let user: User
+    
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    
+    var logoHeight: CGFloat {
+        horizontalSizeClass == .regular ? 60 : 40 // iPad : iPhone
+    }
+    
     @Environment(\.localizationManager) private var localizationManager
     
     @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
@@ -72,14 +79,22 @@ struct FeedFlowView: View {
     private var headerSection: some View {
         HStack {
             HStack(spacing: 0) {
-                Image("logo")
+                /*
+                 Image("logo")
+                 .resizable()
+                 .frame(width: 44, height: 44)
+                 
+                 Text("FigrClub")
+                 .font(.system(size: 24, weight: .bold, design: .rounded))
+                 //.themedTextColor(.primary)
+                 .foregroundColor(Color.figrPrimary)
+                 */
+                
+                Image("logo-large")
                     .resizable()
-                    .frame(width: 44, height: 44)
-
-                Text("FigrClub")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                    //.themedTextColor(.primary)
-                    .foregroundColor(Color.figrPrimary)
+                    .scaledToFit()
+                    .frame(height: logoHeight)
+                
             }
             
             Spacer()

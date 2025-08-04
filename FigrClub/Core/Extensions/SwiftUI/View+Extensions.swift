@@ -216,7 +216,8 @@ struct FigrPrimaryButtonModifier: ViewModifier {
         if !isEnabled || isLoading {
             return themeManager.currentSecondaryTextColor.opacity(0.6)
         }
-        return themeManager.accentColor
+        //return themeManager.accentColor
+        return .figrBlueAccent
     }
 }
 

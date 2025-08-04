@@ -20,16 +20,17 @@ extension Color {
     static let figrAccent = Color(red: 1.0, green: 0.839, blue: 0.0)
     
     static let figrBlueAccent = Color(red: 0.247, green: 0.604, blue: 0.957) // #3F9AF4
-    static let figrRedAccent = Color(red: 0.863, green: 0.035, blue: 0.078) // #DC0914
+    static let figrRedAccent = Color(red: 0.863, green: 0.035, blue: 0.078) // #DC0914 //#E40714
+    static let figrOrangeAccent = Color(red: 0.863, green: 0.035, blue: 0.078) // #EC4809
     
     
     // MARK: - Background Colors (Light Mode)
-    static let figrBackground = Color(red: 0.97, green: 0.97, blue: 0.98) // Gris muy claro #F7F7FA
+    static let figrBackground = Color(red: 0.97, green: 0.97, blue: 0.98) // Gris muy claro #F7F7FA // #6c6464
     static let figrSurface = Color(red: 0.95, green: 0.95, blue: 0.97) // Gris superficie #F2F2F7
     static let figrCard = Color.white // Blanco puro para tarjetas
     
     // MARK: - Dark Mode Backgrounds
-    static let figrDarkBackground = Color(red: 0.08, green: 0.08, blue: 0.1) // #141419
+    static let figrDarkBackground = Color(red: 0.08, green: 0.08, blue: 0.1) // #141419 // #645c5c
     static let figrDarkSurface = Color(red: 0.10, green: 0.10, blue: 0.12) // #1A1A1F
     static let figrDarkCard = Color(red: 0.12, green: 0.12, blue: 0.15) // #1F1F26
     
