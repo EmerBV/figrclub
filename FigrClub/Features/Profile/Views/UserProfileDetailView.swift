@@ -279,7 +279,7 @@ struct UserProfileDetailView: View {
                 // Acción para mostrar ubicación
             }
             .font(.body)
-            .foregroundColor(Color.figrPrimary)
+            .foregroundColor(Color.figrBlueAccent)
             .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
             
             //Spacer()
@@ -298,7 +298,8 @@ struct UserProfileDetailView: View {
                         
                         if selectedTab == tab {
                             Rectangle()
-                                .fill(themeManager.accentColor)
+                                //.fill(themeManager.accentColor)
+                                .fill(Color.figrRedAccent)
                                 .frame(height: 2)
                         } else {
                             Rectangle()
@@ -458,7 +459,8 @@ struct UserProfileDetailView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, AppTheme.Spacing.medium)
-                    .background(themeManager.accentColor)
+                    //.background(themeManager.accentColor)
+                    .background(Color.figrBlueAccent)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
                 .padding(.top, AppTheme.Spacing.small)
@@ -600,7 +602,7 @@ struct ReviewCard: View {
         .padding(AppTheme.Spacing.medium)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(themeManager.accentColor)
+                //.fill(themeManager.accentColor)
                 .stroke(Color.gray.opacity(0.2), lineWidth: 1)
         )
     }

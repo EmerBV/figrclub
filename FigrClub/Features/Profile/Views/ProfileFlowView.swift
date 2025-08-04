@@ -303,19 +303,19 @@ struct ProfileFlowView: View {
             HStack(spacing: AppTheme.Spacing.medium) {
                 if isLoggingOut {
                     ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .red))
+                        .progressViewStyle(CircularProgressViewStyle(tint: Color.figrRedAccent))
                         .scaleEffect(0.8)
                         .frame(width: 24, height: 24)
                 } else {
                     Image(systemName: "rectangle.portrait.and.arrow.right")
                         .font(.title3)
-                        .foregroundColor(.red)
+                        .foregroundColor(Color.figrRedAccent)
                         .frame(width: 24, height: 24)
                 }
                 
                 Text(isLoggingOut ? localizationManager.localizedString(for: .signingOut) : localizationManager.localizedString(for: .logout))
                     .font(.body)
-                    .foregroundColor(.red)
+                    .foregroundColor(Color.figrRedAccent)
                 
                 Spacer()
             }

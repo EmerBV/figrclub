@@ -66,6 +66,7 @@ struct NotificationsFlowView: View {
         .padding(.horizontal, AppTheme.Spacing.large)
         .padding(.top, AppTheme.Spacing.large)
         .padding(.bottom, AppTheme.Spacing.small)
+        //.background(Color.figrRedAccent)
     }
     
     private func segmentButton(
@@ -86,12 +87,12 @@ struct NotificationsFlowView: View {
                     Text(title)
                         .font(.system(size: 16, weight: isSelected ? .semibold : .medium))
                         .foregroundColor(
-                            isSelected ? .white : .figrTextPrimary
+                            isSelected ? .white : .figrTextTertiary
                         )
                     
                     if badgeCount > 0 {
                         Circle()
-                            .fill(Color.red)
+                            .fill(Color.figrRedAccent)
                             .frame(width: AppTheme.LayoutConstants.badgeSize, height: AppTheme.LayoutConstants.badgeSize)
                             .overlay(
                                 Text("\(badgeCount)")
@@ -287,12 +288,12 @@ struct MessageRowView: View {
                 if !message.isRead {
                     HStack {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(Color.figrPrimary)
+                            .foregroundColor(Color.figrBlueAccent)
                             .font(.system(size: 12))
                         
                         Text(localizationManager.localizedString(for: .unreadString))
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(Color.figrPrimary)
+                            .foregroundColor(Color.figrBlueAccent)
                         
                         Spacer()
                     }

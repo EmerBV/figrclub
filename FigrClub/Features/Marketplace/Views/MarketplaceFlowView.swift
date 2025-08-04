@@ -133,7 +133,7 @@ struct MarketplaceFlowView: View {
                     // TODO: Navegar a destacados
                 }
                 .themedFont(.titleSmall)
-                .foregroundColor(Color.figrPrimary)
+                .foregroundColor(Color.figrBlueAccent)
             }
             .padding(.horizontal, AppTheme.Spacing.large)
             
@@ -232,7 +232,7 @@ struct CategoryChip: View {
                 .padding(.vertical, AppTheme.Spacing.small)
                 .background(
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(isSelected ? Color.figrPrimary : Color(.systemGray6))
+                        .fill(isSelected ? Color.figrBlueAccent : Color(.systemGray6))
                 )
         }
         .buttonStyle(PlainButtonStyle())
@@ -282,7 +282,7 @@ struct FeaturedProductCard: View {
                         .foregroundColor(.blue)
                      */
                         .themedFont(.priceMedium)
-                        .foregroundColor(Color.figrPrimary)
+                        .foregroundColor(Color.figrBlueAccent)
                     
                     HStack(spacing: 4) {
                         KFImage(URL(string: product.sellerProfileImage))
@@ -356,7 +356,7 @@ struct ProductCard: View {
                         .foregroundColor(.blue)
                      */
                         .themedFont(.priceMedium)
-                        .foregroundColor(Color.figrPrimary)
+                        .foregroundColor(Color.figrBlueAccent)
                     
                     // Condición del producto
                     Text(product.condition.displayName)
@@ -437,7 +437,7 @@ struct FiltersSheet: View {
                                     .frame(maxWidth: .infinity)
                                     .background(
                                         RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
-                                            .fill(selectedCategory == category ? Color.figrPrimary : Color(.systemGray6))
+                                            .fill(selectedCategory == category ? Color.figrBlueAccent : Color(.systemGray6))
                                     )
                             }
                             .buttonStyle(PlainButtonStyle())
@@ -458,7 +458,7 @@ struct FiltersSheet: View {
                         selectedCategory = .all
                     }
                     .themedFont(.titleMedium)
-                    .foregroundColor(.figrButtonPrimary)
+                    .foregroundColor(.figrButtonBlueText)
                 }
             }
             .padding(20)

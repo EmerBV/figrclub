@@ -50,7 +50,7 @@ struct PrimaryButtonStyle: ButtonStyle {
         if !isEnabled {
             return .figrButtonDisabled
         }
-        return .figrPrimary
+        return .figrBlueAccent
     }
 }
 

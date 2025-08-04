@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "logo_fc_v3.png",
+      "filename" : "LogoFC_Clear.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -13,6 +13,7 @@
           "value" : "dark"
         }
       ],
+      "filename" : "LogoFC_Dark.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"

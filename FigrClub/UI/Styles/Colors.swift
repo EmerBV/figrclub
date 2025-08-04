@@ -8,13 +8,20 @@
 import SwiftUI
 
 extension Color {
-    // MARK: - HEX Colors
-    static let figrPrimaryBlue = Color(hex: "#274563")
-    
     // MARK: - Primary Brand Colors
+    /*
     static let figrPrimary = Color(red: 0.2, green: 0.3, blue: 0.5) // Azul profundo profesional #334D80
     static let figrSecondary = Color(red: 0.85, green: 0.65, blue: 0.2) // Dorado premium #D9A533
     static let figrAccent = Color(red: 0.85, green: 0.65, blue: 0.2) // Mismo que secondary para coherencia
+     */
+    
+    static let figrPrimary = Color(red: 0.157, green: 0.196, blue: 0.341) // #283257
+    static let figrSecondary = Color(red: 1.0, green: 0.839, blue: 0.0) // #FFD600
+    static let figrAccent = Color(red: 1.0, green: 0.839, blue: 0.0)
+    
+    static let figrBlueAccent = Color(red: 0.247, green: 0.604, blue: 0.957) // #3F9AF4
+    static let figrRedAccent = Color(red: 0.863, green: 0.035, blue: 0.078) // #DC0914
+    
     
     // MARK: - Background Colors (Light Mode)
     static let figrBackground = Color(red: 0.97, green: 0.97, blue: 0.98) // Gris muy claro #F7F7FA
@@ -76,6 +83,8 @@ extension Color {
     static let figrButtonDisabled = Color(red: 0.85, green: 0.85, blue: 0.85)
     static let figrButtonText = Color.white
     static let figrButtonSecondaryText = Color.figrTextPrimary
+    
+    static let figrButtonBlueText = Color.figrBlueAccent
 }
 
 // MARK: - Adaptive Colors (responden al modo oscuro)

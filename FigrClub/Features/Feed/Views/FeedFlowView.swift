@@ -195,7 +195,7 @@ struct UserStoryView: View {
                 
                 // Botón de agregar historia
                 Circle()
-                    .fill(Color.blue)
+                    .fill(Color.figrBlueAccent)
                     .frame(width: 20, height: 20)
                     .overlay(
                         Image(systemName: "plus")
