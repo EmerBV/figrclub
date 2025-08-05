@@ -176,6 +176,9 @@ struct UserStoryView: View {
     var body: some View {
         VStack(spacing: 4) {
             ZStack {
+                
+                // Instagram Style
+                /*
                 Circle()
                     .stroke(
                         LinearGradient(
@@ -187,6 +190,15 @@ struct UserStoryView: View {
                         lineWidth: 2
                     )
                     .frame(width: 66, height: 66)
+                 */
+                    
+                
+                Circle()
+                    .stroke(
+                        Color.figrPrimary,
+                        lineWidth: 1
+                    )
+                    .frame(width: 60, height: 60)
                 
                 if user.hasProfileImage {
                     KFImage(URL(string: "http://localhost:8080/figrclub/api/v1/images/user/\(user.id)/profile"))
@@ -234,12 +246,13 @@ struct StoryView: View {
             ZStack {
                 Circle()
                     .stroke(
+                        //story.isViewed ? Color.gray.opacity(0.3) : Color.figrBlueAccent,
                         LinearGradient(
-                            // TODO: Cambiar colores
-                            colors: story.isViewed ? [.gray.opacity(0.3)] : [.purple, .pink, .orange],
+                            colors: story.isViewed ? [.gray.opacity(0.3)] : [Color.figrGradientBlueStart, Color.figrGradientBlueEnd],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
+                        
                         lineWidth: 2
                     )
                     .frame(width: 66, height: 66)
@@ -812,6 +825,10 @@ struct PostCommentsSheet: View {
                             .profileImageStyle(size: 32)
                     } else {
                         Circle()
+                            .stroke(
+                                Color.figrPrimary,
+                                lineWidth: 1
+                            )
                             .fill(Color.blue.opacity(0.1))
                             .frame(width: 32, height: 32)
                             .overlay(
@@ -822,28 +839,40 @@ struct PostCommentsSheet: View {
                     }
                     
                     // Campo de texto
-                    TextField(localizationManager.localizedString(for: .addAComment), text: $newCommentText, axis: .vertical)
-                        .lineLimit(1...4)
-                        .textFieldStyle(PlainTextFieldStyle())
-                    
-                    // Botón enviar
-                    Button(localizationManager.localizedString(for: .postTitle)) {
-                        if !newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                            let newComment = SamplePost.Comment(
-                                username: currentUser.username,
-                                text: newCommentText
-                            )
-                            allComments.append(newComment)
-                            newCommentText = ""
-                            // TODO: Enviar comentario al servidor
+                    HStack {
+                        TextField(localizationManager.localizedString(for: .addAComment), text: $newCommentText, axis: .vertical)
+                            .lineLimit(1...4)
+                            .textFieldStyle(PlainTextFieldStyle())
+                
+                        // Botón enviar
+                        Button(localizationManager.localizedString(for: .postTitle)) {
+                            if !newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                let newComment = SamplePost.Comment(
+                                    username: currentUser.username,
+                                    text: newCommentText
+                                )
+                                allComments.append(newComment)
+                                newCommentText = ""
+                                // TODO: Enviar comentario al servidor
+                            }
                         }
+                        .disabled(newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.figrTextSecondary : Color.figrButtonText)
+                        .padding(.horizontal, AppTheme.Spacing.small)
+                        .padding(.vertical, AppTheme.Spacing.small)
+                        .background(
+                            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
+                                .fill(newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color(.systemGray6) : Color.figrBlueAccent)
+                        )
+                        .buttonStyle(PlainButtonStyle())
                     }
-                    .disabled(newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .secondary : .blue)
+                    .padding(AppTheme.Spacing.medium)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(AppTheme.CornerRadius.medium)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                .padding(.horizontal, AppTheme.Spacing.large)
+                .padding(.vertical, AppTheme.Spacing.medium)
                 .background(Color(UIColor.systemBackground))
             }
             
@@ -877,6 +906,10 @@ struct CommentRow: View {
         HStack(alignment: .top, spacing: 12) {
             // Avatar del comentarista (placeholder)
             Circle()
+                .stroke(
+                    Color.figrPrimary,
+                    lineWidth: 1
+                )
                 .fill(Color.gray.opacity(0.3))
                 .frame(width: 32, height: 32)
                 .overlay(

@@ -21,6 +21,7 @@ extension Color {
     
     static let figrBlueAccent = Color(red: 0.247, green: 0.604, blue: 0.957) // #3F9AF4
     static let figrRedAccent = Color(red: 0.863, green: 0.035, blue: 0.078) // #DC0914 //#E40714
+    static let figrDarkDanger = Color(red: 0.69, green: 0.035, blue: 0.078) // #B00914
     static let figrOrangeAccent = Color(red: 0.863, green: 0.035, blue: 0.078) // #EC4809
     
     
@@ -70,6 +71,8 @@ extension Color {
     static let figrFigureMythic = Color(red: 0.85, green: 0.65, blue: 0.2) // Dorado mítico
     
     // MARK: - Gradient Colors
+    static let figrGradientBlueStart = Color.figrBlueAccent.opacity(0.6)
+    static let figrGradientBlueEnd = Color.figrPrimary.opacity(0.9)
     static let figrGradientStart = Color.figrPrimary.opacity(0.8)
     static let figrGradientEnd = Color.figrSecondary.opacity(0.6)
     
