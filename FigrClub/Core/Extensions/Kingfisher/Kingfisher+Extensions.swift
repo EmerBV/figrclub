@@ -96,6 +96,7 @@ extension KFImage {
 // MARK: - Custom Placeholder Views
 struct PostImagePlaceholder: View {
     var body: some View {
+        /*
         RoundedRectangle(cornerRadius: 12)
             .fill(Color.gray.opacity(0.3))
             .overlay {
@@ -110,6 +111,19 @@ struct PostImagePlaceholder: View {
                 }
             }
             .frame(maxWidth: .infinity, minHeight: 200, maxHeight: 400)
+         */
+        
+        VStack(spacing: 8) {
+            Image(systemName: "photo")
+                .font(.title2)
+                .foregroundColor(.gray)
+            
+            Text("Cargando imagen...")
+                .font(.caption)
+                .foregroundColor(.gray)
+        }
+        .frame(maxWidth: .infinity, minHeight: 200, maxHeight: 400)
+        .background(Color.gray.opacity(0.3))
     }
 }
 

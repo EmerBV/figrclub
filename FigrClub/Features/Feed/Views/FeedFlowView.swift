@@ -44,17 +44,21 @@ struct FeedFlowView: View {
             }
             .navigationBarHidden(true)
         }
+        
         // Navegación modal
-        .sheet(isPresented: $navigationCoordinator.showingPostDetail) {
-            if let postId = navigationCoordinator.selectedPostId {
-                PostDetailSheet(postId: postId, user: user)
-            }
-        }
-        .sheet(isPresented: $navigationCoordinator.showingUserProfile) {
-            if let userId = navigationCoordinator.selectedUserId {
-                UserProfileSheet(userId: userId, currentUser: user)
-            }
-        }
+        /*
+         .sheet(isPresented: $navigationCoordinator.showingPostDetail) {
+         if let postId = navigationCoordinator.selectedPostId {
+         PostDetailSheet(postId: postId, user: user)
+         }
+         }
+         .sheet(isPresented: $navigationCoordinator.showingUserProfile) {
+         if let userId = navigationCoordinator.selectedUserId {
+         UserProfileSheet(userId: userId, currentUser: user)
+         }
+         }
+         */
+        
         // Alert de confirmación para logout
         .alert(localizationManager.localizedString(for: .logout), isPresented: $showLogoutConfirmation) {
             Button(localizationManager.localizedString(for: .cancel), role: .cancel) {
@@ -79,17 +83,6 @@ struct FeedFlowView: View {
     private var headerSection: some View {
         HStack {
             HStack(spacing: 0) {
-                /*
-                 Image("logo")
-                 .resizable()
-                 .frame(width: 44, height: 44)
-                 
-                 Text("FigrClub")
-                 .font(.system(size: 24, weight: .bold, design: .rounded))
-                 //.themedTextColor(.primary)
-                 .foregroundColor(Color.figrPrimary)
-                 */
-                
                 Image("logo-large")
                     .resizable()
                     .scaledToFit()
@@ -286,8 +279,7 @@ struct PostView: View {
             postHeader
                 .padding(.horizontal, 16)
             
-            // Imagen del post
-            //postImage
+            // Imagen(es) del post
             postImageCarousel
             
             // Botones de acción
@@ -308,10 +300,11 @@ struct PostView: View {
         }
         .sheet(isPresented: $showPostOptions) {
             PostOptionsSheet(post: post, currentUser: currentUser)
-                .presentationDetents([.fraction(0.8)])
+                .presentationDetents([.fraction(0.7)])
         }
         .sheet(isPresented: $showComments) {
             PostCommentsSheet(post: post, currentUser: currentUser)
+                .presentationDetents([.fraction(0.7)])
         }
     }
     
@@ -344,19 +337,6 @@ struct PostView: View {
                     .foregroundColor(.primary)
             }
         }
-    }
-    
-    private var postImage: some View {
-        KFImage(URL(string: post.imageURL))
-            .postImageStyle()
-            .aspectRatio(1, contentMode: .fill)
-            .clipped()
-            .onTapGesture(count: 2) {
-                withAnimation(.easeInOut(duration: 0.1)) {
-                    isLiked.toggle()
-                }
-                // TODO: Enviar like al servidor
-            }
     }
     
     private var postImageCarousel: some View {
@@ -469,18 +449,22 @@ struct PostView: View {
     
     private var commentsSection: some View {
         VStack(alignment: .leading, spacing: 4) {
-            if post.commentsCount > 0 {
-                Button {
-                    showComments = true
-                } label: {
-                    Text(localizationManager.localizedString(for: .seeAllComments, arguments: post.commentsCount))
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
+            if post.commentsCount > 2 {
+                HStack {
+                    Button {
+                        showComments = true
+                    } label: {
+                        Text(localizationManager.localizedString(for: .seeAllComments, arguments: post.commentsCount))
+                            .font(.system(size: 14))
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    Spacer()
                 }
             }
             
-            // Últimos comentarios
-            ForEach(post.recentComments, id: \.username) { comment in
+            ForEach(Array(post.recentComments.suffix(2).enumerated()), id: \.offset) { index, comment in
                 HStack(alignment: .top) {
                     Text(comment.username)
                         .font(.system(size: 14, weight: .semibold))
@@ -495,6 +479,7 @@ struct PostView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     private var timestampView: some View {
@@ -552,8 +537,7 @@ struct PostImageCarousel: View {
             if displayedImages.count > 1 {
                 VStack {
                     Spacer()
-                    HStack {
-                        Spacer()
+                    HStack(alignment: .center) {
                         HStack(spacing: 6) {
                             ForEach(0..<displayedImages.count, id: \.self) { index in
                                 Circle()
@@ -565,7 +549,6 @@ struct PostImageCarousel: View {
                         .padding(.vertical, 8)
                         .background(Color.black.opacity(0.3))
                         .clipShape(Capsule())
-                        .padding(.trailing, 16)
                         .padding(.bottom, 16)
                     }
                 }
@@ -597,62 +580,83 @@ struct PostImageCarousel: View {
 struct ExpandableCaption: View {
     let username: String
     let caption: String
+    
+    @Environment(\.localizationManager) private var localizationManager
+    
     @Binding var isExpanded: Bool
     
     @State private var needsExpansion = false
-    private let maxLines = 2
+    private let maxLines = 1
     
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .top) {
-                Text(username)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.primary)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    if isExpanded {
-                        // Texto completo
-                        Text(caption)
-                            .font(.system(size: 14))
-                            .foregroundColor(.primary)
-                    } else {
-                        // Texto truncado
-                        Text(caption)
-                            .font(.system(size: 14))
-                            .foregroundColor(.primary)
-                            .lineLimit(maxLines)
-                            .background(
-                                // Detector invisible para medir el texto
-                                Text(caption)
-                                    .font(.system(size: 14))
-                                    .lineLimit(nil)
-                                    .background(GeometryReader { geometry in
-                                        Color.clear.onAppear {
-                                            let truncatedHeight = UIFont.systemFont(ofSize: 14).lineHeight * CGFloat(maxLines)
-                                            needsExpansion = geometry.size.height > truncatedHeight
-                                        }
-                                    })
-                                    .hidden()
-                            )
-                    }
-                    
-                    // Botón "more" o "less"
-                    if needsExpansion {
-                        Button {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                isExpanded.toggle()
-                            }
-                        } label: {
-                            Text(isExpanded ? "menos" : "más")
-                                .font(.system(size: 14))
-                                .foregroundColor(.secondary)
-                        }
+            Button {
+                if needsExpansion {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        isExpanded.toggle()
                     }
                 }
-                
-                Spacer()
+            } label: {
+                HStack(alignment: .top) {
+                    if isExpanded {
+                        // Texto completo
+                        Text(attributedText(username + " " + caption, username: username))
+                            .font(.system(size: 14))
+                            .multilineTextAlignment(.leading)
+                    } else {
+                        // Texto truncado
+                        HStack(alignment: .top, spacing: 0) {
+                            Text(attributedText(username + " " + caption, username: username))
+                                .font(.system(size: 14))
+                                .lineLimit(maxLines)
+                                .multilineTextAlignment(.leading)
+                                .background(
+                                    // Detector invisible para medir el texto
+                                    Text(caption)
+                                        .font(.system(size: 14))
+                                        .lineLimit(nil)
+                                        .background(GeometryReader { geometry in
+                                            Color.clear.onAppear {
+                                                let truncatedHeight = UIFont.systemFont(ofSize: 14).lineHeight * CGFloat(maxLines)
+                                                needsExpansion = geometry.size.height > truncatedHeight
+                                            }
+                                        })
+                                        .hidden()
+                                )
+                            
+                            if needsExpansion {
+                                Text(localizationManager.localizedString(for: .moreCaptionButton))
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                    
+                    Spacer()
+                }
             }
+            .buttonStyle(PlainButtonStyle())
+            .disabled(!needsExpansion)
         }
+    }
+    
+    private func attributedText(_ fullText: String, username: String) -> AttributedString {
+        var attributedString = AttributedString(fullText)
+        
+        // Hacer el username bold
+        if let range = attributedString.range(of: username) {
+            attributedString[range].font = .system(size: 14, weight: .semibold)
+            attributedString[range].foregroundColor = .primary
+        }
+        
+        // El resto del texto normal
+        let captionRange = attributedString.index(attributedString.startIndex, offsetByCharacters: username.count + 1)..<attributedString.endIndex
+        if captionRange.lowerBound < attributedString.endIndex {
+            attributedString[captionRange].font = .system(size: 14)
+            attributedString[captionRange].foregroundColor = .primary
+        }
+        
+        return attributedString
     }
 }
 
@@ -671,15 +675,15 @@ struct PostOptionsSheet: View {
                 RoundedRectangle(cornerRadius: 2.5)
                     .fill(Color.secondary.opacity(0.3))
                     .frame(width: 36, height: 5)
-                    .padding(.top, 12)
-                    .padding(.bottom, 20)
+                    .padding(.top, AppTheme.Spacing.medium)
+                    .padding(.bottom, AppTheme.Spacing.large)
                 
                 // Opciones
                 VStack(spacing: 0) {
                     PostOptionRow(
                         icon: "bookmark",
-                        title: "Guardar",
-                        subtitle: "Añadir a elementos guardados"
+                        title: localizationManager.localizedString(for: .save),
+                        subtitle: localizationManager.localizedString(for: .addToSavedItemsSubtitle)
                     ) {
                         // TODO: Implementar guardar post
                         dismiss()
@@ -688,8 +692,8 @@ struct PostOptionsSheet: View {
                     if post.username != currentUser.username {
                         PostOptionRow(
                             icon: "person.badge.minus",
-                            title: "Dejar de seguir",
-                            subtitle: "Dejar de seguir a @\(post.username)",
+                            title: localizationManager.localizedString(for: .unfollowTitle),
+                            subtitle: localizationManager.localizedString(for: .unfollowSubtitle, arguments: post.username),
                             isDestructive: true
                         ) {
                             // TODO: Implementar dejar de seguir
@@ -698,8 +702,8 @@ struct PostOptionsSheet: View {
                         
                         PostOptionRow(
                             icon: "info.circle",
-                            title: "Sobre esta cuenta",
-                            subtitle: "Ver información de la cuenta"
+                            title: localizationManager.localizedString(for: .aboutThisAccountTitle),
+                            subtitle: localizationManager.localizedString(for: .aboutThisAccountSubtitle)
                         ) {
                             // TODO: Implementar info de cuenta
                             dismiss()
@@ -707,8 +711,8 @@ struct PostOptionsSheet: View {
                         
                         PostOptionRow(
                             icon: "exclamationmark.triangle",
-                            title: "Reportar",
-                            subtitle: "Reportar este contenido",
+                            title: localizationManager.localizedString(for: .reportTitle),
+                            subtitle: localizationManager.localizedString(for: .reportSubtitle),
                             isDestructive: true
                         ) {
                             // TODO: Implementar reportar post
@@ -774,6 +778,19 @@ struct PostCommentsSheet: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
+                RoundedRectangle(cornerRadius: 2.5)
+                    .fill(Color.secondary.opacity(0.3))
+                    .frame(width: 36, height: 5)
+                    .padding(.top, AppTheme.Spacing.medium)
+                    .padding(.bottom, AppTheme.Spacing.large)
+                
+                Text(localizationManager.localizedString(for: .commentsTitle))
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+                    .padding(.bottom, AppTheme.Spacing.large)
+                
+                Divider()
+                
                 // Lista de comentarios
                 ScrollView {
                     LazyVStack(spacing: 16) {
@@ -805,12 +822,12 @@ struct PostCommentsSheet: View {
                     }
                     
                     // Campo de texto
-                    TextField("Añadir un comentario...", text: $newCommentText, axis: .vertical)
+                    TextField(localizationManager.localizedString(for: .addAComment), text: $newCommentText, axis: .vertical)
                         .lineLimit(1...4)
                         .textFieldStyle(PlainTextFieldStyle())
                     
                     // Botón enviar
-                    Button("Publicar") {
+                    Button(localizationManager.localizedString(for: .postTitle)) {
                         if !newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                             let newComment = SamplePost.Comment(
                                 username: currentUser.username,
@@ -829,15 +846,9 @@ struct PostCommentsSheet: View {
                 .padding(.vertical, 12)
                 .background(Color(UIColor.systemBackground))
             }
-            .navigationTitle("Comentarios")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cerrar") {
-                        dismiss()
-                    }
-                }
-            }
+            
+            .navigationTitle("")
+            .navigationBarHidden(true)
         }
         .onAppear {
             loadComments()
@@ -860,6 +871,8 @@ struct PostCommentsSheet: View {
 struct CommentRow: View {
     let comment: SamplePost.Comment
     
+    @Environment(\.localizationManager) private var localizationManager
+    
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             // Avatar del comentarista (placeholder)
@@ -880,7 +893,7 @@ struct CommentRow: View {
                     
                     Spacer()
                     
-                    Text("ahora")
+                    Text("ahora") // TODO: Mostrar hace cuanto se publicó
                         .font(.system(size: 12))
                         .foregroundColor(.secondary)
                 }
@@ -891,13 +904,13 @@ struct CommentRow: View {
                     .fixedSize(horizontal: false, vertical: true)
                 
                 HStack(spacing: 16) {
-                    Button("Me gusta") {
+                    Button(localizationManager.localizedString(for: .likeButtonTitle)) {
                         // TODO: Like comment
                     }
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(.secondary)
                     
-                    Button("Responder") {
+                    Button(localizationManager.localizedString(for: .replyButtonTitle)) {
                         // TODO: Reply to comment
                     }
                     .font(.system(size: 12, weight: .medium))
@@ -956,13 +969,14 @@ extension FeedFlowView {
             ],
             caption: "¡Mi nueva colección de figuras de Dragon Ball llegó! No puedo estar más emocionada con estos detalles increíbles. Cada figura tiene una calidad excepcional y los colores son vibrantes. Definitivamente una de mis mejores compras del año. ¿Cuál es vuestra figura favorita de Dragon Ball? 😍 #DragonBall #Figuras #Collection #AnimeCollection #Goku #Vegeta #DragonBallZ",
             likesCount: 127,
-            commentsCount: 23,
+            commentsCount: 10,
             sharesCount: 8,
             createdAt: Date().addingTimeInterval(-3600),
             location: "Madrid, España",
             recentComments: [
                 SamplePost.Comment(username: "carlos_otaku", text: "¡Qué envidia! ¿Dónde la conseguiste?"),
-                SamplePost.Comment(username: "maria_anime", text: "Preciosa! 💖")
+                SamplePost.Comment(username: "maria_anime", text: "Preciosa! 💖"),
+                SamplePost.Comment(username: "setup_goals", text: "Excelente colección! 👌")
             ]
         ),
         SamplePost(
@@ -1039,76 +1053,79 @@ extension FeedFlowView {
     ]
 }
 
+// NO USADO
 // MARK: - Supporting Views
-struct PostDetailSheet: View {
-    let postId: String
-    let user: User
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        FigrNavigationStack {
-            VStack(spacing: AppTheme.Spacing.large) {
-                Text("Post Detail")
-                    .font(.title)
-                
-                Text("Post ID: \(postId)")
-                    .font(.headline)
-                    .foregroundColor(.secondary)
-                
-                Text("Esta funcionalidad estará disponible pronto")
-                    .font(.callout)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("Post")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cerrar") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-    }
-}
-
-struct UserProfileSheet: View {
-    let userId: String
-    let currentUser: User
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        FigrNavigationStack {
-            VStack(spacing: AppTheme.Spacing.large) {
-                Text("User Profile")
-                    .font(.title)
-                
-                Text("User ID: \(userId)")
-                    .font(.headline)
-                    .foregroundColor(.secondary)
-                
-                Text("Esta funcionalidad estará disponible pronto")
-                    .font(.callout)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("Perfil")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cerrar") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-    }
-}
+/*
+ struct PostDetailSheet: View {
+ let postId: String
+ let user: User
+ @Environment(\.dismiss) private var dismiss
+ 
+ var body: some View {
+ FigrNavigationStack {
+ VStack(spacing: AppTheme.Spacing.large) {
+ Text("Post Detail")
+ .font(.title)
+ 
+ Text("Post ID: \(postId)")
+ .font(.headline)
+ .foregroundColor(.secondary)
+ 
+ Text("Esta funcionalidad estará disponible pronto")
+ .font(.callout)
+ .foregroundColor(.secondary)
+ .multilineTextAlignment(.center)
+ 
+ Spacer()
+ }
+ .padding()
+ .navigationTitle("Post")
+ .navigationBarTitleDisplayMode(.inline)
+ .toolbar {
+ ToolbarItem(placement: .navigationBarTrailing) {
+ Button("Cerrar") {
+ dismiss()
+ }
+ }
+ }
+ }
+ }
+ }
+ 
+ struct UserProfileSheet: View {
+ let userId: String
+ let currentUser: User
+ @Environment(\.dismiss) private var dismiss
+ 
+ var body: some View {
+ FigrNavigationStack {
+ VStack(spacing: AppTheme.Spacing.large) {
+ Text("User Profile")
+ .font(.title)
+ 
+ Text("User ID: \(userId)")
+ .font(.headline)
+ .foregroundColor(.secondary)
+ 
+ Text("Esta funcionalidad estará disponible pronto")
+ .font(.callout)
+ .foregroundColor(.secondary)
+ .multilineTextAlignment(.center)
+ 
+ Spacer()
+ }
+ .padding()
+ .navigationTitle("Perfil")
+ .navigationBarTitleDisplayMode(.inline)
+ .toolbar {
+ ToolbarItem(placement: .navigationBarTrailing) {
+ Button("Cerrar") {
+ dismiss()
+ }
+ }
+ }
+ }
+ }
+ }
+ */
 

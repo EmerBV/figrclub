@@ -185,6 +185,19 @@
 "your_story_string" = "Your story";
 "likes_string" = "%d likes";
 "see_all_comments" = "See all %d comments";
+"more_caption_button" = " more";
+"add_to_saved_items_subtitle" = "Add to saved items";
+"unfollow_title" = "Unfollow";
+"unfollow_subtitle" = "Unfollow @%@";
+"about_this_account_title" = "About this account";
+"about_this_account_subtitle" = "View info about this account";
+"report_title" = "Report";
+"report_subtitle" = "Report this content";
+"comments_title" = "Comments";
+"add_a_comment" = "Add a comment...";
+"post_title" = "Post";
+"like_button_title" = "Like";
+"reply_button_title" = "Reply";
 
 // MARK: - Create
 "create_post" = "POST";
