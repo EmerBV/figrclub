@@ -186,6 +186,7 @@ struct UserStoryView: View {
                 Circle()
                     .stroke(
                         LinearGradient(
+                            // TODO: Cambiar el gradient con colores de la app
                             colors: [.purple, .pink, .orange],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -241,6 +242,7 @@ struct StoryView: View {
                 Circle()
                     .stroke(
                         LinearGradient(
+                            // TODO: Cambiar colores
                             colors: story.isViewed ? [.gray.opacity(0.3)] : [.purple, .pink, .orange],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -274,6 +276,9 @@ struct PostView: View {
     @State private var isLiked = false
     @State private var isSaved = false
     @State private var showComments = false
+    @State private var showPostOptions = false
+    @State private var isExpandedCaption = false
+    @State private var captionNeedsExpansion = false
     
     var body: some View {
         VStack(spacing: 16) {
@@ -282,7 +287,8 @@ struct PostView: View {
                 .padding(.horizontal, 16)
             
             // Imagen del post
-            postImage
+            //postImage
+            postImageCarousel
             
             // Botones de acción
             actionButtons
@@ -299,6 +305,13 @@ struct PostView: View {
             // Tiempo del post
             timestampView
                 .padding(.horizontal, 16)
+        }
+        .sheet(isPresented: $showPostOptions) {
+            PostOptionsSheet(post: post, currentUser: currentUser)
+                .presentationDetents([.fraction(0.8)])
+        }
+        .sheet(isPresented: $showComments) {
+            PostCommentsSheet(post: post, currentUser: currentUser)
         }
     }
     
@@ -324,7 +337,7 @@ struct PostView: View {
             
             // Botón de más opciones
             Button {
-                // TODO: Mostrar opciones del post
+                showPostOptions = true
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 16, weight: .bold))
@@ -344,6 +357,32 @@ struct PostView: View {
                 }
                 // TODO: Enviar like al servidor
             }
+    }
+    
+    private var postImageCarousel: some View {
+        Group {
+            if post.imageURLs.count == 1 {
+                // Imagen única
+                KFImage(URL(string: post.imageURLs[0]))
+                    .postImageStyle()
+                    .aspectRatio(1, contentMode: .fill)
+                    .clipped()
+                    .onTapGesture(count: 2) {
+                        withAnimation(.easeInOut(duration: 0.1)) {
+                            isLiked.toggle()
+                        }
+                        // TODO: Enviar like al servidor
+                    }
+            } else {
+                // Carrusel de imágenes
+                PostImageCarousel(imageURLs: post.imageURLs) {
+                    withAnimation(.easeInOut(duration: 0.1)) {
+                        isLiked.toggle()
+                    }
+                    // TODO: Enviar like al servidor
+                }
+            }
+        }
     }
     
     private var actionButtons: some View {
@@ -420,18 +459,11 @@ struct PostView: View {
             }
             
             // Descripción
-            HStack(alignment: .top) {
-                Text(post.username)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.primary)
-                
-                Text(post.caption)
-                    .font(.system(size: 14))
-                    .foregroundColor(.primary)
-                    .lineLimit(1)
-                
-                Spacer()
-            }
+            ExpandableCaption(
+                username: post.username,
+                caption: post.caption,
+                isExpanded: $isExpandedCaption
+            )
         }
     }
     
@@ -486,12 +518,405 @@ struct PostView: View {
     }
 }
 
+// MARK: - Post Image Carousel
+struct PostImageCarousel: View {
+    let imageURLs: [String]
+    let onDoubleTap: () -> Void
+    
+    @State private var currentIndex = 0
+    
+    private let maxImages = 10
+    
+    var displayedImages: [String] {
+        Array(imageURLs.prefix(maxImages))
+    }
+    
+    var body: some View {
+        ZStack {
+            TabView(selection: $currentIndex) {
+                ForEach(0..<displayedImages.count, id: \.self) { index in
+                    KFImage(URL(string: displayedImages[index]))
+                        .postImageStyle()
+                        .aspectRatio(1, contentMode: .fill)
+                        .clipped()
+                        .onTapGesture(count: 2) {
+                            onDoubleTap()
+                        }
+                        .tag(index)
+                }
+            }
+            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+            .aspectRatio(1, contentMode: .fit)
+            
+            // Indicador de página personalizado
+            if displayedImages.count > 1 {
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        HStack(spacing: 6) {
+                            ForEach(0..<displayedImages.count, id: \.self) { index in
+                                Circle()
+                                    .fill(index == currentIndex ? Color.white : Color.white.opacity(0.5))
+                                    .frame(width: 6, height: 6)
+                            }
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Color.black.opacity(0.3))
+                        .clipShape(Capsule())
+                        .padding(.trailing, 16)
+                        .padding(.bottom, 16)
+                    }
+                }
+            }
+            
+            // Contador de imágenes
+            if displayedImages.count > 1 {
+                VStack {
+                    HStack {
+                        Spacer()
+                        Text("\(currentIndex + 1)/\(displayedImages.count)")
+                            .font(.caption)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.black.opacity(0.6))
+                            .clipShape(Capsule())
+                            .padding(.trailing, 16)
+                            .padding(.top, 16)
+                    }
+                    Spacer()
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Expandable Caption
+struct ExpandableCaption: View {
+    let username: String
+    let caption: String
+    @Binding var isExpanded: Bool
+    
+    @State private var needsExpansion = false
+    private let maxLines = 2
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .top) {
+                Text(username)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.primary)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    if isExpanded {
+                        // Texto completo
+                        Text(caption)
+                            .font(.system(size: 14))
+                            .foregroundColor(.primary)
+                    } else {
+                        // Texto truncado
+                        Text(caption)
+                            .font(.system(size: 14))
+                            .foregroundColor(.primary)
+                            .lineLimit(maxLines)
+                            .background(
+                                // Detector invisible para medir el texto
+                                Text(caption)
+                                    .font(.system(size: 14))
+                                    .lineLimit(nil)
+                                    .background(GeometryReader { geometry in
+                                        Color.clear.onAppear {
+                                            let truncatedHeight = UIFont.systemFont(ofSize: 14).lineHeight * CGFloat(maxLines)
+                                            needsExpansion = geometry.size.height > truncatedHeight
+                                        }
+                                    })
+                                    .hidden()
+                            )
+                    }
+                    
+                    // Botón "more" o "less"
+                    if needsExpansion {
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                isExpanded.toggle()
+                            }
+                        } label: {
+                            Text(isExpanded ? "menos" : "más")
+                                .font(.system(size: 14))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                
+                Spacer()
+            }
+        }
+    }
+}
+
+// MARK: - Post Options Sheet
+struct PostOptionsSheet: View {
+    let post: SamplePost
+    let currentUser: User
+    
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.localizationManager) private var localizationManager
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 0) {
+                // Handle visual
+                RoundedRectangle(cornerRadius: 2.5)
+                    .fill(Color.secondary.opacity(0.3))
+                    .frame(width: 36, height: 5)
+                    .padding(.top, 12)
+                    .padding(.bottom, 20)
+                
+                // Opciones
+                VStack(spacing: 0) {
+                    PostOptionRow(
+                        icon: "bookmark",
+                        title: "Guardar",
+                        subtitle: "Añadir a elementos guardados"
+                    ) {
+                        // TODO: Implementar guardar post
+                        dismiss()
+                    }
+                    
+                    if post.username != currentUser.username {
+                        PostOptionRow(
+                            icon: "person.badge.minus",
+                            title: "Dejar de seguir",
+                            subtitle: "Dejar de seguir a @\(post.username)",
+                            isDestructive: true
+                        ) {
+                            // TODO: Implementar dejar de seguir
+                            dismiss()
+                        }
+                        
+                        PostOptionRow(
+                            icon: "info.circle",
+                            title: "Sobre esta cuenta",
+                            subtitle: "Ver información de la cuenta"
+                        ) {
+                            // TODO: Implementar info de cuenta
+                            dismiss()
+                        }
+                        
+                        PostOptionRow(
+                            icon: "exclamationmark.triangle",
+                            title: "Reportar",
+                            subtitle: "Reportar este contenido",
+                            isDestructive: true
+                        ) {
+                            // TODO: Implementar reportar post
+                            dismiss()
+                        }
+                    }
+                }
+                
+                Spacer()
+            }
+            .navigationTitle("")
+            .navigationBarHidden(true)
+        }
+    }
+}
+
+// MARK: - Post Option Row
+struct PostOptionRow: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    var isDestructive: Bool = false
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 16) {
+                Image(systemName: icon)
+                    .font(.title2)
+                    .foregroundColor(isDestructive ? .red : .primary)
+                    .frame(width: 24)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(isDestructive ? .red : .primary)
+                    
+                    Text(subtitle)
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - Post Comments Sheet
+struct PostCommentsSheet: View {
+    let post: SamplePost
+    let currentUser: User
+    
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.localizationManager) private var localizationManager
+    
+    @State private var newCommentText = ""
+    @State private var allComments: [SamplePost.Comment] = []
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 0) {
+                // Lista de comentarios
+                ScrollView {
+                    LazyVStack(spacing: 16) {
+                        ForEach(allComments, id: \.username) { comment in
+                            CommentRow(comment: comment)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                }
+                
+                Divider()
+                
+                // Campo de nuevo comentario
+                HStack(spacing: 12) {
+                    // Avatar del usuario actual
+                    if currentUser.hasProfileImage {
+                        KFImage(URL(string: "http://localhost:8080/figrclub/api/v1/images/user/\(currentUser.id)/profile"))
+                            .profileImageStyle(size: 32)
+                    } else {
+                        Circle()
+                            .fill(Color.blue.opacity(0.1))
+                            .frame(width: 32, height: 32)
+                            .overlay(
+                                Text(currentUser.displayName.prefix(1).uppercased())
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(Color.figrPrimary)
+                            )
+                    }
+                    
+                    // Campo de texto
+                    TextField("Añadir un comentario...", text: $newCommentText, axis: .vertical)
+                        .lineLimit(1...4)
+                        .textFieldStyle(PlainTextFieldStyle())
+                    
+                    // Botón enviar
+                    Button("Publicar") {
+                        if !newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            let newComment = SamplePost.Comment(
+                                username: currentUser.username,
+                                text: newCommentText
+                            )
+                            allComments.append(newComment)
+                            newCommentText = ""
+                            // TODO: Enviar comentario al servidor
+                        }
+                    }
+                    .disabled(newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .secondary : .blue)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(Color(UIColor.systemBackground))
+            }
+            .navigationTitle("Comentarios")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Cerrar") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .onAppear {
+            loadComments()
+        }
+    }
+    
+    private func loadComments() {
+        // Simular carga de comentarios desde el servidor
+        allComments = post.recentComments + [
+            SamplePost.Comment(username: "otaku_master", text: "¡Increíble colección!"),
+            SamplePost.Comment(username: "anime_lover", text: "¿Dónde conseguiste esa figura?"),
+            SamplePost.Comment(username: "collector_spain", text: "Te quedó genial el setup 👌"),
+            SamplePost.Comment(username: "figma_fan", text: "Necesito esa figura en mi vida"),
+            SamplePost.Comment(username: "manga_reader", text: "¡El mejor personaje de toda la serie!")
+        ]
+    }
+}
+
+// MARK: - Comment Row
+struct CommentRow: View {
+    let comment: SamplePost.Comment
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            // Avatar del comentarista (placeholder)
+            Circle()
+                .fill(Color.gray.opacity(0.3))
+                .frame(width: 32, height: 32)
+                .overlay(
+                    Text(comment.username.prefix(1).uppercased())
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.white)
+                )
+            
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(comment.username)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.primary)
+                    
+                    Spacer()
+                    
+                    Text("ahora")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                }
+                
+                Text(comment.text)
+                    .font(.system(size: 14))
+                    .foregroundColor(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+                
+                HStack(spacing: 16) {
+                    Button("Me gusta") {
+                        // TODO: Like comment
+                    }
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
+                    
+                    Button("Responder") {
+                        // TODO: Reply to comment
+                    }
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
+                }
+                .padding(.top, 2)
+            }
+            
+            Spacer()
+        }
+    }
+}
+
 // MARK: - Data Models
 struct SamplePost: Identifiable {
     let id = UUID()
     let username: String
     let userProfileImage: String
-    let imageURL: String
+    let imageURLs: [String]
     let caption: String
     let likesCount: Int
     let commentsCount: Int
@@ -499,6 +924,11 @@ struct SamplePost: Identifiable {
     let createdAt: Date
     let location: String?
     let recentComments: [Comment]
+    
+    // Retrocompatibilidad con imageURL
+    var imageURL: String {
+        return imageURLs.first ?? ""
+    }
     
     struct Comment {
         let username: String
@@ -519,8 +949,12 @@ extension FeedFlowView {
         SamplePost(
             username: "ana_figuras",
             userProfileImage: "https://picsum.photos/seed/user1/200/200",
-            imageURL: "https://picsum.photos/seed/post1/400/400",
-            caption: "¡Mi nueva figura de Goku llegó! 😍 #DragonBall #Figuras #Collection",
+            imageURLs: [
+                "https://picsum.photos/seed/post1a/400/400",
+                "https://picsum.photos/seed/post1b/400/400",
+                "https://picsum.photos/seed/post1c/400/400"
+            ],
+            caption: "¡Mi nueva colección de figuras de Dragon Ball llegó! No puedo estar más emocionada con estos detalles increíbles. Cada figura tiene una calidad excepcional y los colores son vibrantes. Definitivamente una de mis mejores compras del año. ¿Cuál es vuestra figura favorita de Dragon Ball? 😍 #DragonBall #Figuras #Collection #AnimeCollection #Goku #Vegeta #DragonBallZ",
             likesCount: 127,
             commentsCount: 23,
             sharesCount: 8,
@@ -534,8 +968,14 @@ extension FeedFlowView {
         SamplePost(
             username: "carlos_otaku",
             userProfileImage: "https://picsum.photos/seed/user2/200/200",
-            imageURL: "https://picsum.photos/seed/post2/400/400",
-            caption: "Setup actualizado con mi colección favorita 🔥",
+            imageURLs: [
+                "https://picsum.photos/seed/post2a/400/400",
+                "https://picsum.photos/seed/post2b/400/400",
+                "https://picsum.photos/seed/post2c/400/400",
+                "https://picsum.photos/seed/post2d/400/400",
+                "https://picsum.photos/seed/post2e/400/400"
+            ],
+            caption: "Setup actualizado con mi colección favorita. Después de meses organizando y reorganizando, finalmente tengo el setup perfecto. Cada figura tiene su lugar especial y la iluminación LED hace que se vean espectaculares por la noche. 🔥",
             likesCount: 89,
             commentsCount: 15,
             sharesCount: 5,
@@ -548,7 +988,9 @@ extension FeedFlowView {
         SamplePost(
             username: "maria_anime",
             userProfileImage: "https://picsum.photos/seed/user3/200/200",
-            imageURL: "https://picsum.photos/seed/post3/400/400",
+            imageURLs: [
+                "https://picsum.photos/seed/post3/400/400"
+            ],
             caption: "Unboxing de mi pedido de FigrClub! No puedo estar más feliz 📦✨",
             likesCount: 156,
             commentsCount: 31,
@@ -558,6 +1000,32 @@ extension FeedFlowView {
             recentComments: [
                 SamplePost.Comment(username: "ana_figuras", text: "¡Qué ganas de ver el unboxing!"),
                 SamplePost.Comment(username: "collector_pro", text: "FigrClub siempre tiene lo mejor")
+            ]
+        ),
+        SamplePost(
+            username: "setup_goals",
+            userProfileImage: "https://picsum.photos/seed/user4/200/200",
+            imageURLs: [
+                "https://picsum.photos/seed/post4a/400/400",
+                "https://picsum.photos/seed/post4b/400/400",
+                "https://picsum.photos/seed/post4c/400/400",
+                "https://picsum.photos/seed/post4d/400/400",
+                "https://picsum.photos/seed/post4e/400/400",
+                "https://picsum.photos/seed/post4f/400/400",
+                "https://picsum.photos/seed/post4g/400/400",
+                "https://picsum.photos/seed/post4h/400/400",
+                "https://picsum.photos/seed/post4i/400/400",
+                "https://picsum.photos/seed/post4j/400/400"
+            ],
+            caption: "Mi habitación gamer completamente transformada. Proceso de 6 meses documentado paso a paso. Desde las estanterías custom hasta la iluminación RGB sincronizada. Todo diseñado para mostrar mi colección de la mejor manera posible. Swipe para ver el antes y después completo! ⚡️🎮",
+            likesCount: 245,
+            commentsCount: 67,
+            sharesCount: 34,
+            createdAt: Date().addingTimeInterval(-14400),
+            location: "Valencia, España",
+            recentComments: [
+                SamplePost.Comment(username: "gaming_setup", text: "¡Wow! ¿Cuánto tiempo te llevó?"),
+                SamplePost.Comment(username: "rgb_master", text: "Esa iluminación está perfecta 🌈")
             ]
         )
     ]
