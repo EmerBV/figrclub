@@ -35,6 +35,11 @@ struct MarketplaceFlowView: View {
         .sheet(isPresented: $showFilters) {
             FiltersSheet(selectedCategory: $selectedCategory)
         }
+        .sheet(isPresented: $navigationCoordinator.showingProductDetail) {
+            if let product = navigationCoordinator.selectedProduct {
+                ProductDetailView(product: product)
+            }
+        }
         .onAppear {
             setupFeaturedProducts()
         }
@@ -75,12 +80,22 @@ struct MarketplaceFlowView: View {
                     }
                 }
             }
-            .padding(AppTheme.Spacing.large)
-            .background(Color(.systemGray6))
-            .cornerRadius(AppTheme.CornerRadius.medium)
+            /*
+             .padding(AppTheme.Spacing.large)
+             .background(Color(.systemGray6))
+             .cornerRadius(AppTheme.CornerRadius.medium)
+             */
+            .padding(AppTheme.Spacing.medium)
+            .background(
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
+                    .fill(Color(.systemGray6))
+            )
         }
+        /*
+         .padding(.horizontal, AppTheme.Spacing.large)
+         .padding(.top, AppTheme.Spacing.large)
+         */
         .padding(.horizontal, AppTheme.Spacing.large)
-        .padding(.top, AppTheme.Spacing.large)
         
     }
     
@@ -141,7 +156,7 @@ struct MarketplaceFlowView: View {
                 HStack(spacing: AppTheme.Spacing.large) {
                     ForEach(featuredProducts.prefix(5)) { product in
                         FeaturedProductCard(product: product) {
-                            // TODO: Navegar a detalle del producto
+                            navigationCoordinator.showProductDetail(product)
                             Logger.info("🛍️ Featured product tapped: \(product.title)")
                         }
                     }
@@ -176,7 +191,7 @@ struct MarketplaceFlowView: View {
             ) {
                 ForEach(filteredProducts) { product in
                     ProductCard(product: product) {
-                        // TODO: Navegar a detalle del producto
+                        navigationCoordinator.showProductDetail(product)
                         Logger.info("🛍️ Product tapped: \(product.title)")
                     }
                 }
@@ -278,8 +293,8 @@ struct FeaturedProductCard: View {
                     
                     Text(localizationManager.currencyString(from: product.price))
                     /*
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.blue)
+                     .font(.system(size: 16, weight: .bold))
+                     .foregroundColor(.blue)
                      */
                         .themedFont(.priceMedium)
                         .foregroundColor(Color.figrBlueAccent)
@@ -352,8 +367,8 @@ struct ProductCard: View {
                     
                     Text(localizationManager.currencyString(from: product.price))
                     /*
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.blue)
+                     .font(.system(size: 16, weight: .bold))
+                     .foregroundColor(.blue)
                      */
                         .themedFont(.priceMedium)
                         .foregroundColor(Color.figrBlueAccent)
@@ -419,12 +434,15 @@ struct FiltersSheet: View {
         FigrNavigationStack {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.screenPadding) {
                 // Categorías
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
                     Text(localizationManager.localizedString(for: .categoryString))
                         .themedFont(.titleLarge)
                         .themedTextColor(.primary)
                     
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: AppTheme.Spacing.small) {
+                    LazyVGrid(
+                        columns: Array(repeating: GridItem(.flexible()), count: 2),
+                        spacing: AppTheme.Spacing.small
+                    ) {
                         ForEach(ProductCategory.allCases, id: \.self) { category in
                             Button {
                                 selectedCategory = category
@@ -488,19 +506,42 @@ struct MarketplaceProduct: Identifiable {
     let category: ProductCategory
     let condition: ProductCondition
     let location: String?
-    let isFeatured: Bool
+    //let isFeatured: Bool
     let createdAt: Date
+    
+    // Propiedad calculada para determinar si un producto está destacado
+    var isFeatured: Bool {
+        // Por ahora, consideramos destacados los productos con precio > 50€
+        // En una implementación real, esto sería una propiedad del servidor
+        return price > 50.0
+    }
+    
+    // Método para crear un producto de ejemplo
+    static func example() -> MarketplaceProduct {
+        MarketplaceProduct(
+            title: "Figura de Goku SSJ",
+            description: "Figura de colección de Goku Super Saiyan en excelente estado. Incluye caja original y accesorios.",
+            price: 75.99,
+            imageURL: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400",
+            sellerName: "ColeccionistaAnime",
+            sellerProfileImage: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100",
+            category: .anime,
+            condition: .likeNew,
+            location: "Madrid, España",
+            createdAt: Date().addingTimeInterval(-3600)
+        )
+    }
 }
 
-enum ProductCategory: CaseIterable {
-    case all
-    case anime
-    case manga
-    case gaming
-    case movies
-    case tv
-    case collectibles
-    case vintage
+enum ProductCategory: String, CaseIterable {
+    case all = "all"
+    case anime = "anime"
+    case manga = "manga"
+    case gaming = "gaming"
+    case movies = "movies"
+    case tv = "tv"
+    case collectibles = "collectibles"
+    case vintage = "vintage"
     
     var localizedStringKey: LocalizedStringKey {
         switch self {
@@ -516,12 +557,12 @@ enum ProductCategory: CaseIterable {
     }
 }
 
-enum ProductCondition: CaseIterable {
-    case new
-    case likeNew
-    case good
-    case fair
-    case poor
+enum ProductCondition: String, CaseIterable {
+    case new = "new"
+    case likeNew = "like_new"
+    case good = "good"
+    case fair = "fair"
+    case poor = "poor"
     
     var displayName: String {
         switch self {
@@ -557,7 +598,7 @@ extension MarketplaceFlowView {
             category: .anime,
             condition: .new,
             location: "Madrid",
-            isFeatured: true,
+            //isFeatured: true,
             createdAt: Date().addingTimeInterval(-3600)
         ),
         MarketplaceProduct(
@@ -570,7 +611,7 @@ extension MarketplaceFlowView {
             category: .anime,
             condition: .likeNew,
             location: "Barcelona",
-            isFeatured: true,
+            //isFeatured: true,
             createdAt: Date().addingTimeInterval(-7200)
         ),
         MarketplaceProduct(
@@ -583,7 +624,7 @@ extension MarketplaceFlowView {
             category: .gaming,
             condition: .good,
             location: "Valencia",
-            isFeatured: false,
+            //isFeatured: false,
             createdAt: Date().addingTimeInterval(-10800)
         ),
         MarketplaceProduct(
@@ -596,7 +637,7 @@ extension MarketplaceFlowView {
             category: .movies,
             condition: .new,
             location: "Sevilla",
-            isFeatured: true,
+            //isFeatured: true,
             createdAt: Date().addingTimeInterval(-14400)
         ),
         MarketplaceProduct(
@@ -609,7 +650,7 @@ extension MarketplaceFlowView {
             category: .vintage,
             condition: .fair,
             location: "Bilbao",
-            isFeatured: false,
+            //isFeatured: false,
             createdAt: Date().addingTimeInterval(-18000)
         ),
         MarketplaceProduct(
@@ -622,7 +663,7 @@ extension MarketplaceFlowView {
             category: .anime,
             condition: .likeNew,
             location: "Zaragoza",
-            isFeatured: true,
+            //isFeatured: true,
             createdAt: Date().addingTimeInterval(-21600)
         ),
         MarketplaceProduct(
@@ -635,7 +676,7 @@ extension MarketplaceFlowView {
             category: .anime,
             condition: .new,
             location: "Málaga",
-            isFeatured: false,
+            //isFeatured: false,
             createdAt: Date().addingTimeInterval(-25200)
         ),
         MarketplaceProduct(
@@ -648,7 +689,7 @@ extension MarketplaceFlowView {
             category: .movies,
             condition: .good,
             location: "Valencia",
-            isFeatured: true,
+            //isFeatured: true,
             createdAt: Date().addingTimeInterval(-28800)
         )
     ]

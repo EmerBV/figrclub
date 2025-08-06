@@ -18,6 +18,8 @@ class NavigationCoordinator: ObservableObject {
     @Published var showingSettings = false
     @Published var showingEditProfile = false
     @Published var showingCreatePost = false
+    @Published var showingProductDetail = false
+    @Published var selectedProduct: MarketplaceProduct?
     
     // IDs para navegación
     @Published var selectedPostId: String?
@@ -67,6 +69,13 @@ class NavigationCoordinator: ObservableObject {
         trackNavigation("createPost")
     }
     
+    func showProductDetail(_ product: MarketplaceProduct) {
+        Logger.info("🧭 NavigationCoordinator: Showing product detail: \(product.title)")
+        selectedProduct = product
+        showingProductDetail = true
+        trackNavigation("productDetail_\(product.id)")
+    }
+    
     // MARK: - Dismiss Methods
     func dismissPostDetail() {
         Logger.info("🧭 NavigationCoordinator: Dismissing post detail")
@@ -107,6 +116,13 @@ class NavigationCoordinator: ObservableObject {
         removeFromNavigationStack("createPost")
     }
     
+    func dismissProductDetail() {
+        Logger.info("🧭 NavigationCoordinator: Dismissing product detail")
+        showingProductDetail = false
+        selectedProduct = nil
+        removeFromNavigationStack("productDetail")
+    }
+    
     func dismissAll() {
         Logger.info("🧭 NavigationCoordinator: Dismissing all presentations")
         
@@ -116,10 +132,12 @@ class NavigationCoordinator: ObservableObject {
         showingSettings = false
         showingEditProfile = false
         showingCreatePost = false
+        showingProductDetail = false // Añadir producto
         
         selectedPostId = nil
         selectedUserId = nil
         selectedUserForDetail = nil
+        selectedProduct = nil // Añadir producto
         
         navigationStack.removeAll()
     }
@@ -142,7 +160,8 @@ class NavigationCoordinator: ObservableObject {
         showingUserProfileDetail ||
         showingSettings ||
         showingEditProfile ||
-        showingCreatePost
+        showingCreatePost ||
+        showingProductDetail
     }
     
     var currentNavigationCount: Int {
@@ -170,7 +189,8 @@ class NavigationCoordinator: ObservableObject {
             dismissUserProfile()
         } else if lastNavigation.hasPrefix("userProfileDetail") {
             dismissUserProfileDetail()
-            
+        } else if lastNavigation.hasPrefix("productDetail") {
+            dismissProductDetail()
         } else if lastNavigation.hasPrefix("settings") {
             dismissSettings()
         } else if lastNavigation.hasPrefix("editProfile") {
@@ -180,132 +200,6 @@ class NavigationCoordinator: ObservableObject {
         }
     }
 }
-
-// MARK: - Create Flow Navigation Extension
-/*
- extension NavigationCoordinator {
- 
- /// Presenta el flujo de creación de contenido
- /// - Parameter user: Usuario actual
- func presentCreateFlow(for user: User) {
- Logger.info("Presenting create flow for user: \(user.username)")
- 
- // Aquí implementarías la lógica para presentar el CreateFlowView
- // Esto dependerá de cómo manejes la navegación en tu app
- 
- // Ejemplo de implementación:
- // presentSheet(.createFlow(user))
- }
- 
- /// Cierra el flujo de creación
- func dismissCreateFlow() {
- Logger.info("Dismissing create flow")
- 
- // Aquí implementarías la lógica para cerrar el CreateFlowView
- // Ejemplo:
- // dismissSheet()
- }
- 
- /// Navega a la pantalla de edición de media
- /// - Parameters:
- ///   - image: Imagen capturada (opcional)
- ///   - videoURL: URL del video capturado (opcional)
- ///   - user: Usuario actual
- func navigateToMediaEdit(image: UIImage? = nil, videoURL: URL? = nil, for user: User) {
- Logger.info("Navigating to media edit")
- 
- // Implementar navegación a pantalla de edición
- // Ejemplo:
- // push(.mediaEdit(image: image, videoURL: videoURL, user: user))
- }
- 
- /// Navega a la pantalla de configuración de cámara
- func navigateToCameraSettings() {
- Logger.info("Navigating to camera settings")
- 
- // Implementar navegación a configuración de cámara
- // Ejemplo:
- // presentSheet(.cameraSettings)
- }
- }
- 
- // MARK: - Create Flow Sheet Types (si usas enum para sheets)
- extension NavigationCoordinator {
- 
- /// Tipos de sheets específicos para el create flow
- enum CreateFlowSheet: Identifiable {
- case createFlow(User)
- case mediaEdit(image: UIImage?, videoURL: URL?, user: User)
- case cameraSettings
- case imageLibrary
- case musicSelection
- case effectsLibrary
- 
- var id: String {
- switch self {
- case .createFlow:
- return "createFlow"
- case .mediaEdit:
- return "mediaEdit"
- case .cameraSettings:
- return "cameraSettings"
- case .imageLibrary:
- return "imageLibrary"
- case .musicSelection:
- return "musicSelection"
- case .effectsLibrary:
- return "effectsLibrary"
- }
- }
- }
- }
- 
- // MARK: - Create Flow Routing (si usas enum para rutas)
- extension NavigationCoordinator {
- 
- /// Rutas específicas del create flow
- enum CreateFlowRoute: Hashable {
- case camera
- case mediaEdit(image: UIImage?, videoURL: URL?)
- case postCompose(media: MediaAsset)
- case storyEdit(media: MediaAsset)
- case reelEdit(media: MediaAsset)
- case liveStreamSetup
- 
- // Implementar Hashable
- func hash(into hasher: inout Hasher) {
- switch self {
- case .camera:
- hasher.combine("camera")
- case .mediaEdit:
- hasher.combine("mediaEdit")
- case .postCompose:
- hasher.combine("postCompose")
- case .storyEdit:
- hasher.combine("storyEdit")
- case .reelEdit:
- hasher.combine("reelEdit")
- case .liveStreamSetup:
- hasher.combine("liveStreamSetup")
- }
- }
- 
- static func == (lhs: CreateFlowRoute, rhs: CreateFlowRoute) -> Bool {
- switch (lhs, rhs) {
- case (.camera, .camera),
- (.mediaEdit, .mediaEdit),
- (.postCompose, .postCompose),
- (.storyEdit, .storyEdit),
- (.reelEdit, .reelEdit),
- (.liveStreamSetup, .liveStreamSetup):
- return true
- default:
- return false
- }
- }
- }
- }
- */
 
 // MARK: - Media Asset Model
 struct MediaAsset: Identifiable, Hashable {

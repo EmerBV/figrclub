@@ -167,6 +167,15 @@
 "apply_filter_string" = "Aplicar filtro";
 "clear_filter_string" = "Limpiar filtro";
 "filters_string" = "Filtros";
+"product_description" = "Descripción";
+"shipping_info" = "Información de envío";
+"standard_shipping" = "Envío estándar";
+"estimated_delivery" = "Entrega estimada";
+"similar_products" = "Productos similares";
+"contact_seller" = "Contactar vendedor";
+"buy_now" = "Comprar ahora";
+"message_string" = "Mensaje";
+"send_string" = "Enviar";
 
 // MARK: - Product Categories
 "category_all" = "Todos";
