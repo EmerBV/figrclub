@@ -23,6 +23,7 @@ struct ProductDetailView: View {
     @State private var showingSellerProfile = false
     @State private var showingContactSeller = false
     @State private var showingReportProduct = false
+    @State private var showingAllReviews = false
     @State private var quantity = 1
     @State private var region = MKCoordinateRegion()
     
@@ -43,17 +44,54 @@ struct ProductDetailView: View {
                     descriptionSection
                     shippingSection
                     locationMapSection
+                    reviewsSection
                     similarProductsSection
                     reportProductSection
                 }
             }
-            .navigationBarHidden(true)
-            .safeAreaInset(edge: .top) {
-                customNavigationBar
+            .navigationBarHidden(false)
+            .toolbar {
+                // Botón de back customizado
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "arrow.left")
+                            .font(.title2)
+                            .foregroundColor(.primary)
+                    }
+                }
+                
+                // Botones de acción
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    HStack(spacing: AppTheme.Spacing.medium) {
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                isFavorite.toggle()
+                            }
+                        } label: {
+                            Image(systemName: isFavorite ? "heart.fill" : "heart")
+                                .font(.title2)
+                                .foregroundColor(isFavorite ? .red : .primary)
+                        }
+                        
+                        Button {
+                            shareProduct()
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.title2)
+                                .foregroundColor(.primary)
+                        }
+                    }
+                }
             }
+            .navigationBarBackButtonHidden()
             .safeAreaInset(edge: .bottom) {
                 bottomActionBar
             }
+        }
+        .onAppear {
+            setupMapLocation()
         }
         .sheet(isPresented: $showingSellerProfile) {
             if let seller = createSellerUser() {
@@ -69,96 +107,12 @@ struct ProductDetailView: View {
                 selectedIndex: $selectedImageIndex
             )
         }
+        .sheet(isPresented: $showingAllReviews) {
+            AllReviewsView(product: product)
+        }
         .sheet(isPresented: $showingReportProduct) {
             ReportProductSheet(product: product)
         }
-        .onAppear {
-            setupMapLocation()
-        }
-    }
-    
-    // MARK: - Custom Navigation Bar
-    private var customNavigationBar: some View {
-        HStack {
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "arrow.left")
-                    .font(.title2)
-                    .themedTextColor(.primary)
-                    .padding(AppTheme.Spacing.small)
-                    .background(
-                        /*
-                         Circle()
-                         .fill(.ultraThinMaterial)
-                         */
-                        Circle()
-                            .fill(Color(.systemBackground))
-                            .shadow(
-                                color: .black.opacity(0.1),
-                                radius: 4,
-                                x: 0,
-                                y: 2
-                            )
-                    )
-            }
-            
-            Spacer()
-            
-            HStack(spacing: AppTheme.Spacing.medium) {
-                Button {
-                    // Compartir producto
-                    shareProduct()
-                } label: {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.title2)
-                        .themedTextColor(.primary)
-                        .padding(AppTheme.Spacing.small)
-                        .background(
-                            /*
-                             Circle()
-                             .fill(.ultraThinMaterial)
-                             */
-                            Circle()
-                                .fill(Color(.systemBackground))
-                                .shadow(
-                                    color: .black.opacity(0.1),
-                                    radius: 4,
-                                    x: 0,
-                                    y: 2
-                                )
-                        )
-                }
-                
-                Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        isFavorite.toggle()
-                    }
-                } label: {
-                    Image(systemName: isFavorite ? "heart.fill" : "heart")
-                        .font(.title2)
-                        .foregroundColor(isFavorite ? .red : Color.primary)
-                        .padding(AppTheme.Spacing.small)
-                        .background(
-                            /*
-                             Circle()
-                             .fill(.ultraThinMaterial)
-                             */
-                            Circle()
-                                .fill(Color(.systemBackground))
-                                .shadow(
-                                    color: .black.opacity(0.1),
-                                    radius: 4,
-                                    x: 0,
-                                    y: 2
-                                )
-                        )
-                }
-            }
-        }
-        .padding(.horizontal, AppTheme.Spacing.large)
-        .padding(.top, AppTheme.Spacing.small)
-        .background(Color.yellow)
     }
     
     // MARK: - Image Carousel Section
@@ -372,6 +326,77 @@ struct ProductDetailView: View {
         .padding(.top, AppTheme.Spacing.medium)
     }
     
+    // MARK: - Reviews Section
+    private var reviewsSection: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+            // Header con título y calificación general
+            HStack {
+                Text(localizationManager.localizedString(for: .reviewsTab))
+                    .themedFont(.titleMedium)
+                    .themedTextColor(.primary)
+                
+                Spacer()
+                
+                HStack(spacing: AppTheme.Spacing.xSmall) {
+                    Image(systemName: "star.fill")
+                        .font(.caption)
+                        .foregroundColor(.yellow)
+                    
+                    Text("4.8")
+                        .themedFont(.bodyMedium)
+                        .themedTextColor(.primary)
+                    
+                    Text("(24)")
+                        .themedFont(.bodySmall)
+                        .themedTextColor(.secondary)
+                }
+            }
+            .padding(.horizontal, AppTheme.Spacing.large)
+            
+            // Lista de 3 valoraciones
+            ForEach(ProductDetailView.sampleReviews.prefix(3), id: \.id) { review in
+                DetailReviewCard(review: review)
+                    .padding(.horizontal, AppTheme.Spacing.large)
+                
+                if review.id != ProductDetailView.sampleReviews.prefix(3).last?.id {
+                    Divider()
+                        .padding(.horizontal, AppTheme.Spacing.large)
+                }
+            }
+            
+            // Botón "Ver todas las valoraciones"
+            if ProductDetailView.sampleReviews.count > 3 {
+                Button {
+                    showingAllReviews = true
+                } label: {
+                    HStack {
+                        Text("Ver todas las valoraciones")
+                            .themedFont(.bodyMedium)
+                            .themedTextColor(.primary)
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .themedTextColor(.secondary)
+                    }
+                    .padding(.horizontal, AppTheme.Spacing.large)
+                    .padding(.vertical, AppTheme.Spacing.medium)
+                    .background(
+                        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
+                            .fill(Color(.systemGray6))
+                    )
+                    .padding(.horizontal, AppTheme.Spacing.large)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            
+            Divider()
+                .padding(.horizontal, AppTheme.Spacing.large)
+        }
+        .padding(.vertical, AppTheme.Spacing.medium)
+    }
+    
     // MARK: - Similar Products Section
     private var similarProductsSection: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
@@ -412,9 +437,6 @@ struct ProductDetailView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, AppTheme.Spacing.medium)
-                .background(.yellow)
-                
-                
             }
             .buttonStyle(PlainButtonStyle())
             .padding(.horizontal, AppTheme.Spacing.medium)
@@ -591,7 +613,7 @@ struct ReportProductSheet: View {
     ]
     
     var body: some View {
-        NavigationView {
+        FigrNavigationStack {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.large) {
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
                     Text("¿Cuál es el problema?")
@@ -653,6 +675,66 @@ struct ReportProductSheet: View {
         // Implementar envío de reporte
         
         dismiss()
+    }
+}
+
+// MARK: - Review Model
+struct ProductReview: Identifiable {
+    let id = UUID()
+    let userName: String
+    let userImage: String
+    let rating: Int
+    let comment: String
+    let date: Date
+}
+
+// MARK: - Review Card Component
+struct DetailReviewCard: View {
+    let review: ProductReview
+    
+    @EnvironmentObject private var themeManager: ThemeManager
+    
+    private var dateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
+            HStack {
+                KFImage(URL(string: review.userImage))
+                    .profileImageStyle(size: 40)
+                
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xxSmall) {
+                    Text(review.userName)
+                        .themedFont(.bodyMedium)
+                        .themedTextColor(.primary)
+                        .fontWeight(.medium)
+                    
+                    HStack(spacing: AppTheme.Spacing.xxSmall) {
+                        ForEach(0..<5) { index in
+                            Image(systemName: "star.fill")
+                                .font(.caption2)
+                                .foregroundColor(index < review.rating ? .yellow : Color(.systemGray4))
+                        }
+                        
+                        Text(dateFormatter.string(from: review.date))
+                            .themedFont(.bodyXSmall)
+                            .themedTextColor(.secondary)
+                    }
+                }
+                
+                Spacer()
+            }
+            
+            Text(review.comment)
+                .themedFont(.bodyMedium)
+                .themedTextColor(.secondary)
+                .multilineTextAlignment(.leading)
+        }
+        .padding(.vertical, AppTheme.Spacing.small)
     }
 }
 
@@ -753,7 +835,7 @@ struct ImageViewerSheet: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
+        FigrNavigationStack {
             TabView(selection: $selectedIndex) {
                 ForEach(Array(images.enumerated()), id: \.offset) { index, imageURL in
                     KFImage(URL(string: imageURL))
@@ -777,6 +859,69 @@ struct ImageViewerSheet: View {
     }
 }
 
+// MARK: - All Reviews View
+struct AllReviewsView: View {
+    let product: MarketplaceProduct
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.localizationManager) private var localizationManager
+    
+    var body: some View {
+        FigrNavigationStack {
+            FigrVerticalScrollView {
+                LazyVStack(spacing: AppTheme.Spacing.medium) {
+                    // Rating summary
+                    VStack(spacing: AppTheme.Spacing.medium) {
+                        HStack(spacing: AppTheme.Spacing.medium) {
+                            VStack(alignment: .leading, spacing: AppTheme.Spacing.xSmall) {
+                                Text("4.8")
+                                    .font(.largeTitle.weight(.bold))
+                                    .themedTextColor(.primary)
+                                
+                                HStack(spacing: AppTheme.Spacing.xxSmall) {
+                                    ForEach(0..<5) { index in
+                                        Image(systemName: "star.fill")
+                                            .font(.caption)
+                                            .foregroundColor(.yellow)
+                                    }
+                                }
+                                
+                                Text(localizationManager.localizedString(for: .basedOnString, arguments: 24))
+                                    .themedFont(.bodySmall)
+                                    .themedTextColor(.secondary)
+                            }
+                            
+                            Spacer()
+                        }
+                        
+                        Divider()
+                    }
+                    .padding(.horizontal, AppTheme.Spacing.large)
+                    
+                    // All reviews
+                    ForEach(ProductDetailView.sampleReviews, id: \.id) { review in
+                        DetailReviewCard(review: review)
+                            .padding(.horizontal, AppTheme.Spacing.large)
+                        
+                        if review.id != ProductDetailView.sampleReviews.last?.id {
+                            Divider()
+                                .padding(.horizontal, AppTheme.Spacing.large)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Todas las valoraciones")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Cerrar") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
 // MARK: - Contact Seller View
 struct ContactSellerView: View {
     let product: MarketplaceProduct
@@ -786,7 +931,7 @@ struct ContactSellerView: View {
     @State private var message = ""
     
     var body: some View {
-        NavigationView {
+        FigrNavigationStack {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.large) {
                 // Información del producto
                 HStack(spacing: AppTheme.Spacing.medium) {
@@ -965,6 +1110,68 @@ extension ProductDetailView {
             location: "Valencia",
             //isFeatured: true,
             createdAt: Date().addingTimeInterval(-28800)
+        )
+    ]
+}
+
+// MARK: - Sample Reviews Data
+extension ProductDetailView {
+    static let sampleReviews: [ProductReview] = [
+        ProductReview(
+            userName: "María García",
+            userImage: "https://picsum.photos/seed/user1/100/100",
+            rating: 5,
+            comment: "Excelente vendedor, producto en perfectas condiciones y envío rápido. Lo recomiendo totalmente.",
+            date: Date().addingTimeInterval(-86400)
+        ),
+        ProductReview(
+            userName: "Carlos López",
+            userImage: "https://picsum.photos/seed/user2/100/100",
+            rating: 4,
+            comment: "Muy contento con la compra. La figura llegó bien empaquetada y en el estado descrito.",
+            date: Date().addingTimeInterval(-172800)
+        ),
+        ProductReview(
+            userName: "Ana Martín",
+            userImage: "https://picsum.photos/seed/user3/100/100",
+            rating: 5,
+            comment: "Perfecta comunicación con el vendedor. La figura es exactamente como se veía en las fotos.",
+            date: Date().addingTimeInterval(-259200)
+        ),
+        ProductReview(
+            userName: "David Rodríguez",
+            userImage: "https://picsum.photos/seed/user4/100/100",
+            rating: 4,
+            comment: "Buena calidad y precio justo. El envío tardó un poco más de lo esperado pero llegó bien.",
+            date: Date().addingTimeInterval(-345600)
+        ),
+        ProductReview(
+            userName: "Laura Fernández",
+            userImage: "https://picsum.photos/seed/user5/100/100",
+            rating: 5,
+            comment: "¡Me encanta! Es mi segunda compra a este vendedor y siempre perfecto.",
+            date: Date().addingTimeInterval(-432000)
+        ),
+        ProductReview(
+            userName: "Miguel Santos",
+            userImage: "https://picsum.photos/seed/user6/100/100",
+            rating: 4,
+            comment: "Producto como se describía. Vendedor serio y responsable.",
+            date: Date().addingTimeInterval(-518400)
+        ),
+        ProductReview(
+            userName: "Sofia Jiménez",
+            userImage: "https://picsum.photos/seed/user7/100/100",
+            rating: 5,
+            comment: "Increíble atención al cliente. Resolvió todas mis dudas antes de la compra.",
+            date: Date().addingTimeInterval(-604800)
+        ),
+        ProductReview(
+            userName: "Pablo Moreno",
+            userImage: "https://picsum.photos/seed/user8/100/100",
+            rating: 3,
+            comment: "El producto está bien, aunque tenía pequeños detalles que no se apreciaban en las fotos.",
+            date: Date().addingTimeInterval(-691200)
         )
     ]
 }

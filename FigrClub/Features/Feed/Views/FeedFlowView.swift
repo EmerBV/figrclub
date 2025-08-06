@@ -682,7 +682,7 @@ struct PostOptionsSheet: View {
     @Environment(\.localizationManager) private var localizationManager
     
     var body: some View {
-        NavigationView {
+        FigrNavigationStack {
             VStack(spacing: 0) {
                 // Handle visual
                 RoundedRectangle(cornerRadius: 2.5)
@@ -789,7 +789,7 @@ struct PostCommentsSheet: View {
     @State private var allComments: [SamplePost.Comment] = []
     
     var body: some View {
-        NavigationView {
+        FigrNavigationStack {
             VStack(spacing: 0) {
                 RoundedRectangle(cornerRadius: 2.5)
                     .fill(Color.secondary.opacity(0.3))
