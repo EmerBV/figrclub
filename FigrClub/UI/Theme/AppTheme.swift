@@ -227,7 +227,7 @@ struct FigrNavigationStack<Content: View>: View {
                 // Fondo temático automático
                 themeManager.currentBackgroundColor
                     .ignoresSafeArea()
-                
+
                 content
             }
         }

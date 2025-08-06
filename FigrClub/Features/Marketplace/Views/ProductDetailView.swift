@@ -314,7 +314,7 @@ struct ProductDetailView: View {
             
             ProductLocationMapView(
                 region: $region,
-                locationName: product.location ?? "Ubicación"
+                locationName: product.location ?? localizationManager.localizedString(for: .locationString)
             )
             .frame(height: 100)
             .cornerRadius(AppTheme.CornerRadius.medium)
@@ -370,7 +370,7 @@ struct ProductDetailView: View {
                     showingAllReviews = true
                 } label: {
                     HStack {
-                        Text("Ver todas las valoraciones")
+                        Text(localizationManager.localizedString(for: .seeAllReviews))
                             .themedFont(.bodyMedium)
                             .themedTextColor(.primary)
                         
@@ -441,7 +441,7 @@ struct ProductDetailView: View {
             .buttonStyle(PlainButtonStyle())
             .padding(.horizontal, AppTheme.Spacing.medium)
         }
-        .padding(.bottom, AppTheme.Spacing.xxLarge)
+        .padding(.bottom, AppTheme.Spacing.medium)
     }
     
     // MARK: - Bottom Action Bar
@@ -616,7 +616,7 @@ struct ReportProductSheet: View {
         FigrNavigationStack {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.large) {
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
-                    Text("¿Cuál es el problema?")
+                    Text(localizationManager.localizedString(for: .whatsTheProblem))
                         .themedFont(.titleMedium)
                         .themedTextColor(.primary)
                     
@@ -633,7 +633,7 @@ struct ReportProductSheet: View {
                 }
                 
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
-                    Text("Comentarios adicionales (opcional)")
+                    Text(localizationManager.localizedString(for: .additionalComments))
                         .themedFont(.titleMedium)
                         .themedTextColor(.primary)
                     
@@ -649,7 +649,7 @@ struct ReportProductSheet: View {
                 Spacer()
             }
             .padding(AppTheme.Spacing.large)
-            .navigationTitle("Reportar producto")
+            .navigationTitle(localizationManager.localizedString(for: .reportProduct))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -659,7 +659,7 @@ struct ReportProductSheet: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Enviar") {
+                    Button(localizationManager.localizedString(for: .sendString)) {
                         submitReport()
                     }
                     .disabled(selectedReportReason == nil)
@@ -744,10 +744,12 @@ struct ReportReasonRow: View {
     let isSelected: Bool
     let onTap: () -> Void
     
+    @Environment(\.localizationManager) private var localizationManager
+    
     var body: some View {
         Button(action: onTap) {
             HStack {
-                Text(reason.displayName)
+                Text(localizationManager.localizedString(for: reason.localizedStringKey))
                     .themedFont(.bodyMedium)
                     .themedTextColor(.primary)
                     .multilineTextAlignment(.leading)
@@ -774,6 +776,7 @@ enum ReportReason: CaseIterable {
     case prohibitedItem
     case other
     
+    /*
     var displayName: String {
         switch self {
         case .inappropriateContent:
@@ -788,6 +791,24 @@ enum ReportReason: CaseIterable {
             return "Artículo prohibido"
         case .other:
             return "Otro motivo"
+        }
+    }
+     */
+    
+    var localizedStringKey: LocalizedStringKey {
+        switch self {
+        case .inappropriateContent:
+            return .innapropriateContent
+        case .scamOrFraud:
+            return .scamOrFraud
+        case .counterfeits:
+            return .counterfeitProduct
+        case .incorrectInformation:
+            return .incorrectInformation
+        case .prohibitedItem:
+            return .prohibitedItem
+        case .other:
+            return .otherReason
         }
     }
 }
@@ -834,6 +855,8 @@ struct ImageViewerSheet: View {
     @Binding var selectedIndex: Int
     @Environment(\.dismiss) private var dismiss
     
+    @Environment(\.localizationManager) private var localizationManager
+    
     var body: some View {
         FigrNavigationStack {
             TabView(selection: $selectedIndex) {
@@ -845,11 +868,10 @@ struct ImageViewerSheet: View {
                 }
             }
             .tabViewStyle(.page)
-            .background(Color.black)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cerrar") {
+                    Button(localizationManager.localizedString(for: .close)) {
                         dismiss()
                     }
                     .foregroundColor(.white)
@@ -909,11 +931,11 @@ struct AllReviewsView: View {
                     }
                 }
             }
-            .navigationTitle("Todas las valoraciones")
+            .navigationTitle(localizationManager.localizedString(for: .allReviews))
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cerrar") {
+                    Button(localizationManager.localizedString(for: .close)) {
                         dismiss()
                     }
                 }

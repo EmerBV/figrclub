@@ -873,7 +873,6 @@ struct PostCommentsSheet: View {
                 }
                 .padding(.horizontal, AppTheme.Spacing.large)
                 .padding(.vertical, AppTheme.Spacing.medium)
-                .background(Color(UIColor.systemBackground))
             }
             
             .navigationTitle("")

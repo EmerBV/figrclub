@@ -182,6 +182,17 @@ enum LocalizedStringKey: String, CaseIterable {
     case messageString = "message_string"
     case sendString = "send_string"
     case reportProduct = "report_product"
+    case allReviews = "all_reviews"
+    case seeAllReviews = "see_all_reviews"
+    case whatsTheProblem = "whats_the_problem"
+    case additionalComments = "additional_comments"
+    
+    case innapropriateContent = "innapropriate_content"
+    case scamOrFraud = "scam_or_fraud"
+    case counterfeitProduct = "counterfeit_product"
+    case incorrectInformation = "incorrect_information"
+    case prohibitedItem = "prohibited_item"
+    case otherReason = "other_reason"
     
     // MARK: - Product Categories
     case categoryAll = "category_all"
@@ -443,6 +454,16 @@ enum LocalizedStringKey: String, CaseIterable {
         case .messageString: return "Mensaje"
         case .sendString: return "Enviar"
         case .reportProduct: return "Denunciar producto"
+        case .allReviews: return "Todas las valoraciones"
+        case .seeAllReviews: return "Ver todas las valoraciones"
+        case .whatsTheProblem: return "¿Cuál es el problema?"
+        case .additionalComments: return "Comentarios adicionales (opcional)"
+        case .innapropriateContent: return "Contenido inapropiado"
+        case .scamOrFraud: return "Estafa o fraude"
+        case .counterfeitProduct: return "Producto falsificado"
+        case .incorrectInformation: return "Información incorrecta"
+        case .prohibitedItem: return "Artículo prohibido"
+        case .otherReason: return "Otro motivo"
             
             // Product Categories
         case .categoryAll: return "Todos"

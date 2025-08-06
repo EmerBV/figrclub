@@ -177,6 +177,16 @@
 "message_string" = "Mensaje";
 "send_string" = "Enviar";
 "report_product" = "Denunciar producto";
+"all_reviews" = "Todas las valoraciones";
+"see_all_reviews" = "Ver todas las valoraciones";
+"whats_the_problem" = "¿Cuál es el problema?";
+"additional_comments" = "Comentarios adicionales (opcional)";
+"innapropriate_content" = "Contenido inapropiado";
+"scam_or_fraud" = "Estafa o fraude";
+"counterfeit_product" = "Producto falsificado";
+"incorrect_information" = "Información incorrecta";
+"prohibited_item" = "Artículo prohibido";
+"other_reason" = "Otro motivo";
 
 // MARK: - Product Categories
 "category_all" = "Todos";
