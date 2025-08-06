@@ -176,6 +176,7 @@
 "buy_now" = "Buy now";
 "message_string" = "Message";
 "send_string" = "Send";
+"report_product" = "Report product";
 
 // MARK: - Product Categories
 "category_all" = "All";

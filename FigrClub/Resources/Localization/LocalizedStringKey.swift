@@ -181,6 +181,7 @@ enum LocalizedStringKey: String, CaseIterable {
     case buyNow = "buy_now"
     case messageString = "message_string"
     case sendString = "send_string"
+    case reportProduct = "report_product"
     
     // MARK: - Product Categories
     case categoryAll = "category_all"
@@ -432,7 +433,6 @@ enum LocalizedStringKey: String, CaseIterable {
         case .applyFilterString: return "Aplicar filtro"
         case .clearFilterString: return "Limpiar filtro"
         case .filtersString: return "Filtros"
-            
         case .productDescription: return "Descripción"
         case .shippingInfo: return "Información de envío"
         case .standardShipping: return "Envío estándar"
@@ -442,6 +442,7 @@ enum LocalizedStringKey: String, CaseIterable {
         case .buyNow: return "Comprar ahora"
         case .messageString: return "Mensaje"
         case .sendString: return "Enviar"
+        case .reportProduct: return "Denunciar producto"
             
             // Product Categories
         case .categoryAll: return "Todos"

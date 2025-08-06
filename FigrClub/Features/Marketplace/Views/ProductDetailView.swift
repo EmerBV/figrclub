@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Kingfisher
+import MapKit
 
 struct ProductDetailView: View {
     let product: MarketplaceProduct
@@ -21,7 +22,9 @@ struct ProductDetailView: View {
     @State private var showingImageViewer = false
     @State private var showingSellerProfile = false
     @State private var showingContactSeller = false
+    @State private var showingReportProduct = false
     @State private var quantity = 1
+    @State private var region = MKCoordinateRegion()
     
     // Imágenes de ejemplo (en una app real, esto vendría del producto)
     private var productImages: [String] {
@@ -32,14 +35,16 @@ struct ProductDetailView: View {
     
     var body: some View {
         FigrNavigationStack {
-            ScrollView {
+            FigrVerticalScrollView {
                 LazyVStack(spacing: 0) {
                     imageCarouselSection
                     productInfoSection
                     sellerInfoSection
                     descriptionSection
                     shippingSection
+                    locationMapSection
                     similarProductsSection
+                    reportProductSection
                 }
             }
             .navigationBarHidden(true)
@@ -64,6 +69,12 @@ struct ProductDetailView: View {
                 selectedIndex: $selectedImageIndex
             )
         }
+        .sheet(isPresented: $showingReportProduct) {
+            ReportProductSheet(product: product)
+        }
+        .onAppear {
+            setupMapLocation()
+        }
     }
     
     // MARK: - Custom Navigation Bar
@@ -72,13 +83,23 @@ struct ProductDetailView: View {
             Button {
                 dismiss()
             } label: {
-                Image(systemName: "chevron.left")
+                Image(systemName: "arrow.left")
                     .font(.title2)
                     .themedTextColor(.primary)
-                    .padding(12)
+                    .padding(AppTheme.Spacing.small)
                     .background(
+                        /*
+                         Circle()
+                         .fill(.ultraThinMaterial)
+                         */
                         Circle()
-                            .fill(.ultraThinMaterial)
+                            .fill(Color(.systemBackground))
+                            .shadow(
+                                color: .black.opacity(0.1),
+                                radius: 4,
+                                x: 0,
+                                y: 2
+                            )
                     )
             }
             
@@ -92,10 +113,20 @@ struct ProductDetailView: View {
                     Image(systemName: "square.and.arrow.up")
                         .font(.title2)
                         .themedTextColor(.primary)
-                        .padding(12)
+                        .padding(AppTheme.Spacing.small)
                         .background(
+                            /*
+                             Circle()
+                             .fill(.ultraThinMaterial)
+                             */
                             Circle()
-                                .fill(.ultraThinMaterial)
+                                .fill(Color(.systemBackground))
+                                .shadow(
+                                    color: .black.opacity(0.1),
+                                    radius: 4,
+                                    x: 0,
+                                    y: 2
+                                )
                         )
                 }
                 
@@ -107,16 +138,27 @@ struct ProductDetailView: View {
                     Image(systemName: isFavorite ? "heart.fill" : "heart")
                         .font(.title2)
                         .foregroundColor(isFavorite ? .red : Color.primary)
-                        .padding(12)
+                        .padding(AppTheme.Spacing.small)
                         .background(
+                            /*
+                             Circle()
+                             .fill(.ultraThinMaterial)
+                             */
                             Circle()
-                                .fill(.ultraThinMaterial)
+                                .fill(Color(.systemBackground))
+                                .shadow(
+                                    color: .black.opacity(0.1),
+                                    radius: 4,
+                                    x: 0,
+                                    y: 2
+                                )
                         )
                 }
             }
         }
         .padding(.horizontal, AppTheme.Spacing.large)
         .padding(.top, AppTheme.Spacing.small)
+        .background(Color.yellow)
     }
     
     // MARK: - Image Carousel Section
@@ -298,6 +340,38 @@ struct ProductDetailView: View {
         .padding(.horizontal, AppTheme.Spacing.large)
     }
     
+    // MARK: - Location Map Section
+    private var locationMapSection: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+            HStack {
+                Text(localizationManager.localizedString(for: .locationString))
+                    .themedFont(.titleMedium)
+                    .themedTextColor(.primary)
+                
+                Spacer()
+                
+                if let location = product.location {
+                    Text(location)
+                        .themedFont(.bodyMedium)
+                        .themedTextColor(.secondary)
+                }
+            }
+            .padding(.horizontal, AppTheme.Spacing.large)
+            
+            ProductLocationMapView(
+                region: $region,
+                locationName: product.location ?? "Ubicación"
+            )
+            .frame(height: 100)
+            .cornerRadius(AppTheme.CornerRadius.medium)
+            .padding(.horizontal, AppTheme.Spacing.large)
+            
+            Divider()
+                .padding(.horizontal, AppTheme.Spacing.large)
+        }
+        .padding(.top, AppTheme.Spacing.medium)
+    }
+    
     // MARK: - Similar Products Section
     private var similarProductsSection: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
@@ -319,6 +393,32 @@ struct ProductDetailView: View {
             }
         }
         .padding(.top, AppTheme.Spacing.medium)
+        .padding(.bottom, AppTheme.Spacing.xxLarge)
+    }
+    
+    // MARK: - Report Product Section
+    private var reportProductSection: some View {
+        VStack(spacing: AppTheme.Spacing.large) {
+            Divider()
+                .padding(.horizontal, AppTheme.Spacing.large)
+            
+            Button {
+                showingReportProduct = true
+            } label: {
+                HStack {
+                    Text(localizationManager.localizedString(for: .reportProduct))
+                        .themedFont(.titleMedium)
+                        .foregroundColor(.figrButtonBlueText)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, AppTheme.Spacing.medium)
+                .background(.yellow)
+                
+                
+            }
+            .buttonStyle(PlainButtonStyle())
+            .padding(.horizontal, AppTheme.Spacing.medium)
+        }
         .padding(.bottom, AppTheme.Spacing.xxLarge)
     }
     
@@ -411,6 +511,32 @@ struct ProductDetailView: View {
         )
     }
     
+    private func setupMapLocation() {
+        // Configurar coordenadas basadas en la ubicación del producto
+        // En una implementación real, estas coordenadas vendrían del servidor
+        let coordinates = getCoordinatesForLocation(product.location)
+        region = MKCoordinateRegion(
+            center: coordinates,
+            span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+        )
+    }
+    
+    private func getCoordinatesForLocation(_ location: String?) -> CLLocationCoordinate2D {
+        // Mapeo de ubicaciones españolas a coordenadas
+        // En una app real, esto se haría mediante geocoding
+        let locationCoordinates: [String: CLLocationCoordinate2D] = [
+            "Madrid": CLLocationCoordinate2D(latitude: 40.4168, longitude: -3.7038),
+            "Barcelona": CLLocationCoordinate2D(latitude: 41.3851, longitude: 2.1734),
+            "Valencia": CLLocationCoordinate2D(latitude: 39.4699, longitude: -0.3763),
+            "Sevilla": CLLocationCoordinate2D(latitude: 37.3886, longitude: -5.9823),
+            "Bilbao": CLLocationCoordinate2D(latitude: 43.2627, longitude: -2.9253),
+            "Zaragoza": CLLocationCoordinate2D(latitude: 41.6488, longitude: -0.8891),
+            "Málaga": CLLocationCoordinate2D(latitude: 36.7213, longitude: -4.4214)
+        ]
+        
+        return locationCoordinates[location ?? "Madrid"] ?? CLLocationCoordinate2D(latitude: 40.4168, longitude: -3.7038)
+    }
+    
     private func shareProduct() {
         Logger.info("🔗 Sharing product: \(product.title)")
         // Implementar share sheet
@@ -419,6 +545,168 @@ struct ProductDetailView: View {
     private func buyProduct() {
         Logger.info("🛒 Buy product: \(product.title)")
         // Implementar flujo de compra
+    }
+}
+
+// MARK: - Product Location Map View
+struct ProductLocationMapView: View {
+    @Binding var region: MKCoordinateRegion
+    let locationName: String
+    
+    var body: some View {
+        Map(coordinateRegion: $region, annotationItems: [ProductLocationAnnotation(coordinate: region.center, name: locationName)]) { annotation in
+            MapMarker(coordinate: annotation.coordinate, tint: .figrBlueAccent)
+        }
+        .disabled(true) // Hacer el mapa de solo lectura
+        .overlay(
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
+                .stroke(Color(.systemGray5), lineWidth: 1)
+        )
+    }
+}
+
+// MARK: - Product Location Annotation
+struct ProductLocationAnnotation: Identifiable {
+    let id = UUID()
+    let coordinate: CLLocationCoordinate2D
+    let name: String
+}
+
+// MARK: - Report Product Sheet
+struct ReportProductSheet: View {
+    let product: MarketplaceProduct
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.localizationManager) private var localizationManager
+    
+    @State private var selectedReportReason: ReportReason?
+    @State private var additionalComments = ""
+    
+    private let reportReasons: [ReportReason] = [
+        .inappropriateContent,
+        .scamOrFraud,
+        .counterfeits,
+        .incorrectInformation,
+        .prohibitedItem,
+        .other
+    ]
+    
+    var body: some View {
+        NavigationView {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.large) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+                    Text("¿Cuál es el problema?")
+                        .themedFont(.titleMedium)
+                        .themedTextColor(.primary)
+                    
+                    LazyVStack(spacing: AppTheme.Spacing.small) {
+                        ForEach(reportReasons, id: \.self) { reason in
+                            ReportReasonRow(
+                                reason: reason,
+                                isSelected: selectedReportReason == reason
+                            ) {
+                                selectedReportReason = reason
+                            }
+                        }
+                    }
+                }
+                
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+                    Text("Comentarios adicionales (opcional)")
+                        .themedFont(.titleMedium)
+                        .themedTextColor(.primary)
+                    
+                    TextEditor(text: $additionalComments)
+                        .frame(minHeight: 100)
+                        .padding(AppTheme.Spacing.small)
+                        .background(
+                            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
+                                .stroke(Color(.systemGray4), lineWidth: 1)
+                        )
+                }
+                
+                Spacer()
+            }
+            .padding(AppTheme.Spacing.large)
+            .navigationTitle("Reportar producto")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(localizationManager.localizedString(for: .cancel)) {
+                        dismiss()
+                    }
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Enviar") {
+                        submitReport()
+                    }
+                    .disabled(selectedReportReason == nil)
+                }
+            }
+        }
+    }
+    
+    private func submitReport() {
+        guard let reason = selectedReportReason else { return }
+        
+        Logger.info("🚨 Product reported: \(product.title), Reason: \(reason)")
+        // Implementar envío de reporte
+        
+        dismiss()
+    }
+}
+
+// MARK: - Report Reason Row
+struct ReportReasonRow: View {
+    let reason: ReportReason
+    let isSelected: Bool
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            HStack {
+                Text(reason.displayName)
+                    .themedFont(.bodyMedium)
+                    .themedTextColor(.primary)
+                    .multilineTextAlignment(.leading)
+                
+                Spacer()
+                
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.title3)
+                    .foregroundColor(isSelected ? .figrBlueAccent : .gray)
+            }
+            .padding(.vertical, AppTheme.Spacing.small)
+            .background(Color.clear)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - Report Reason Enum
+enum ReportReason: CaseIterable {
+    case inappropriateContent
+    case scamOrFraud
+    case counterfeits
+    case incorrectInformation
+    case prohibitedItem
+    case other
+    
+    var displayName: String {
+        switch self {
+        case .inappropriateContent:
+            return "Contenido inapropiado"
+        case .scamOrFraud:
+            return "Estafa o fraude"
+        case .counterfeits:
+            return "Producto falsificado"
+        case .incorrectInformation:
+            return "Información incorrecta"
+        case .prohibitedItem:
+            return "Artículo prohibido"
+        case .other:
+            return "Otro motivo"
+        }
     }
 }
 
