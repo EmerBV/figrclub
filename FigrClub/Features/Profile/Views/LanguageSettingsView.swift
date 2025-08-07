@@ -33,8 +33,8 @@ struct LanguageSettingsView: View {
                 // Save Button
                 saveButtonSection
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 20)
+            .padding(.horizontal, AppTheme.Padding.xLarge)
+            .padding(.top, AppTheme.Padding.screenPadding)
             .navigationTitle(localizationManager.localizedString(for: .changeLanguage))
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
@@ -68,11 +68,11 @@ struct LanguageSettingsView: View {
             Text(localizationManager.localizedString(for: .language))
                 .font(.title2)
                 .fontWeight(.semibold)
-                .foregroundColor(.primary)
+                .themedTextColor(.primary)
             
             Text("Selecciona tu idioma preferido")
                 .font(.body)
-                .foregroundColor(.secondary)
+                .themedTextColor(.secondary)
                 .multilineTextAlignment(.center)
         }
     }
@@ -98,11 +98,11 @@ struct LanguageSettingsView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(language.displayName)
                         .font(.headline)
-                        .foregroundColor(.primary)
+                        .themedTextColor(.primary)
                     
                     Text(language.nativeName)
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .themedTextColor(.secondary)
                 }
                 
                 Spacer()
@@ -118,13 +118,13 @@ struct LanguageSettingsView: View {
                         .foregroundColor(.gray)
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+            .padding(.horizontal, AppTheme.Padding.screenPadding)
+            .padding(.vertical, AppTheme.Padding.large)
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
                     .fill(selectedLanguage == language ? Color.blue.opacity(0.1) : Color(.systemGray6))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
                             .stroke(selectedLanguage == language ? Color.blue : Color.clear, lineWidth: 2)
                     )
             )
@@ -141,9 +141,9 @@ struct LanguageSettingsView: View {
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
+                    .padding(.vertical, AppTheme.Padding.large)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
                             .fill(hasLanguageChanged ? .blue : .gray)
                     )
             }
@@ -152,7 +152,7 @@ struct LanguageSettingsView: View {
             if localizationManager.isSystemLanguageDetected {
                 Text("Idioma detectado automáticamente: \(localizationManager.currentLanguage.displayName)")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .themedTextColor(.secondary)
                     .multilineTextAlignment(.center)
             }
         }

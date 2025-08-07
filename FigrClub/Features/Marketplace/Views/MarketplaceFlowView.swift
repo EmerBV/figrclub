@@ -80,22 +80,13 @@ struct MarketplaceFlowView: View {
                     }
                 }
             }
-            /*
-             .padding(AppTheme.Spacing.large)
-             .background(Color(.systemGray6))
-             .cornerRadius(AppTheme.CornerRadius.medium)
-             */
-            .padding(AppTheme.Spacing.medium)
+            .padding(AppTheme.Padding.medium)
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
                     .fill(Color(.systemGray6))
             )
         }
-        /*
-         .padding(.horizontal, AppTheme.Spacing.large)
-         .padding(.top, AppTheme.Spacing.large)
-         */
-        .padding(.horizontal, AppTheme.Spacing.large)
+        .padding(.horizontal, AppTheme.Padding.large)
         
     }
     
@@ -115,12 +106,9 @@ struct MarketplaceFlowView: View {
                         }
                     }
                 }
-                .padding(.horizontal, AppTheme.Spacing.large)
+                .padding(.horizontal, AppTheme.Padding.large)
             }
-            .padding(.vertical, AppTheme.Spacing.small)
-            
-            Divider()
-                .background(themeManager.currentSecondaryTextColor.opacity(0.3))
+            .padding(.vertical, AppTheme.Padding.small)
         }
     }
     
@@ -150,7 +138,7 @@ struct MarketplaceFlowView: View {
                 .themedFont(.titleSmall)
                 .foregroundColor(Color.figrBlueAccent)
             }
-            .padding(.horizontal, AppTheme.Spacing.large)
+            .padding(.horizontal, AppTheme.Padding.large)
             
             FigrHorizontalScrollView {
                 HStack(spacing: AppTheme.Spacing.large) {
@@ -161,7 +149,7 @@ struct MarketplaceFlowView: View {
                         }
                     }
                 }
-                .padding(.horizontal, AppTheme.Spacing.large)
+                .padding(.horizontal, AppTheme.Padding.large)
             }
         }
     }
@@ -181,8 +169,8 @@ struct MarketplaceFlowView: View {
                     .font(.system(size: 14))
                     .themedTextColor(.secondary)
             }
-            .padding(.horizontal, AppTheme.Spacing.large)
-            .padding(.vertical, AppTheme.Spacing.medium)
+            .padding(.horizontal, AppTheme.Padding.large)
+            .padding(.vertical, AppTheme.Padding.medium)
             
             // Grid de productos
             LazyVGrid(
@@ -196,9 +184,9 @@ struct MarketplaceFlowView: View {
                     }
                 }
             }
-            .padding(.horizontal, AppTheme.Spacing.large)
+            .padding(.horizontal, AppTheme.Padding.large)
         }
-        .padding(.bottom, AppTheme.Spacing.large)
+        .padding(.bottom, AppTheme.Padding.large)
     }
     
     // MARK: - Computed Properties
@@ -243,8 +231,8 @@ struct CategoryChip: View {
             Text(localizationManager.localizedString(for: category.localizedStringKey))
                 .themedFont(.titleSmall)
                 .foregroundColor(isSelected ? .white : .primary)
-                .padding(.horizontal, AppTheme.Spacing.large)
-                .padding(.vertical, AppTheme.Spacing.small)
+                .padding(.horizontal, AppTheme.Padding.large)
+                .padding(.vertical, AppTheme.Padding.small)
                 .background(
                     RoundedRectangle(cornerRadius: 20)
                         .fill(isSelected ? Color.figrBlueAccent : Color(.systemGray6))
@@ -347,7 +335,7 @@ struct ProductCard: View {
                         Image(systemName: isFavorite ? "heart.fill" : "heart")
                             .font(.system(size: 16))
                             .foregroundColor(isFavorite ? .red : .white)
-                            .padding(8)
+                            .padding(AppTheme.Spacing.small)
                             .background(
                                 Circle()
                                     .fill(Color.black.opacity(0.3))
@@ -377,10 +365,10 @@ struct ProductCard: View {
                     Text(product.condition.displayName)
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.white)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
+                        .padding(.horizontal, AppTheme.Padding.smallPadding)
+                        .padding(.vertical, AppTheme.Padding.xxxSmall)
                         .background(
-                            RoundedRectangle(cornerRadius: 4)
+                            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xSmall)
                                 .fill(product.condition.color)
                         )
                     
@@ -409,7 +397,7 @@ struct ProductCard: View {
                         }
                     }
                 }
-                .padding(4)
+                .padding(AppTheme.Padding.xSmall)
             }
         }
         .buttonStyle(PlainButtonStyle())
@@ -432,7 +420,7 @@ struct FiltersSheet: View {
     
     var body: some View {
         FigrNavigationStack {
-            VStack(alignment: .leading, spacing: AppTheme.Spacing.screenPadding) {
+            VStack(alignment: .leading, spacing: AppTheme.Padding.screenPadding) {
                 // Categorías
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
                     Text(localizationManager.localizedString(for: .categoryString))
@@ -450,8 +438,8 @@ struct FiltersSheet: View {
                                 Text(localizationManager.localizedString(for: category.localizedStringKey))
                                     .themedFont(.buttonSmall)
                                     .foregroundColor(selectedCategory == category ? .white : .primary)
-                                    .padding(.horizontal, AppTheme.Spacing.medium)
-                                    .padding(.vertical, AppTheme.Spacing.small)
+                                    .padding(.horizontal, AppTheme.Padding.medium)
+                                    .padding(.vertical, AppTheme.Padding.small)
                                     .frame(maxWidth: .infinity)
                                     .background(
                                         RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
@@ -479,7 +467,7 @@ struct FiltersSheet: View {
                     .foregroundColor(.figrButtonBlueText)
                 }
             }
-            .padding(20)
+            .padding(AppTheme.Padding.screenPadding)
             .navigationTitle(localizationManager.localizedString(for: .filtersString))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

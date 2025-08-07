@@ -100,7 +100,7 @@ struct ThemedTextColorModifier: ViewModifier {
     
     func body(content: Content) -> some View {
         content
-            .foregroundColor(colorForLevel(level))
+            .foregroundStyle(colorForLevel(level))
     }
     
     private func colorForLevel(_ level: TextColorLevel) -> Color {
@@ -161,8 +161,8 @@ struct ThemedTextFieldModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .themedFont(.bodyMedium)
-            .padding(.horizontal, AppTheme.Spacing.large)
-            .padding(.vertical, AppTheme.Spacing.medium)
+            .padding(.horizontal, AppTheme.Padding.large)
+            .padding(.vertical, AppTheme.Padding.medium)
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.input)
                     .fill(themeManager.currentCardColor)
@@ -228,8 +228,8 @@ struct FigrSecondaryButtonModifier: ViewModifier {
         content
             .themedFont(.buttonMedium)
             .foregroundColor(themeManager.accentColor)
-            .padding(.horizontal, AppTheme.Spacing.xLarge)
-            .padding(.vertical, AppTheme.Spacing.large)
+            .padding(.horizontal, AppTheme.Padding.xLarge)
+            .padding(.vertical, AppTheme.Padding.large)
             .background(themeManager.currentCardColor)
             .cornerRadius(AppTheme.CornerRadius.button)
             .overlay(
@@ -246,8 +246,8 @@ struct FigrOutlineButtonModifier: ViewModifier {
         content
             .themedFont(.buttonMedium)
             .themedTextColor(.primary)
-            .padding(.horizontal, AppTheme.Spacing.xLarge)
-            .padding(.vertical, AppTheme.Spacing.large)
+            .padding(.horizontal, AppTheme.Padding.xLarge)
+            .padding(.vertical, AppTheme.Padding.large)
             .background(Color.clear)
             .cornerRadius(AppTheme.CornerRadius.button)
             .overlay(
@@ -272,6 +272,7 @@ extension View {
 }
 
 struct FigrLoadingModifier: ViewModifier {
+    @Environment(\.localizationManager) private var localizationManager
     @EnvironmentObject private var themeManager: ThemeManager
     let isLoading: Bool
     
@@ -288,7 +289,7 @@ struct FigrLoadingModifier: ViewModifier {
                                     .progressViewStyle(CircularProgressViewStyle(tint: themeManager.accentColor))
                                     .scaleEffect(1.2)
                                 
-                                Text("Cargando...")
+                                Text(localizationManager.localizedString(for: .loading))
                                     .themedFont(.bodyMedium)
                                     .themedTextColor(.secondary)
                             }
@@ -466,10 +467,10 @@ struct DebugThemeInfoModifier: ViewModifier {
                     Text("Contrast: \(themeManager.isHighContrastEnabled ? "On" : "Off")")
                 }
                     .font(.caption2)
-                    .padding(8)
+                    .padding(AppTheme.Padding.small)
                     .background(.black.opacity(0.8))
                     .foregroundColor(.white)
-                    .cornerRadius(8),
+                    .cornerRadius(AppTheme.CornerRadius.small),
                 alignment: .topTrailing
             )
     }
@@ -489,10 +490,10 @@ struct DebugInfoView: View {
             Text("Colors: \(themeManager.colorScheme == .dark ? "Dark" : "Light")")
         }
         .font(.caption2)
-        .padding(8)
+        .padding(AppTheme.Padding.small)
         .background(.black.opacity(0.8))
         .foregroundColor(.white)
-        .cornerRadius(8)
+        .cornerRadius(AppTheme.CornerRadius.small)
     }
 }
 #endif
@@ -550,14 +551,18 @@ struct FigrTapAnimationModifier: ViewModifier {
 // MARK: - Layout Extensions
 
 extension View {
+    
+    func figrPadding(_ size: AppTheme.Padding.Size = .large) -> some View {
+        self.padding(size.value)
+    }
     /// Aplica padding estándar de pantalla
     func figrScreenPadding() -> some View {
-        self.padding(.horizontal, AppTheme.Spacing.screenPadding)
+        self.padding(.horizontal, AppTheme.Padding.screenPadding)
     }
     
     /// Aplica padding de sección
     func figrSectionPadding() -> some View {
-        self.padding(.vertical, AppTheme.Spacing.xLarge)
+        self.padding(.vertical, AppTheme.Padding.xLarge)
     }
     
     /// Aplica espaciado estándar
@@ -577,7 +582,7 @@ extension View {
     }
     
     /// Aplica padding de tarjeta FigrClub
-    func figrCardPadding(_ padding: CGFloat = AppTheme.Spacing.large) -> some View {
+    func figrCardPadding(_ padding: CGFloat = AppTheme.Padding.large) -> some View {
         self.padding(padding)
     }
     
@@ -600,15 +605,47 @@ extension View {
     }
     
     func figrCardPadding() -> some View {
-        self.padding(AppTheme.Spacing.large)
+        self.padding(AppTheme.Padding.large)
     }
     
     func figrSectionSpacing() -> some View {
-        self.padding(.bottom, AppTheme.Spacing.xLarge)
+        self.padding(.bottom, AppTheme.Padding.xLarge)
     }
     
     func figrScreenContainer() -> some View {
         self.modifier(ScreenContainerModifier())
+    }
+}
+
+// MARK: - Padding Size Extension
+
+extension AppTheme.Padding {
+    enum Size {
+        case xxxSmall, xxSmall, xSmall, small, medium, large, xLarge, xxLarge, xxxLarge
+        
+        var value: CGFloat {
+            switch self {
+                
+            case .xxxSmall:
+                return AppTheme.Padding.xxxSmall
+            case .xxSmall:
+                return AppTheme.Padding.xxSmall
+            case .xSmall:
+                return AppTheme.Padding.xSmall
+            case .small:
+                return AppTheme.Padding.small
+            case .medium:
+                return AppTheme.Padding.medium
+            case .large:
+                return AppTheme.Padding.large
+            case .xLarge:
+                return AppTheme.Padding.xLarge
+            case .xxLarge:
+                return AppTheme.Padding.xxLarge
+            case .xxxLarge:
+                return AppTheme.Padding.xxxLarge
+            }
+        }
     }
 }
 

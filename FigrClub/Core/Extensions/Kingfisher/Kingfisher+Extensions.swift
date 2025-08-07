@@ -262,7 +262,7 @@ struct ImageErrorView: View {
             
             Text("Error al cargar imagen")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .themedTextColor(.secondary)
             
             if let retryAction = retryAction {
                 Button("Reintentar") {

@@ -125,9 +125,14 @@ struct MainTabView: View {
     private var customTabBar: some View {
         VStack(spacing: 0) {
             // Top border
+            /*
             Rectangle()
-                .fill(themeManager.colorScheme == .dark ? Color.figrDarkTextTertiary.opacity(0.2) : Color(.separator))
+                .fill(themeManager.currentBorderColor)
                 .frame(height: 0.5)
+             */
+            
+            Divider()
+                .background(themeManager.currentBorderColor)
             
             // Tab bar content
             HStack {
@@ -149,9 +154,9 @@ struct MainTabView: View {
                     .buttonStyle(PlainButtonStyle())
                 }
             }
-            .padding(.horizontal, AppTheme.Spacing.large)
-            .padding(.top, AppTheme.Spacing.small)
-            .padding(.bottom, AppTheme.Spacing.small)
+            .padding(.horizontal, AppTheme.Padding.large)
+            .padding(.top, AppTheme.Padding.small)
+            .padding(.bottom, AppTheme.Padding.small)
         }
         .shadow(
             color: themeManager.colorScheme == .dark ?

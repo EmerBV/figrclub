@@ -125,7 +125,7 @@ struct ContentView: View {
                 .progressViewStyle(CircularProgressViewStyle(tint: themeManager.accentColor))
                 .scaleEffect(1.2)
         }
-        .padding(.horizontal, AppTheme.Spacing.xLarge)
+        .padding(.horizontal, AppTheme.Padding.xLarge)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(themeManager.currentBackgroundColor)
     }
@@ -178,10 +178,10 @@ struct ContentView: View {
                         .buttonStyle(.primary)
                         .scaleEffect(0.8)
                     }
-                    .padding(8)
+                    .padding(AppTheme.Padding.small)
                     .background(
                         themeManager.currentCardColor.opacity(0.95)
-                            .cornerRadius(8)
+                            .cornerRadius(AppTheme.CornerRadius.small)
                     )
                     .shadow(radius: 4)
                     .transition(.asymmetric(
@@ -190,8 +190,8 @@ struct ContentView: View {
                     ))
                 }
             }
-            .padding(.trailing, AppTheme.Spacing.medium)
-            .padding(.bottom, AppTheme.Spacing.medium)
+            .padding(.trailing, AppTheme.Padding.medium)
+            .padding(.bottom, AppTheme.Padding.medium)
         }
         .onTapGesture(count: 3) {
             withAnimation(.easeInOut(duration: 0.3)) {
@@ -246,14 +246,14 @@ struct ContentView: View {
                     .buttonStyle(.primary)
                 }
             }
-            .padding(.horizontal, AppTheme.Spacing.xLarge)
-            .padding(.vertical, AppTheme.Spacing.large)
+            .padding(.horizontal, AppTheme.Padding.xLarge)
+            .padding(.vertical, AppTheme.Padding.large)
             .background(
                 themeManager.currentCardColor
-                    .cornerRadius(16)
+                    .cornerRadius(AppTheme.CornerRadius.large)
             )
             .shadow(radius: 10)
-            .padding(.horizontal, AppTheme.Spacing.xLarge)
+            .padding(.horizontal, AppTheme.Padding.xLarge)
         }
         .transition(.asymmetric(
             insertion: .scale.combined(with: .opacity),

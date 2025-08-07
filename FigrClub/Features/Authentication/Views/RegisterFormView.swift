@@ -26,9 +26,9 @@ struct RegisterFormView: View {
                 formSection
                 actionButtonsSection
             }
-            .padding(.horizontal, AppTheme.Spacing.screenPadding)
-            .padding(.top, AppTheme.Spacing.xxxLarge)
-            .padding(.bottom, AppTheme.Spacing.xxLarge)
+            .padding(.horizontal, AppTheme.Padding.screenPadding)
+            .padding(.top, AppTheme.Padding.xxxLarge)
+            .padding(.bottom, AppTheme.Padding.xxLarge)
         }
         .sheet(isPresented: $showingTermsOfService) {
             LegalDocumentView.termsOfService(errorHandler: errorHandler)
@@ -196,14 +196,14 @@ struct RegisterFormView: View {
                             
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.secondary)
+                                .themedTextColor(.secondary)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 
                 Divider()
-                    .opacity(0.3)
+                    .background(themeManager.currentBorderColor)
                 
                 // Privacy Policy Row
                 HStack {
@@ -225,21 +225,21 @@ struct RegisterFormView: View {
                             
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.secondary)
+                                .themedTextColor(.secondary)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 16)
+            .padding(.vertical, AppTheme.Padding.medium)
+            .padding(.horizontal, AppTheme.Padding.large)
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
                     .fill(Color(.systemGray6))
             )
             
             // Single acceptance checkbox
-            HStack(alignment: .center, spacing: 12) {
+            HStack(alignment: .center, spacing: AppTheme.Spacing.medium) {
                 Button {
                     if !viewModel.acceptTerms {
                         viewModel.acceptTermsAndConditions()
@@ -385,13 +385,13 @@ struct RegisterFormView: View {
             Text(localizationManager.localizedString(for: .or))
                 .themedFont(.bodySmall)
                 .themedTextColor(.secondary)
-                .padding(.horizontal, AppTheme.Spacing.large)
+                .padding(.horizontal, AppTheme.Padding.large)
             
             Rectangle()
                 .fill(themeManager.currentSecondaryTextColor.opacity(0.3))
                 .frame(height: 1)
         }
-        .padding(.horizontal, AppTheme.Spacing.large)
+        .padding(.horizontal, AppTheme.Padding.large)
     }
     
     private var switchToLoginButton: some View {
@@ -458,7 +458,7 @@ struct RegisterFormView: View {
                     .foregroundColor(passwordHasSpecialChar ? .green : .gray)
             }
         }
-        .padding(.top, 4)
+        .padding(.top, AppTheme.Padding.xSmall)
     }
     
     // Password validation computed properties

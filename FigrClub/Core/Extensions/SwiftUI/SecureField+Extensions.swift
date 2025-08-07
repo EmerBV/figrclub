@@ -10,16 +10,16 @@ import SwiftUI
 // MARK: - Extensions for SecureField
 extension SecureField {
     func textFieldStyle<S>(_ style: S) -> some View where S: TextFieldStyle {
-        self.padding(.horizontal, 16)
+        self.padding(.horizontal, AppTheme.Padding.large)
             .padding(.vertical, 14)
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
                     .fill(Color(.systemGray6))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(Color(.systemGray4), lineWidth: 0.5)
             )
-            .font(.system(size: 16, weight: .regular))
+            .themedFont(.bodyMedium)
     }
 }

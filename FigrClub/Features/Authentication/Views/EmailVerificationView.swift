@@ -34,23 +34,23 @@ struct EmailVerificationView: View {
             VStack(spacing: 16) {
                 Text(localizationManager.localizedString(for: .emailSentMessage))
                     .font(.body)
-                    .foregroundStyle(.secondary)
+                    .themedTextColor(.secondary)
                     .multilineTextAlignment(.center)
                 
                 Text(email)
                     .font(.headline)
                     .fontWeight(.semibold)
-                    .foregroundStyle(.primary)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
+                    .themedTextColor(.primary)
+                    .padding(.horizontal, AppTheme.Padding.large)
+                    .padding(.vertical, AppTheme.Padding.small)
                     .background(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
                             .fill(Color(.systemGray6))
                     )
                 
                 Text(localizationManager.localizedString(for: .emailSentInstructions))
                     .font(.body)
-                    .foregroundStyle(.secondary)
+                    .themedTextColor(.secondary)
                     .multilineTextAlignment(.center)
                     .lineLimit(nil)
             }
@@ -61,18 +61,18 @@ struct EmailVerificationView: View {
             Button(action: onContinue) {
                 Text(localizationManager.localizedString(for: .continueButton))
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
+                    .padding(.vertical, AppTheme.Padding.large)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
                             .fill(.tint)
                     )
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 32)
+        .padding(.horizontal, AppTheme.Padding.xLarge)
+        .padding(.vertical, AppTheme.Padding.xxLarge)
     }
 }
 

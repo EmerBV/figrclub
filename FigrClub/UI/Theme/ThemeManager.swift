@@ -102,6 +102,10 @@ final class ThemeManager: ObservableObject {
         colorScheme == .dark ? .figrDarkTextSecondary : .figrTextSecondary
     }
     
+    var currentBorderColor: Color {
+        colorScheme == .dark ? .figrDarkBorder.opacity(0.2) : .figrBorder
+    }
+    
     // MARK: - Public Methods
     func toggleColorScheme() {
         switch themeMode {
@@ -345,74 +349,3 @@ struct ThemedFont {
         .scaledForTheme(baseSize: 16, weight: .medium, scaleFactor: themeManager.accessibilityTextScaleFactor)
     }
 }
-
-// MARK: - Theme Preview Helper
-/*
- #if DEBUG
- struct ThemePreview: View {
- // Crear instancia local para preview
- @StateObject private var themeManager = ThemeManager()
- 
- var body: some View {
- VStack(spacing: 20) {
- Text("FigrClub Theme Preview")
- .themedFont(.displayMedium)
- .foregroundColor(themeManager.currentTextColor)
- 
- HStack(spacing: 16) {
- ForEach(ThemeManager.ThemeMode.allCases, id: \.self) { mode in
- Button(action: {
- themeManager.setThemeMode(mode)
- }) {
- VStack {
- Image(systemName: mode.icon)
- .figrIcon()
- Text(mode.displayName)
- .font(.figrCaptionMedium)
- }
- }
- .buttonStyle(.secondary)
- }
- }
- 
- // Ejemplo de componentes con tema
- VStack(spacing: 12) {
- FigrPriceTag(price: "$299.99", originalPrice: "$399.99", size: .medium)
- 
- FigrRarityBadge(rarity: .legendary, size: .medium)
- 
- Button("Primary Button") {}
- .buttonStyle(.primary)
- 
- Button("Secondary Button") {}
- .buttonStyle(.secondary)
- }
- .figrCard()
- .figrCardPadding()
- 
- Spacer()
- }
- .padding(.horizontal, AppTheme.Spacing.screenPadding)
- .background(
- (themeManager.colorScheme == .dark ? Color.figrDarkBackground : Color.figrBackground)
- .ignoresSafeArea()
- )
- .environmentObject(themeManager) // Inyectamos para el preview
- }
- }
- 
- struct ThemePreview_Previews: PreviewProvider {
- static var previews: some View {
- Group {
- ThemePreview()
- .preferredColorScheme(.light)
- .previewDisplayName("Light Mode")
- 
- ThemePreview()
- .preferredColorScheme(.dark)
- .previewDisplayName("Dark Mode")
- }
- }
- }
- #endif
- */

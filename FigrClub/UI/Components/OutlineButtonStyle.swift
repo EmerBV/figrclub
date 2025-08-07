@@ -12,8 +12,8 @@ struct OutlineButtonStyle: ButtonStyle {
         configuration.label
             .font(.figrButtonMedium)
             .foregroundColor(.figrPrimary)
-            .padding(.horizontal, AppTheme.Spacing.xLarge)
-            .padding(.vertical, AppTheme.Spacing.medium)
+            .padding(.horizontal, AppTheme.Padding.xLarge)
+            .padding(.vertical, AppTheme.Padding.medium)
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
                     .stroke(Color.figrPrimary, lineWidth: 1.5)

@@ -121,8 +121,8 @@ struct FeedFlowView: View {
                 }
             }
         }
-        .padding(.top, AppTheme.Spacing.large)
-        .padding(.horizontal, AppTheme.Spacing.large)
+        .padding(.top, AppTheme.Padding.large)
+        .padding(.horizontal, AppTheme.Padding.large)
     }
     
     // MARK: - Stories View
@@ -137,9 +137,9 @@ struct FeedFlowView: View {
                     StoryView(story: story)
                 }
             }
-            .padding(.horizontal, AppTheme.Spacing.large)
+            .padding(.horizontal, AppTheme.Padding.large)
         }
-        .padding(.bottom, AppTheme.Spacing.large)
+        .padding(.bottom, AppTheme.Padding.large)
     }
     
     // MARK: - Private Methods
@@ -174,7 +174,7 @@ struct UserStoryView: View {
     @Environment(\.localizationManager) private var localizationManager
     
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: AppTheme.Spacing.xSmall) {
             ZStack {
                 
                 // Instagram Style
@@ -209,8 +209,8 @@ struct UserStoryView: View {
                         .frame(width: 60, height: 60)
                         .overlay(
                             Text(user.displayName.prefix(1).uppercased())
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundColor(Color.figrPrimary)
+                                .themedFont(.headlineMedium)
+                                .themedTextColor(.primary)
                         )
                 }
                 
@@ -225,15 +225,16 @@ struct UserStoryView: View {
                     )
                     .offset(x: 22, y: 22)
             }
+            .padding(.vertical, 3)
             
             Text(localizationManager.localizedString(for: .yourStoryString))
                 .font(.caption)
-                .foregroundColor(.primary)
+                .themedTextColor(.primary)
                 .lineLimit(1)
                 .frame(width: 66)
         }
-        .padding(.top, 8)
-        .padding(.bottom, 8)
+        .padding(.top, AppTheme.Padding.small)
+        .padding(.bottom, AppTheme.Padding.small)
     }
 }
 
@@ -242,7 +243,7 @@ struct StoryView: View {
     let story: SampleStory
     
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: AppTheme.Spacing.xSmall) {
             ZStack {
                 Circle()
                     .stroke(
@@ -267,8 +268,8 @@ struct StoryView: View {
                 .lineLimit(1)
                 .frame(width: 66)
         }
-        .padding(.top, AppTheme.Spacing.small)
-        .padding(.bottom, AppTheme.Spacing.small)
+        .padding(.top, AppTheme.Padding.small)
+        .padding(.bottom, AppTheme.Padding.small)
     }
 }
 
@@ -279,6 +280,8 @@ struct PostView: View {
     
     @Environment(\.localizationManager) private var localizationManager
     @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
+    @EnvironmentObject private var themeManager: ThemeManager
+    
     @State private var isLiked = false
     @State private var isSaved = false
     @State private var showComments = false
@@ -287,29 +290,29 @@ struct PostView: View {
     @State private var captionNeedsExpansion = false
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AppTheme.Spacing.large) {
             // Header del post
             postHeader
-                .padding(.horizontal, 16)
+                .padding(.horizontal, AppTheme.Padding.large)
             
             // Imagen(es) del post
             postImageCarousel
             
             // Botones de acción
             actionButtons
-                .padding(.horizontal, 16)
+                .padding(.horizontal, AppTheme.Padding.large)
             
             // Likes y descripción
             postContent
-                .padding(.horizontal, 16)
+                .padding(.horizontal, AppTheme.Padding.large)
             
             // Comentarios
             commentsSection
-                .padding(.horizontal, 16)
+                .padding(.horizontal, AppTheme.Padding.large)
             
             // Tiempo del post
             timestampView
-                .padding(.horizontal, 16)
+                .padding(.horizontal, AppTheme.Padding.large)
         }
         .sheet(isPresented: $showPostOptions) {
             PostOptionsSheet(post: post, currentUser: currentUser)
@@ -330,12 +333,12 @@ struct PostView: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text(post.username)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.primary)
+                    .themedTextColor(.primary)
                 
                 if let location = post.location {
                     Text(location)
                         .font(.system(size: 11))
-                        .foregroundColor(.secondary)
+                        .themedTextColor(.secondary)
                 }
             }
             
@@ -347,7 +350,7 @@ struct PostView: View {
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.primary)
+                    .themedTextColor(.primary)
             }
         }
     }
@@ -388,12 +391,12 @@ struct PostView: View {
             } label: {
                 Image(systemName: isLiked ? "heart.fill" : "heart")
                     .font(.title2)
-                    .foregroundColor(isLiked ? .red : .primary)
+                    .foregroundColor(isLiked ? .red : themeManager.currentTextColor)
                 
                 if post.likesCount > 0 {
                     Text("\(post.likesCount)")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.primary)
+                        .themedFont(.titleSmall)
+                        .themedTextColor(.primary)
                 }
             }
             
@@ -403,12 +406,12 @@ struct PostView: View {
             } label: {
                 Image(systemName: "bubble.right")
                     .font(.title2)
-                    .foregroundColor(.primary)
+                    .themedTextColor(.primary)
                 
                 if post.commentsCount > 0 {
                     Text("\(post.commentsCount)")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.primary)
+                        .themedFont(.titleSmall)
+                        .themedTextColor(.primary)
                 }
             }
             
@@ -418,12 +421,12 @@ struct PostView: View {
             } label: {
                 Image(systemName: "paperplane")
                     .font(.title2)
-                    .foregroundColor(.primary)
+                    .themedTextColor(.primary)
                 
                 if post.sharesCount > 0 {
                     Text("\(post.sharesCount)")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.primary)
+                        .themedFont(.titleSmall)
+                        .themedTextColor(.primary)
                 }
             }
             
@@ -437,18 +440,18 @@ struct PostView: View {
             } label: {
                 Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
                     .font(.title2)
-                    .foregroundColor(.primary)
+                    .themedTextColor(.primary)
             }
         }
     }
     
     private var postContent: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.xSmall) {
             // Número de likes
             if post.likesCount < 10 {
                 Text(localizationManager.localizedString(for: .numberOfProducts, arguments: post.likesCount))
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.primary)
+                    .themedTextColor(.primary)
             }
             
             // Descripción
@@ -469,7 +472,7 @@ struct PostView: View {
                     } label: {
                         Text(localizationManager.localizedString(for: .seeAllComments, arguments: post.commentsCount))
                             .font(.system(size: 14))
-                            .foregroundColor(.secondary)
+                            .themedTextColor(.secondary)
                     }
                     .buttonStyle(PlainButtonStyle())
                     
@@ -481,11 +484,11 @@ struct PostView: View {
                 HStack(alignment: .top) {
                     Text(comment.username)
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.primary)
+                        .themedTextColor(.primary)
                     
                     Text(comment.text)
                         .font(.system(size: 14))
-                        .foregroundColor(.primary)
+                        .themedTextColor(.primary)
                         .lineLimit(1)
                     
                     Spacer()
@@ -500,13 +503,13 @@ struct PostView: View {
             HStack(alignment: .top) {
                 Text(timeAgoString(from: post.createdAt))
                     .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    .themedTextColor(.secondary)
                     .lineLimit(1)
                 
                 Spacer()
             }
         }
-        .padding(.bottom, 16)
+        .padding(.bottom, AppTheme.Padding.large)
     }
     
     private func timeAgoString(from date: Date) -> String {
@@ -558,11 +561,11 @@ struct PostImageCarousel: View {
                                     .frame(width: 6, height: 6)
                             }
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, AppTheme.Padding.medium)
+                        .padding(.vertical, AppTheme.Padding.small)
                         .background(Color.black.opacity(0.3))
                         .clipShape(Capsule())
-                        .padding(.bottom, 16)
+                        .padding(.bottom, AppTheme.Padding.large)
                     }
                 }
             }
@@ -575,12 +578,12 @@ struct PostImageCarousel: View {
                         Text("\(currentIndex + 1)/\(displayedImages.count)")
                             .font(.caption)
                             .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
+                            .padding(.horizontal, AppTheme.Padding.small)
+                            .padding(.vertical, AppTheme.Padding.xSmall)
                             .background(Color.black.opacity(0.6))
                             .clipShape(Capsule())
-                            .padding(.trailing, 16)
-                            .padding(.top, 16)
+                            .padding(.trailing, AppTheme.Padding.large)
+                            .padding(.top, AppTheme.Padding.large)
                     }
                     Spacer()
                 }
@@ -640,7 +643,7 @@ struct ExpandableCaption: View {
                             if needsExpansion {
                                 Text(localizationManager.localizedString(for: .moreCaptionButton))
                                     .font(.system(size: 14))
-                                    .foregroundColor(.secondary)
+                                    .themedTextColor(.secondary)
                             }
                         }
                     }
@@ -688,8 +691,8 @@ struct PostOptionsSheet: View {
                 RoundedRectangle(cornerRadius: 2.5)
                     .fill(Color.secondary.opacity(0.3))
                     .frame(width: 36, height: 5)
-                    .padding(.top, AppTheme.Spacing.medium)
-                    .padding(.bottom, AppTheme.Spacing.large)
+                    .padding(.top, AppTheme.Padding.medium)
+                    .padding(.bottom, AppTheme.Padding.large)
                 
                 // Opciones
                 VStack(spacing: 0) {
@@ -765,13 +768,13 @@ struct PostOptionRow: View {
                     
                     Text(subtitle)
                         .font(.system(size: 14))
-                        .foregroundColor(.secondary)
+                        .themedTextColor(.secondary)
                 }
                 
                 Spacer()
             }
             .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+            .padding(.vertical, AppTheme.Padding.large)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -785,6 +788,8 @@ struct PostCommentsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.localizationManager) private var localizationManager
     
+    @EnvironmentObject private var themeManager: ThemeManager
+    
     @State private var newCommentText = ""
     @State private var allComments: [SamplePost.Comment] = []
     
@@ -794,15 +799,13 @@ struct PostCommentsSheet: View {
                 RoundedRectangle(cornerRadius: 2.5)
                     .fill(Color.secondary.opacity(0.3))
                     .frame(width: 36, height: 5)
-                    .padding(.top, AppTheme.Spacing.medium)
-                    .padding(.bottom, AppTheme.Spacing.large)
+                    .padding(.top, AppTheme.Padding.medium)
+                    .padding(.bottom, AppTheme.Padding.large)
                 
                 Text(localizationManager.localizedString(for: .commentsTitle))
                     .font(.headline)
-                    .foregroundColor(.secondary)
-                    .padding(.bottom, AppTheme.Spacing.large)
-                
-                Divider()
+                    .themedTextColor(.secondary)
+                    .padding(.bottom, AppTheme.Padding.large)
                 
                 // Lista de comentarios
                 ScrollView {
@@ -811,11 +814,12 @@ struct PostCommentsSheet: View {
                             CommentRow(comment: comment)
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
+                    .padding(.horizontal, AppTheme.Padding.large)
+                    .padding(.top, AppTheme.Padding.large)
                 }
                 
                 Divider()
+                    .background(themeManager.currentBorderColor)
                 
                 // Campo de nuevo comentario
                 HStack(spacing: 12) {
@@ -859,20 +863,20 @@ struct PostCommentsSheet: View {
                         .disabled(newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.figrTextSecondary : Color.figrButtonText)
-                        .padding(.horizontal, AppTheme.Spacing.small)
-                        .padding(.vertical, AppTheme.Spacing.small)
+                        .padding(.horizontal, AppTheme.Padding.small)
+                        .padding(.vertical, AppTheme.Padding.small)
                         .background(
                             RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
                                 .fill(newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color(.systemGray6) : Color.figrBlueAccent)
                         )
                         .buttonStyle(PlainButtonStyle())
                     }
-                    .padding(AppTheme.Spacing.medium)
+                    .padding(AppTheme.Padding.medium)
                     .background(Color(.systemGray6))
                     .cornerRadius(AppTheme.CornerRadius.medium)
                 }
-                .padding(.horizontal, AppTheme.Spacing.large)
-                .padding(.vertical, AppTheme.Spacing.medium)
+                .padding(.horizontal, AppTheme.Padding.large)
+                .padding(.vertical, AppTheme.Padding.medium)
             }
             
             .navigationTitle("")
@@ -921,18 +925,18 @@ struct CommentRow: View {
                 HStack {
                     Text(comment.username)
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.primary)
+                        .themedTextColor(.primary)
                     
                     Spacer()
                     
                     Text("ahora") // TODO: Mostrar hace cuanto se publicó
                         .font(.system(size: 12))
-                        .foregroundColor(.secondary)
+                        .themedTextColor(.secondary)
                 }
                 
                 Text(comment.text)
                     .font(.system(size: 14))
-                    .foregroundColor(.primary)
+                    .themedTextColor(.primary)
                     .fixedSize(horizontal: false, vertical: true)
                 
                 HStack(spacing: 16) {
@@ -940,15 +944,15 @@ struct CommentRow: View {
                         // TODO: Like comment
                     }
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.secondary)
+                    .themedTextColor(.secondary)
                     
                     Button(localizationManager.localizedString(for: .replyButtonTitle)) {
                         // TODO: Reply to comment
                     }
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.secondary)
+                    .themedTextColor(.secondary)
                 }
-                .padding(.top, 2)
+                .padding(.top, AppTheme.Padding.xxxSmall)
             }
             
             Spacer()
@@ -1084,80 +1088,3 @@ extension FeedFlowView {
         SampleStory(username: "collector_pro", userProfileImage: "https://picsum.photos/seed/story5/200/200", isViewed: true)
     ]
 }
-
-// NO USADO
-// MARK: - Supporting Views
-/*
- struct PostDetailSheet: View {
- let postId: String
- let user: User
- @Environment(\.dismiss) private var dismiss
- 
- var body: some View {
- FigrNavigationStack {
- VStack(spacing: AppTheme.Spacing.large) {
- Text("Post Detail")
- .font(.title)
- 
- Text("Post ID: \(postId)")
- .font(.headline)
- .foregroundColor(.secondary)
- 
- Text("Esta funcionalidad estará disponible pronto")
- .font(.callout)
- .foregroundColor(.secondary)
- .multilineTextAlignment(.center)
- 
- Spacer()
- }
- .padding()
- .navigationTitle("Post")
- .navigationBarTitleDisplayMode(.inline)
- .toolbar {
- ToolbarItem(placement: .navigationBarTrailing) {
- Button("Cerrar") {
- dismiss()
- }
- }
- }
- }
- }
- }
- 
- struct UserProfileSheet: View {
- let userId: String
- let currentUser: User
- @Environment(\.dismiss) private var dismiss
- 
- var body: some View {
- FigrNavigationStack {
- VStack(spacing: AppTheme.Spacing.large) {
- Text("User Profile")
- .font(.title)
- 
- Text("User ID: \(userId)")
- .font(.headline)
- .foregroundColor(.secondary)
- 
- Text("Esta funcionalidad estará disponible pronto")
- .font(.callout)
- .foregroundColor(.secondary)
- .multilineTextAlignment(.center)
- 
- Spacer()
- }
- .padding()
- .navigationTitle("Perfil")
- .navigationBarTitleDisplayMode(.inline)
- .toolbar {
- ToolbarItem(placement: .navigationBarTrailing) {
- Button("Cerrar") {
- dismiss()
- }
- }
- }
- }
- }
- }
- */
-

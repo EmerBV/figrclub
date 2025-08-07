@@ -46,7 +46,7 @@ extension Color {
     static let figrDarkTextTertiary = Color(red: 0.55, green: 0.55, blue: 0.55) // Gris medio
     
     // MARK: - Border Colors
-    static let figrDarkBorder = Color(red: 0.90, green: 0.90, blue: 0.90) //
+    static let figrDarkBorder = Color(red: 0.75, green: 0.75, blue: 0.75) // Gris claro
     static let figrBorder = Color(red: 0.90, green: 0.90, blue: 0.90) // Borde sutil
     static let figrDivider = Color(red: 0.85, green: 0.85, blue: 0.85) // Divisor más visible
     

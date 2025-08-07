@@ -29,8 +29,8 @@ struct PrimaryButtonStyle: ButtonStyle {
         .font(.figrButtonMedium)
         .foregroundColor(isEnabled ? .figrButtonText : .figrButtonText.opacity(0.6))
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, AppTheme.Spacing.xLarge)
-        .padding(.vertical, AppTheme.Spacing.medium)
+        .padding(.horizontal, AppTheme.Padding.xLarge)
+        .padding(.vertical, AppTheme.Padding.medium)
         .background(
             RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
                 .fill(backgroundFill)

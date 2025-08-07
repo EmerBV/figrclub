@@ -24,8 +24,8 @@ struct ProfileFlowView: View {
             FigrVerticalScrollView {
                 VStack(spacing: 0) {
                     headerSection
-                        .padding(.horizontal, AppTheme.Spacing.large)
-                        .padding(.bottom, AppTheme.Spacing.large)
+                        .padding(.horizontal, AppTheme.Padding.large)
+                        .padding(.bottom, AppTheme.Padding.large)
                     optionsSection
                 }
             }
@@ -72,7 +72,7 @@ struct ProfileFlowView: View {
                     HStack(spacing: AppTheme.Spacing.xSmall) {
                         Text(user.displayName)
                             .font(.title2.weight(.bold))
-                            .foregroundColor(.primary)
+                            .themedTextColor(.primary)
                         
                         if user.isVerified {
                             Image(systemName: "checkmark.seal.fill")
@@ -91,13 +91,13 @@ struct ProfileFlowView: View {
                         
                         Text("\(user.followersCount)")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .themedTextColor(.secondary)
                     }
                     
                     // Fecha de registro
                     Text(localizationManager.localizedString(for: .inFigrClubSince, arguments: extractYear(from: user.createdAt)))
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .themedTextColor(.secondary)
                 }
                 
                 Spacer()
@@ -108,12 +108,12 @@ struct ProfileFlowView: View {
                 }) {
                     Image(systemName: "chevron.right")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .themedTextColor(.secondary)
                         .frame(width: 20, height: 20)
                 }
             }
         }
-        .padding(.top, AppTheme.Spacing.xLarge)
+        .padding(.top, AppTheme.Padding.xLarge)
     }
     
     // MARK: - Profile Image View
@@ -244,7 +244,7 @@ struct ProfileFlowView: View {
             
             // Botón de cerrar sesión
             logoutButton
-                .padding(.bottom, AppTheme.Spacing.xLarge)
+                .padding(.bottom, AppTheme.Padding.xLarge)
         }
     }
     
@@ -253,14 +253,14 @@ struct ProfileFlowView: View {
         HStack {
             Text(title)
                 .font(.caption.weight(.medium))
-                .foregroundColor(.secondary)
+                .themedTextColor(.secondary)
                 .textCase(.uppercase)
             
             Spacer()
         }
-        .padding(.horizontal, AppTheme.Spacing.large)
-        .padding(.top, AppTheme.Spacing.large)
-        .padding(.bottom, AppTheme.Spacing.small)
+        .padding(.horizontal, AppTheme.Padding.large)
+        .padding(.top, AppTheme.Padding.large)
+        .padding(.bottom, AppTheme.Padding.small)
     }
     
     // MARK: - Option Row
@@ -269,21 +269,21 @@ struct ProfileFlowView: View {
             HStack(spacing: AppTheme.Spacing.medium) {
                 Image(systemName: icon)
                     .font(.title3)
-                    .foregroundColor(.primary)
+                    .themedTextColor(.primary)
                     .frame(width: 24, height: 24)
                 
                 Text(title)
                     .font(.body)
-                    .foregroundColor(.primary)
+                    .themedTextColor(.primary)
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .themedTextColor(.secondary)
             }
-            .padding(.horizontal, AppTheme.Spacing.large)
-            .padding(.vertical, AppTheme.Spacing.medium)
+            .padding(.horizontal, AppTheme.Padding.large)
+            .padding(.vertical, AppTheme.Padding.medium)
             /*
             .background(
                 Rectangle()
@@ -319,12 +319,12 @@ struct ProfileFlowView: View {
                 
                 Spacer()
             }
-            .padding(.horizontal, AppTheme.Spacing.large)
-            .padding(.vertical, AppTheme.Spacing.medium)
+            .padding(.horizontal, AppTheme.Padding.large)
+            .padding(.vertical, AppTheme.Padding.medium)
         }
         .buttonStyle(PlainButtonStyle())
         .disabled(isLoggingOut)
-        .padding(.top, AppTheme.Spacing.medium)
+        .padding(.top, AppTheme.Padding.medium)
     }
     
     // MARK: - Helper Methods
@@ -363,7 +363,7 @@ struct SettingsView: View {
                     .font(.title)
                 
                 Text("Próximamente...")
-                    .foregroundColor(.secondary)
+                    .themedTextColor(.secondary)
                 
                 Spacer()
             }
@@ -394,7 +394,7 @@ struct EditProfileView: View {
                     .font(.title)
                 
                 Text("Próximamente...")
-                    .foregroundColor(.secondary)
+                    .themedTextColor(.secondary)
                 
                 Spacer()
             }

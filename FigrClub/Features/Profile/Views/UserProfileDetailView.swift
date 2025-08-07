@@ -31,16 +31,16 @@ struct UserProfileDetailView: View {
                 VStack(spacing: 0) {
                     // Header section
                     headerSection
-                        .padding(.bottom, AppTheme.Spacing.large)
+                        .padding(.bottom, AppTheme.Padding.large)
                     
                     // Tab selector
                     tabSelector
-                        .padding(.horizontal, AppTheme.Spacing.large)
-                        .padding(.bottom, AppTheme.Spacing.medium)
+                        .padding(.horizontal, AppTheme.Padding.large)
+                        .padding(.bottom, AppTheme.Padding.medium)
                     
                     // Content based on selected tab
                     tabContent
-                        .padding(.horizontal, AppTheme.Spacing.large)
+                        .padding(.horizontal, AppTheme.Padding.large)
                 }
             }
             .navigationBarHidden(false)
@@ -49,7 +49,7 @@ struct UserProfileDetailView: View {
                     Button(action: { dismiss() }) {
                         Image(systemName: "arrow.left")
                             .font(.title2)
-                            .foregroundColor(.primary)
+                            .themedTextColor(.primary)
                     }
                 }
                 
@@ -58,13 +58,13 @@ struct UserProfileDetailView: View {
                         Button(action: { /* Editar perfil */ }) {
                             Image(systemName: "pencil")
                                 .font(.title2)
-                                .foregroundColor(.primary)
+                                .themedTextColor(.primary)
                         }
                         
                         Button(action: { /* Compartir perfil */ }) {
                             Image(systemName: "square.and.arrow.up")
                                 .font(.title2)
-                                .foregroundColor(.primary)
+                                .themedTextColor(.primary)
                         }
                     }
                 }
@@ -107,7 +107,7 @@ struct UserProfileDetailView: View {
                     profileImageView
                 }
             }
-            .padding(AppTheme.Spacing.large)
+            .padding(AppTheme.Padding.large)
         }
         .frame(height: 220) // Altura fija para el header con fondo
         .frame(maxWidth: .infinity)
@@ -148,7 +148,7 @@ struct UserProfileDetailView: View {
             // Nombre
             Text(user.displayName)
                 .font(.title.weight(.bold))
-                .foregroundColor(.primary)
+                .themedTextColor(.primary)
                 .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
             
             // Rating stars
@@ -161,7 +161,7 @@ struct UserProfileDetailView: View {
                 
                 Text("(\(user.followersCount))")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .themedTextColor(.secondary)
                     .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
             }
         }
@@ -247,17 +247,17 @@ struct UserProfileDetailView: View {
         HStack(spacing: AppTheme.Spacing.xSmall) {
             Image(systemName: icon)
                 .font(.caption)
-                .foregroundColor(.primary)
+                .themedTextColor(.primary)
                 .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
             
             Text(value)
                 .font(.body.weight(.semibold))
-                .foregroundColor(.primary)
+                .themedTextColor(.primary)
                 .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
             
             Text(label)
                 .font(.body)
-                .foregroundColor(.primary)
+                .themedTextColor(.primary)
                 .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
         }
     }
@@ -267,12 +267,12 @@ struct UserProfileDetailView: View {
         HStack(spacing: AppTheme.Spacing.xSmall) {
             Image(systemName: "location.fill")
                 .font(.caption)
-                .foregroundColor(.primary)
+                .themedTextColor(.primary)
                 .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
             
             Text("28033, \(user.city ?? localizationManager.localizedString(for: .notSpecified)).")
                 .font(.body)
-                .foregroundColor(.primary)
+                .themedTextColor(.primary)
                 .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
             
             Button(localizationManager.localizedString(for: .seeLocationString)) {
@@ -371,7 +371,7 @@ struct UserProfileDetailView: View {
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.xSmall) {
                     Text("4.8")
                         .font(.largeTitle.weight(.bold))
-                        .foregroundColor(.primary)
+                        .themedTextColor(.primary)
                     
                     HStack(spacing: AppTheme.Spacing.xxSmall) {
                         ForEach(0..<5) { index in
@@ -383,12 +383,12 @@ struct UserProfileDetailView: View {
                     
                     Text(localizationManager.localizedString(for: .basedOnString, arguments: 24))
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .themedTextColor(.secondary)
                 }
                 
                 Spacer()
             }
-            .padding(.bottom, AppTheme.Spacing.medium)
+            .padding(.bottom, AppTheme.Padding.medium)
             
             // Sample reviews
             ForEach(0..<3) { index in
@@ -409,7 +409,7 @@ struct UserProfileDetailView: View {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
                 Text(localizationManager.localizedString(for: .profileInfo))
                     .font(.headline.weight(.semibold))
-                    .foregroundColor(.primary)
+                    .themedTextColor(.primary)
                 
                 VStack(spacing: AppTheme.Spacing.small) {
                     InfoRow(title: localizationManager.localizedString(for: .memberSince), value: createdAt(from: user.createdAt))
@@ -423,7 +423,7 @@ struct UserProfileDetailView: View {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
                 Text(localizationManager.localizedString(for: .salesStatistics))
                     .font(.headline.weight(.semibold))
-                    .foregroundColor(.primary)
+                    .themedTextColor(.primary)
                 
                 VStack(spacing: AppTheme.Spacing.small) {
                     InfoRow(title: localizationManager.localizedString(for: .productsSold), value: "\(sampleProducts.filter { $0.status == .sold }.count)")
@@ -437,11 +437,11 @@ struct UserProfileDetailView: View {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
                 Text(localizationManager.localizedString(for: .returnPolicy))
                     .font(.headline.weight(.semibold))
-                    .foregroundColor(.primary)
+                    .themedTextColor(.primary)
                 
                 Text(localizationManager.localizedString(for: .returnPolicyDescription))
                     .font(.body)
-                    .foregroundColor(.secondary)
+                    .themedTextColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             
@@ -458,17 +458,17 @@ struct UserProfileDetailView: View {
                     }
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, AppTheme.Spacing.medium)
+                    .padding(.vertical, AppTheme.Padding.medium)
                     //.background(themeManager.accentColor)
                     .background(Color.figrBlueAccent)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                .padding(.top, AppTheme.Spacing.small)
+                .padding(.top, AppTheme.Padding.small)
             } else {
                 // Espacio vacío para mantener consistencia cuando no hay botón
                 Spacer()
                     .frame(height: 32)
-                    .padding(.top, AppTheme.Spacing.small)
+                    .padding(.top, AppTheme.Padding.small)
             }
         }
         .frame(maxWidth: .infinity)
@@ -480,11 +480,11 @@ struct UserProfileDetailView: View {
         HStack(spacing: AppTheme.Spacing.small) {
             Image(systemName: "magnifyingglass")
                 .font(.body)
-                .foregroundColor(.secondary)
+                .themedTextColor(.secondary)
             
             TextField(localizationManager.localizedString(for: .searchTextfield), text: $searchText)
                 .font(.body)
-                .foregroundColor(.primary)
+                .themedTextColor(.primary)
             
             if !searchText.isEmpty {
                 Button {
@@ -492,12 +492,12 @@ struct UserProfileDetailView: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.body)
-                        .foregroundColor(.secondary)
+                        .themedTextColor(.secondary)
                 }
             }
         }
-        .padding(.horizontal, AppTheme.Spacing.medium)
-        .padding(.vertical, AppTheme.Spacing.small)
+        .padding(.horizontal, AppTheme.Padding.medium)
+        .padding(.vertical, AppTheme.Padding.small)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(.systemGray6))
@@ -520,12 +520,13 @@ struct UserProfileDetailView: View {
                         }
                     }
                 }
-                .padding(.horizontal, AppTheme.Spacing.large)
+                .padding(.horizontal, AppTheme.Padding.large)
             }
-            
+            /*
             Divider()
-                .background(Color.gray.opacity(0.3))
-                .padding(.horizontal, AppTheme.Spacing.large)
+                .background(themeManager.currentBorderColor)
+                .padding(.horizontal, AppTheme.Padding.large)
+             */
         }
     }
     
@@ -577,7 +578,7 @@ struct ReviewCard: View {
             HStack {
                 Text(userName)
                     .font(.body.weight(.medium))
-                    .foregroundColor(.primary)
+                    .themedTextColor(.primary)
                 
                 Spacer()
                 
@@ -592,14 +593,14 @@ struct ReviewCard: View {
             
             Text(comment)
                 .font(.body)
-                .foregroundColor(.secondary)
+                .themedTextColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             
             Text(dateFormatter.string(from: date))
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .themedTextColor(.secondary)
         }
-        .padding(AppTheme.Spacing.medium)
+        .padding(AppTheme.Padding.medium)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 //.fill(themeManager.accentColor)
@@ -685,17 +686,17 @@ struct UserProductCard: View {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.xSmall) {
                 Text("\(Int(product.price)) €")
                     .font(.headline.weight(.bold))
-                    .foregroundColor(.primary)
+                    .themedTextColor(.primary)
                 
                 Text(product.title)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .themedTextColor(.secondary)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
                     .frame(minHeight: 32) // Altura mínima para consistencia
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, AppTheme.Spacing.small)
+            .padding(.top, AppTheme.Padding.small)
             
             Spacer(minLength: 0)
             
@@ -706,18 +707,18 @@ struct UserProductCard: View {
                 }
                 .font(.caption.weight(.medium))
                 .foregroundColor(Color.figrPrimary)
-                .padding(.vertical, AppTheme.Spacing.xSmall)
-                .padding(.horizontal, AppTheme.Spacing.medium)
+                .padding(.vertical, AppTheme.Padding.xSmall)
+                .padding(.horizontal, AppTheme.Padding.medium)
                 .background(
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large)
                         .stroke(Color.blue, lineWidth: 1)
                 )
-                .padding(.top, AppTheme.Spacing.small)
+                .padding(.top, AppTheme.Padding.small)
             } else {
                 // Espacio vacío para mantener consistencia cuando no hay botón
                 Spacer()
                     .frame(height: 32)
-                    .padding(.top, AppTheme.Spacing.small)
+                    .padding(.top, AppTheme.Padding.small)
             }
         }
         .frame(maxWidth: .infinity)
@@ -734,15 +735,15 @@ struct InfoRow: View {
         HStack {
             Text(title)
                 .font(.body)
-                .foregroundColor(.secondary)
+                .themedTextColor(.secondary)
             
             Spacer()
             
             Text(value)
                 .font(.body)
-                .foregroundColor(.primary)
+                .themedTextColor(.primary)
         }
-        .padding(.vertical, AppTheme.Spacing.xSmall)
+        .padding(.vertical, AppTheme.Padding.xSmall)
     }
 }
 

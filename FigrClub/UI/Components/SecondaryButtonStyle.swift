@@ -12,8 +12,8 @@ struct SecondaryButtonStyle: ButtonStyle {
         configuration.label
             .font(.figrButtonMedium)
             .foregroundColor(.figrTextPrimary)
-            .padding(.horizontal, AppTheme.Spacing.xLarge)
-            .padding(.vertical, AppTheme.Spacing.medium)
+            .padding(.horizontal, AppTheme.Padding.xLarge)
+            .padding(.vertical, AppTheme.Padding.medium)
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.button)
                     .fill(Color.figrSecondary.opacity(0.15))

@@ -20,9 +20,23 @@ struct AppTheme {
         static let xLarge: CGFloat = 24
         static let xxLarge: CGFloat = 32
         static let xxxLarge: CGFloat = 48
+    }
+    
+    // MARK: - Padding System
+    enum Padding {
+        static let xxxSmall: CGFloat = 2
+        static let xxSmall: CGFloat = 3
+        static let xSmall: CGFloat = 4
+        static let small: CGFloat = 8
+        static let medium: CGFloat = 12
+        static let large: CGFloat = 16
+        static let xLarge: CGFloat = 24
+        static let xxLarge: CGFloat = 32
+        static let xxxLarge: CGFloat = 48
         
         // Specific use cases
         static let screenPadding: CGFloat = 20
+        static let smallPadding: CGFloat = 6
     }
     
     enum LayoutConstants {
@@ -36,6 +50,7 @@ struct AppTheme {
     
     // MARK: - Corner Radius System
     enum CornerRadius {
+        static let xSmall: CGFloat = 4
         static let small: CGFloat = 8
         static let medium: CGFloat = 12
         static let large: CGFloat = 16
@@ -165,8 +180,8 @@ struct FigrTextFieldStyle: TextFieldStyle {
     func _body(configuration: TextField<Self._Label>) -> some View {
         configuration
             .font(.figrBodyMedium)
-            .padding(.horizontal, AppTheme.Spacing.large)
-            .padding(.vertical, AppTheme.Spacing.medium)
+            .padding(.horizontal, AppTheme.Padding.large)
+            .padding(.vertical, AppTheme.Padding.medium)
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.input)
                     .fill(Color.figrCard)
@@ -292,7 +307,7 @@ struct FigrScreenContainer<Content: View>: View {
             
             // Contenido con padding estándar
             content
-                .padding(.horizontal, AppTheme.Spacing.screenPadding)
+                .padding(.horizontal, AppTheme.Padding.screenPadding)
         }
     }
 }
@@ -416,7 +431,7 @@ struct ScreenContainerModifier: ViewModifier {
     
     func body(content: Content) -> some View {
         content
-            .padding(.horizontal, AppTheme.Spacing.screenPadding)
+            .padding(.horizontal, AppTheme.Padding.screenPadding)
             .background(
                 (colorScheme == .dark ? Color.figrDarkBackground : Color.figrBackground)
                     .ignoresSafeArea()

@@ -16,14 +16,14 @@ struct EBVTextFieldStyle: TextFieldStyle {
     
     func _body(configuration: TextField<Self._Label>) -> some View {
         configuration
-            .padding(.horizontal, 16)
+            .padding(.horizontal, AppTheme.Padding.large)
             .padding(.vertical, 14)
             .background(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
                     .fill(Color(.systemGray6))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
                     .stroke(borderColor, lineWidth: borderWidth)
             )
             .font(.system(size: 16, weight: .regular))

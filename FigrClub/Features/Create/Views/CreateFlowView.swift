@@ -99,9 +99,9 @@ struct CreateFlowView: View {
                     rightSideControls
                     
                 }
-                .padding(.top, AppTheme.Spacing.xxxLarge)
-                .padding(.leading, AppTheme.Spacing.large)
-                .padding(.trailing, AppTheme.Spacing.large)
+                .padding(.top, AppTheme.Padding.xxxLarge)
+                .padding(.leading, AppTheme.Padding.large)
+                .padding(.trailing, AppTheme.Padding.large)
                 
                 Spacer()
                 
@@ -179,11 +179,11 @@ struct CreateFlowView: View {
                             Text("\(String(format: "%.1f", currentZoom))x")
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.white)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
+                                .padding(.horizontal, AppTheme.Padding.medium)
+                                .padding(.vertical, AppTheme.Padding.smallPadding)
                                 .background(Color.black.opacity(0.6))
-                                .clipShape(RoundedRectangle(cornerRadius: 16))
-                                .padding(.trailing, 20)
+                                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large))
+                                .padding(.trailing, AppTheme.Padding.large)
                                 .padding(.top, 100)
                         }
                         Spacer()
@@ -195,7 +195,7 @@ struct CreateFlowView: View {
                     .fill(Color.black)
                     .ignoresSafeArea(.all)
                 
-                VStack(spacing: 16) {
+                VStack(spacing: AppTheme.Spacing.large) {
                     if !cameraManager.permissionGranted {
                         Image(systemName: "camera.fill")
                             .font(.system(size: 48))
@@ -261,8 +261,8 @@ struct CreateFlowView: View {
                     .foregroundColor(.white)
             }
         }
-        .padding(.horizontal, AppTheme.Spacing.large)
-        .padding(.top, AppTheme.Spacing.large)
+        .padding(.horizontal, AppTheme.Padding.large)
+        .padding(.top, AppTheme.Padding.large)
         .background(
             LinearGradient(
                 colors: [
@@ -396,7 +396,7 @@ struct CreateFlowView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, AppTheme.Padding.small)
                 }
                 
                 Spacer()
@@ -441,10 +441,10 @@ struct CreateFlowView: View {
                 Text(formatDuration(recordingDuration))
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, AppTheme.Padding.medium)
+                    .padding(.vertical, AppTheme.Padding.xSmall)
                     .background(Color.black.opacity(0.6))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium))
             }
             
             // Main capture button
@@ -469,10 +469,10 @@ struct CreateFlowView: View {
                             Text(localizationManager.localizedString(for: .createLiveStream))
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(.white)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 2)
+                                .padding(.horizontal, AppTheme.Padding.small)
+                                .padding(.vertical, AppTheme.Padding.xxxSmall)
                                 .background(Color.red)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .clipShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small))
                         }
                         .offset(y: -60)
                     }

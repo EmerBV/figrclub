@@ -53,7 +53,7 @@ struct LegalDocumentView: View {
             
             Text(localizationManager.localizedString(for: .loadingDocument))
                 .font(.system(size: 16))
-                .foregroundColor(.secondary)
+                .themedTextColor(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -67,13 +67,13 @@ struct LegalDocumentView: View {
             
             Text(localizationManager.localizedString(for: .error))
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.primary)
+                .themedTextColor(.primary)
             
             Text(message)
                 .font(.system(size: 16))
-                .foregroundColor(.secondary)
+                .themedTextColor(.secondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
+                .padding(.horizontal, AppTheme.Padding.xxLarge)
             
             Button(localizationManager.localizedString(for: .retry)) {
                 Task {
@@ -81,14 +81,14 @@ struct LegalDocumentView: View {
                 }
             }
             .buttonStyle(.primary)
-            .padding(.top, 16)
+            .padding(.top, AppTheme.Padding.large)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
     // MARK: - Document Content View
     private func documentContentView(_ document: LegalDocumentData) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.large) {
             // Document Content (HTML)
             SelfSizingWebView(htmlContent: document.htmlContent)
                 .frame(height: 800) // Fixed height for now
@@ -97,12 +97,12 @@ struct LegalDocumentView: View {
 #if DEBUG
             Text("Debug: Content length: \(document.htmlContent.count) chars")
                 .font(.caption)
-                .foregroundColor(.secondary)
-                .padding(.top, 8)
+                .themedTextColor(.secondary)
+                .padding(.top, AppTheme.Padding.small)
 #endif
             
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, AppTheme.Padding.large)
     }
     
     // MARK: - Empty View
@@ -114,7 +114,7 @@ struct LegalDocumentView: View {
             
             Text(localizationManager.localizedString(for: .noDocumentAvailable))
                 .font(.system(size: 16))
-                .foregroundColor(.secondary)
+                .themedTextColor(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

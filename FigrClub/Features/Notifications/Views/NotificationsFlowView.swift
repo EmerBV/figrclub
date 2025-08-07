@@ -63,9 +63,9 @@ struct NotificationsFlowView: View {
             RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
                 .fill(themeManager.currentBackgroundColor)
         )
-        .padding(.horizontal, AppTheme.Spacing.large)
-        .padding(.top, AppTheme.Spacing.large)
-        .padding(.bottom, AppTheme.Spacing.small)
+        .padding(.horizontal, AppTheme.Padding.large)
+        .padding(.top, AppTheme.Padding.large)
+        .padding(.bottom, AppTheme.Padding.small)
         //.background(Color.figrRedAccent)
     }
     
@@ -251,6 +251,7 @@ struct MessageRowView: View {
     let currentUser: User
     
     @Environment(\.localizationManager) private var localizationManager
+    @EnvironmentObject private var themeManager: ThemeManager
     
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -270,13 +271,13 @@ struct MessageRowView: View {
                 HStack {
                     Text(message.senderName)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.primary)
+                        .themedTextColor(.primary)
                     
                     Spacer()
                     
                     Text(formatDate(message.createdAt))
                         .font(.system(size: 14))
-                        .foregroundColor(.secondary)
+                        .themedTextColor(.secondary)
                 }
                 
                 Text(message.lastMessage)
@@ -302,13 +303,13 @@ struct MessageRowView: View {
             
             Spacer()
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, AppTheme.Padding.large)
+        .padding(.vertical, AppTheme.Padding.medium)
         .background(Color.clear)
         
         Divider()
-            .background(Color.gray.opacity(0.3))
-            .padding(.horizontal, AppTheme.Spacing.large)
+            .background(themeManager.currentBorderColor)
+            .padding(.horizontal, AppTheme.Padding.large)
     }
     
     private func formatDate(_ date: Date) -> String {
@@ -322,6 +323,8 @@ struct MessageRowView: View {
 struct NotificationRowView: View {
     let notification: SystemNotification
     let currentUser: User
+    
+    @EnvironmentObject private var themeManager: ThemeManager
     
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -346,34 +349,34 @@ struct NotificationRowView: View {
                         
                         Text(notification.title)
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.primary)
+                            .themedTextColor(.primary)
                     }
                     
                     Spacer()
                     
                     Text(formatTimeAgo(notification.createdAt))
                         .font(.system(size: 14))
-                        .foregroundColor(.secondary)
+                        .themedTextColor(.secondary)
                 }
                 
                 Text(notification.message)
                     .font(.system(size: 15))
-                    .foregroundColor(.secondary)
+                    .themedTextColor(.secondary)
                     .lineLimit(3)
                     .multilineTextAlignment(.leading)
             }
             
             Spacer()
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, AppTheme.Padding.large)
+        .padding(.vertical, AppTheme.Padding.medium)
         .background(
             notification.isRead ? Color.clear : Color.blue.opacity(0.05)
         )
         
         Divider()
-            .background(Color.gray.opacity(0.3))
-            .padding(.horizontal, AppTheme.Spacing.large)
+            .background(themeManager.currentBorderColor)
+            .padding(.horizontal, AppTheme.Padding.large)
     }
     
     private func formatTimeAgo(_ date: Date) -> String {
@@ -524,7 +527,7 @@ struct NotificationDetailSheet: View {
                 
                 Text("ID: \(notificationId)")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .themedTextColor(.secondary)
                 
                 Spacer()
             }

@@ -15,6 +15,8 @@ struct ProductDetailView: View {
     @Environment(\.localizationManager) private var localizationManager
     @Environment(\.dismiss) private var dismiss
     
+    @EnvironmentObject private var themeManager: ThemeManager
+    
     // Estados locales
     @State private var products: [MarketplaceProduct] = sampleProducts
     @State private var isFavorite = false
@@ -58,7 +60,7 @@ struct ProductDetailView: View {
                     } label: {
                         Image(systemName: "arrow.left")
                             .font(.title2)
-                            .foregroundColor(.primary)
+                            .themedTextColor(.primary)
                     }
                 }
                 
@@ -80,7 +82,7 @@ struct ProductDetailView: View {
                         } label: {
                             Image(systemName: "square.and.arrow.up")
                                 .font(.title2)
-                                .foregroundColor(.primary)
+                                .themedTextColor(.primary)
                         }
                     }
                 }
@@ -135,10 +137,10 @@ struct ProductDetailView: View {
         .overlay(alignment: .bottomTrailing) {
             Text("\(selectedImageIndex + 1)/\(productImages.count)")
                 .font(.caption)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
+                .padding(.horizontal, AppTheme.Padding.small)
+                .padding(.vertical, AppTheme.Padding.xSmall)
                 .background(.ultraThinMaterial, in: Capsule())
-                .padding(AppTheme.Spacing.medium)
+                .padding(AppTheme.Padding.medium)
         }
     }
     
@@ -159,8 +161,8 @@ struct ProductDetailView: View {
                     Text(product.condition.displayName)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
+                        .padding(.horizontal, AppTheme.Padding.medium)
+                        .padding(AppTheme.Padding.smallPadding)
                         .background(
                             Capsule()
                                 .fill(product.condition.color)
@@ -169,8 +171,8 @@ struct ProductDetailView: View {
                     Text(localizationManager.localizedString(for: product.category.localizedStringKey))
                         .font(.system(size: 12, weight: .medium))
                         .themedTextColor(.secondary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
+                        .padding(.horizontal, AppTheme.Padding.medium)
+                        .padding(.vertical, AppTheme.Padding.smallPadding)
                         .background(
                             Capsule()
                                 .fill(Color(.systemGray6))
@@ -181,9 +183,10 @@ struct ProductDetailView: View {
             }
             
             Divider()
+                .background(themeManager.currentBorderColor)
         }
-        .padding(.horizontal, AppTheme.Spacing.large)
-        .padding(.vertical, AppTheme.Spacing.medium)
+        .padding(.horizontal, AppTheme.Padding.large)
+        .padding(.vertical, AppTheme.Padding.medium)
     }
     
     // MARK: - Seller Info Section
@@ -234,8 +237,9 @@ struct ProductDetailView: View {
             .buttonStyle(PlainButtonStyle())
             
             Divider()
+                .background(themeManager.currentBorderColor)
         }
-        .padding(.horizontal, AppTheme.Spacing.large)
+        .padding(.horizontal, AppTheme.Padding.large)
     }
     
     // MARK: - Description Section
@@ -251,9 +255,10 @@ struct ProductDetailView: View {
                 .multilineTextAlignment(.leading)
             
             Divider()
+                .background(themeManager.currentBorderColor)
         }
-        .padding(.horizontal, AppTheme.Spacing.large)
-        .padding(.vertical, AppTheme.Spacing.medium)
+        .padding(.horizontal, AppTheme.Padding.large)
+        .padding(.vertical, AppTheme.Padding.medium)
     }
     
     // MARK: - Shipping Section
@@ -290,8 +295,9 @@ struct ProductDetailView: View {
             }
             
             Divider()
+                .background(themeManager.currentBorderColor)
         }
-        .padding(.horizontal, AppTheme.Spacing.large)
+        .padding(.horizontal, AppTheme.Padding.large)
     }
     
     // MARK: - Location Map Section
@@ -310,7 +316,7 @@ struct ProductDetailView: View {
                         .themedTextColor(.secondary)
                 }
             }
-            .padding(.horizontal, AppTheme.Spacing.large)
+            .padding(.horizontal, AppTheme.Padding.large)
             
             ProductLocationMapView(
                 region: $region,
@@ -318,12 +324,13 @@ struct ProductDetailView: View {
             )
             .frame(height: 100)
             .cornerRadius(AppTheme.CornerRadius.medium)
-            .padding(.horizontal, AppTheme.Spacing.large)
+            .padding(.horizontal, AppTheme.Padding.large)
             
             Divider()
-                .padding(.horizontal, AppTheme.Spacing.large)
+                .background(themeManager.currentBorderColor)
+                .padding(.horizontal, AppTheme.Padding.large)
         }
-        .padding(.top, AppTheme.Spacing.medium)
+        .padding(.top, AppTheme.Padding.medium)
     }
     
     // MARK: - Reviews Section
@@ -351,16 +358,17 @@ struct ProductDetailView: View {
                         .themedTextColor(.secondary)
                 }
             }
-            .padding(.horizontal, AppTheme.Spacing.large)
+            .padding(.horizontal, AppTheme.Padding.large)
             
             // Lista de 3 valoraciones
             ForEach(ProductDetailView.sampleReviews.prefix(3), id: \.id) { review in
                 DetailReviewCard(review: review)
-                    .padding(.horizontal, AppTheme.Spacing.large)
+                    .padding(.horizontal, AppTheme.Padding.large)
                 
                 if review.id != ProductDetailView.sampleReviews.prefix(3).last?.id {
                     Divider()
-                        .padding(.horizontal, AppTheme.Spacing.large)
+                        .background(themeManager.currentBorderColor)
+                        .padding(.horizontal, AppTheme.Padding.large)
                 }
             }
             
@@ -371,7 +379,7 @@ struct ProductDetailView: View {
                 } label: {
                     HStack {
                         Text(localizationManager.localizedString(for: .seeAllReviews))
-                            .themedFont(.bodyMedium)
+                            .themedFont(.titleMedium)
                             .themedTextColor(.primary)
                         
                         Spacer()
@@ -380,21 +388,22 @@ struct ProductDetailView: View {
                             .font(.caption)
                             .themedTextColor(.secondary)
                     }
-                    .padding(.horizontal, AppTheme.Spacing.large)
-                    .padding(.vertical, AppTheme.Spacing.medium)
+                    .padding(.horizontal, AppTheme.Padding.large)
+                    .padding(.vertical, AppTheme.Padding.medium)
                     .background(
                         RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
                             .fill(Color(.systemGray6))
                     )
-                    .padding(.horizontal, AppTheme.Spacing.large)
+                    .padding(.horizontal, AppTheme.Padding.large)
                 }
                 .buttonStyle(PlainButtonStyle())
             }
             
             Divider()
-                .padding(.horizontal, AppTheme.Spacing.large)
+                .background(themeManager.currentBorderColor)
+                .padding(.horizontal, AppTheme.Padding.large)
         }
-        .padding(.vertical, AppTheme.Spacing.medium)
+        .padding(.vertical, AppTheme.Padding.medium)
     }
     
     // MARK: - Similar Products Section
@@ -403,7 +412,7 @@ struct ProductDetailView: View {
             Text(localizationManager.localizedString(for: .similarProducts))
                 .themedFont(.titleMedium)
                 .themedTextColor(.primary)
-                .padding(.horizontal, AppTheme.Spacing.large)
+                .padding(.horizontal, AppTheme.Padding.large)
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: AppTheme.Spacing.medium) {
@@ -414,18 +423,19 @@ struct ProductDetailView: View {
                         }
                     }
                 }
-                .padding(.horizontal, AppTheme.Spacing.large)
+                .padding(.horizontal, AppTheme.Padding.large)
             }
         }
-        .padding(.top, AppTheme.Spacing.medium)
-        .padding(.bottom, AppTheme.Spacing.xxLarge)
+        .padding(.top, AppTheme.Padding.medium)
+        .padding(.bottom, AppTheme.Padding.xxLarge)
     }
     
     // MARK: - Report Product Section
     private var reportProductSection: some View {
         VStack(spacing: AppTheme.Spacing.large) {
             Divider()
-                .padding(.horizontal, AppTheme.Spacing.large)
+                .background(themeManager.currentBorderColor)
+                .padding(.horizontal, AppTheme.Padding.large)
             
             Button {
                 showingReportProduct = true
@@ -436,12 +446,12 @@ struct ProductDetailView: View {
                         .foregroundColor(.figrButtonBlueText)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, AppTheme.Spacing.medium)
+                .padding(.vertical, AppTheme.Padding.medium)
             }
             .buttonStyle(PlainButtonStyle())
-            .padding(.horizontal, AppTheme.Spacing.medium)
+            .padding(.horizontal, AppTheme.Padding.medium)
         }
-        .padding(.bottom, AppTheme.Spacing.medium)
+        .padding(.bottom, AppTheme.Padding.medium)
     }
     
     // MARK: - Bottom Action Bar
@@ -454,7 +464,7 @@ struct ProductDetailView: View {
                     .themedFont(.titleMedium)
                     .foregroundColor(Color.figrBlueAccent)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, AppTheme.Spacing.medium)
+                    .padding(.vertical, AppTheme.Padding.medium)
                     .background(
                         RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
                             .stroke(Color.figrBlueAccent, lineWidth: 1)
@@ -469,15 +479,15 @@ struct ProductDetailView: View {
                     .themedFont(.titleMedium)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, AppTheme.Spacing.medium)
+                    .padding(.vertical, AppTheme.Padding.medium)
                     .background(
                         RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
                             .fill(Color.figrBlueAccent)
                     )
             }
         }
-        .padding(.horizontal, AppTheme.Spacing.large)
-        .padding(.vertical, AppTheme.Spacing.medium)
+        .padding(.horizontal, AppTheme.Padding.large)
+        .padding(.vertical, AppTheme.Padding.medium)
         .background(.ultraThinMaterial)
     }
     
@@ -639,7 +649,7 @@ struct ReportProductSheet: View {
                     
                     TextEditor(text: $additionalComments)
                         .frame(minHeight: 100)
-                        .padding(AppTheme.Spacing.small)
+                        .padding(AppTheme.Padding.small)
                         .background(
                             RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
                                 .stroke(Color(.systemGray4), lineWidth: 1)
@@ -648,7 +658,7 @@ struct ReportProductSheet: View {
                 
                 Spacer()
             }
-            .padding(AppTheme.Spacing.large)
+            .padding(AppTheme.Padding.large)
             .navigationTitle(localizationManager.localizedString(for: .reportProduct))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -709,9 +719,9 @@ struct DetailReviewCard: View {
                 
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.xxSmall) {
                     Text(review.userName)
-                        .themedFont(.bodyMedium)
+                        .themedFont(.titleSmall)
                         .themedTextColor(.primary)
-                        .fontWeight(.medium)
+                        //.fontWeight(.medium)
                     
                     HStack(spacing: AppTheme.Spacing.xxSmall) {
                         ForEach(0..<5) { index in
@@ -734,7 +744,7 @@ struct DetailReviewCard: View {
                 .themedTextColor(.secondary)
                 .multilineTextAlignment(.leading)
         }
-        .padding(.vertical, AppTheme.Spacing.small)
+        .padding(.vertical, AppTheme.Padding.small)
     }
 }
 
@@ -760,7 +770,7 @@ struct ReportReasonRow: View {
                     .font(.title3)
                     .foregroundColor(isSelected ? .figrBlueAccent : .gray)
             }
-            .padding(.vertical, AppTheme.Spacing.small)
+            .padding(.vertical, AppTheme.Padding.small)
             .background(Color.clear)
         }
         .buttonStyle(PlainButtonStyle())
@@ -887,6 +897,8 @@ struct AllReviewsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.localizationManager) private var localizationManager
     
+    @EnvironmentObject private var themeManager: ThemeManager
+    
     var body: some View {
         FigrNavigationStack {
             FigrVerticalScrollView {
@@ -916,17 +928,19 @@ struct AllReviewsView: View {
                         }
                         
                         Divider()
+                            .background(themeManager.currentBorderColor)
                     }
-                    .padding(.horizontal, AppTheme.Spacing.large)
+                    .padding(.horizontal, AppTheme.Padding.large)
                     
                     // All reviews
                     ForEach(ProductDetailView.sampleReviews, id: \.id) { review in
                         DetailReviewCard(review: review)
-                            .padding(.horizontal, AppTheme.Spacing.large)
+                            .padding(.horizontal, AppTheme.Padding.large)
                         
                         if review.id != ProductDetailView.sampleReviews.last?.id {
                             Divider()
-                                .padding(.horizontal, AppTheme.Spacing.large)
+                                .background(themeManager.currentBorderColor)
+                                .padding(.horizontal, AppTheme.Padding.large)
                         }
                     }
                 }
@@ -977,7 +991,7 @@ struct ContactSellerView: View {
                     
                     Spacer()
                 }
-                .padding(AppTheme.Spacing.medium)
+                .padding(AppTheme.Padding.medium)
                 .background(
                     RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
                         .fill(Color(.systemGray6))
@@ -991,7 +1005,7 @@ struct ContactSellerView: View {
                     
                     TextEditor(text: $message)
                         .frame(minHeight: 120)
-                        .padding(AppTheme.Spacing.small)
+                        .padding(AppTheme.Padding.small)
                         .background(
                             RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small)
                                 .stroke(Color(.systemGray4), lineWidth: 1)
@@ -1000,7 +1014,7 @@ struct ContactSellerView: View {
                 
                 Spacer()
             }
-            .padding(AppTheme.Spacing.large)
+            .padding(AppTheme.Padding.large)
             .navigationTitle(localizationManager.localizedString(for: .contactSeller))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

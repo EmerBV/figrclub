@@ -417,7 +417,7 @@ struct ErrorAlertModifier: ViewModifier {
                     if error.severity == .critical {
                         Text("Por favor, contacta al soporte técnico si el problema persiste.")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .themedTextColor(.secondary)
                     }
                 }
             }
