@@ -477,13 +477,11 @@ struct UserProfileDetailView: View {
     
     // MARK: - Search Section
     private var searchSection: some View {
-        HStack(spacing: AppTheme.Spacing.small) {
+        HStack {
             Image(systemName: "magnifyingglass")
-                .font(.body)
                 .themedTextColor(.secondary)
             
             TextField(localizationManager.localizedString(for: .searchTextfield), text: $searchText)
-                .font(.body)
                 .themedTextColor(.primary)
             
             if !searchText.isEmpty {
@@ -491,15 +489,13 @@ struct UserProfileDetailView: View {
                     searchText = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.body)
                         .themedTextColor(.secondary)
                 }
             }
         }
-        .padding(.horizontal, AppTheme.Padding.medium)
-        .padding(.vertical, AppTheme.Padding.small)
+        .padding(AppTheme.Padding.medium)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium)
                 .fill(Color(.systemGray6))
         )
     }

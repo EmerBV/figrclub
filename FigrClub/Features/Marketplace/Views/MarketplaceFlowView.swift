@@ -69,7 +69,7 @@ struct MarketplaceFlowView: View {
                     .themedTextColor(.secondary)
                 
                 TextField(localizationManager.localizedString(for: .searchTextfield), text: $searchText)
-                    .themedFont(.bodyMedium)
+                    .themedTextColor(.primary)
                 
                 if !searchText.isEmpty {
                     Button {
