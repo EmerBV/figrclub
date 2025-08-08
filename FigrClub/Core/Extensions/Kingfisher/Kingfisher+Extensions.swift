@@ -97,20 +97,20 @@ extension KFImage {
 struct PostImagePlaceholder: View {
     var body: some View {
         /*
-        RoundedRectangle(cornerRadius: 12)
-            .fill(Color.gray.opacity(0.3))
-            .overlay {
-                VStack(spacing: 8) {
-                    Image(systemName: "photo")
-                        .font(.title2)
-                        .foregroundColor(.gray)
-                    
-                    Text("Cargando imagen...")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                }
-            }
-            .frame(maxWidth: .infinity, minHeight: 200, maxHeight: 400)
+         RoundedRectangle(cornerRadius: 12)
+         .fill(Color.gray.opacity(0.3))
+         .overlay {
+         VStack(spacing: 8) {
+         Image(systemName: "photo")
+         .font(.title2)
+         .foregroundColor(.gray)
+         
+         Text("Cargando imagen...")
+         .font(.caption)
+         .foregroundColor(.gray)
+         }
+         }
+         .frame(maxWidth: .infinity, minHeight: 200, maxHeight: 400)
          */
         
         VStack(spacing: 8) {
@@ -590,25 +590,6 @@ struct GradientOverlayModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .overlay(gradient.blendMode(blendMode))
-    }
-}
-
-extension View {
-    func gradientOverlay(
-        _ gradient: LinearGradient,
-        blendMode: BlendMode = .overlay
-    ) -> some View {
-        modifier(GradientOverlayModifier(gradient: gradient, blendMode: blendMode))
-    }
-    
-    func darkGradientOverlay() -> some View {
-        gradientOverlay(
-            LinearGradient(
-                colors: [Color.clear, Color.black.opacity(0.7)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
     }
 }
 

@@ -267,6 +267,22 @@ struct ThemedFontModifier: ViewModifier {
     }
 }
 
+// MARK: - Font Size Category Extension
+extension ThemeManager.FontSizePreference {
+    var sizeCategory: DynamicTypeSize {
+        switch self {
+        case .small:
+            return .small
+        case .medium:
+            return .medium
+        case .large:
+            return .large
+        case .extraLarge:
+            return .xLarge
+        }
+    }
+}
+
 // MARK: - Accessibility Support
 extension ThemeManager {
     var accessibilityTextScaleFactor: CGFloat {

@@ -99,13 +99,13 @@ struct FeedFlowView: View {
                 
                 // Botón de logout
                 /*
-                Button {
-                    showLogoutConfirmation = true
-                } label: {
-                    Image(systemName: "line.3.horizontal")
-                        .font(.title2)
-                        .themedTextColor(.primary)
-                }
+                 Button {
+                 showLogoutConfirmation = true
+                 } label: {
+                 Image(systemName: "line.3.horizontal")
+                 .font(.title2)
+                 .themedTextColor(.primary)
+                 }
                  */
             }
         }
@@ -167,19 +167,19 @@ struct UserStoryView: View {
                 
                 // Instagram Style
                 /*
-                Circle()
-                    .stroke(
-                        LinearGradient(
-                            // TODO: Cambiar el gradient con colores de la app
-                            colors: [.purple, .pink, .orange],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 2
-                    )
-                    .frame(width: 66, height: 66)
+                 Circle()
+                 .stroke(
+                 LinearGradient(
+                 // TODO: Cambiar el gradient con colores de la app
+                 colors: [.purple, .pink, .orange],
+                 startPoint: .topLeading,
+                 endPoint: .bottomTrailing
+                 ),
+                 lineWidth: 2
+                 )
+                 .frame(width: 66, height: 66)
                  */
-                    
+                
                 
                 Circle()
                     .stroke(
@@ -343,29 +343,40 @@ struct PostView: View {
         }
     }
     
+    /*
+     private var postImageCarousel: some View {
+     Group {
+     if post.imageURLs.count == 1 {
+     // Imagen única
+     KFImage(URL(string: post.imageURLs[0]))
+     .postImageStyle()
+     .aspectRatio(1, contentMode: .fill)
+     .clipped()
+     .onTapGesture(count: 2) {
+     withAnimation(.easeInOut(duration: 0.1)) {
+     isLiked.toggle()
+     }
+     // TODO: Enviar like al servidor
+     }
+     } else {
+     // Carrusel de imágenes
+     PostImageCarousel(imageURLs: post.imageURLs) {
+     withAnimation(.easeInOut(duration: 0.1)) {
+     isLiked.toggle()
+     }
+     // TODO: Enviar like al servidor
+     }
+     }
+     }
+     }
+     */
+    
     private var postImageCarousel: some View {
-        Group {
-            if post.imageURLs.count == 1 {
-                // Imagen única
-                KFImage(URL(string: post.imageURLs[0]))
-                    .postImageStyle()
-                    .aspectRatio(1, contentMode: .fill)
-                    .clipped()
-                    .onTapGesture(count: 2) {
-                        withAnimation(.easeInOut(duration: 0.1)) {
-                            isLiked.toggle()
-                        }
-                        // TODO: Enviar like al servidor
-                    }
-            } else {
-                // Carrusel de imágenes
-                PostImageCarousel(imageURLs: post.imageURLs) {
-                    withAnimation(.easeInOut(duration: 0.1)) {
-                        isLiked.toggle()
-                    }
-                    // TODO: Enviar like al servidor
-                }
+        ImageCarousel.forPost(imageURLs: post.imageURLs) {
+            withAnimation(.easeInOut(duration: 0.1)) {
+                isLiked.toggle()
             }
+            // TODO: Enviar like al servidor
         }
     }
     
@@ -508,6 +519,85 @@ struct PostView: View {
 }
 
 // MARK: - Post Image Carousel
+/*
+ struct PostImageCarousel: View {
+ let imageURLs: [String]
+ let onDoubleTap: () -> Void
+ 
+ @State private var currentIndex = 0
+ 
+ private let maxImages = 10
+ 
+ var displayedImages: [String] {
+ Array(imageURLs.prefix(maxImages))
+ }
+ 
+ var body: some View {
+ ZStack {
+ TabView(selection: $currentIndex) {
+ ForEach(0..<displayedImages.count, id: \.self) { index in
+ KFImage(URL(string: displayedImages[index]))
+ .postImageStyle()
+ .aspectRatio(1, contentMode: .fill)
+ .clipped()
+ .onTapGesture(count: 2) {
+ onDoubleTap()
+ }
+ .tag(index)
+ }
+ }
+ .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+ .aspectRatio(1, contentMode: .fit)
+ 
+ // Indicador de página personalizado
+ if displayedImages.count > 1 {
+ VStack {
+ Spacer()
+ HStack(alignment: .center) {
+ HStack(spacing: 6) {
+ ForEach(0..<displayedImages.count, id: \.self) { index in
+ Circle()
+ .fill(index == currentIndex ? Color.white : Color.white.opacity(0.5))
+ .frame(width: index == currentIndex ? 8 : 6,
+ height: index == currentIndex ? 8 : 6)
+ .animation(.easeInOut(duration: 0.2), value: currentIndex)
+ }
+ }
+ .padding(.horizontal, AppTheme.Padding.medium)
+ .padding(.vertical, AppTheme.Padding.small)
+ //.background(Color.black.opacity(0.3))
+ //.clipShape(Capsule())
+ .padding(.bottom, AppTheme.Padding.large)
+ }
+ }
+ }
+ 
+ // Contador de imágenes
+ if displayedImages.count > 1 {
+ VStack {
+ HStack {
+ Spacer()
+ Text("\(currentIndex + 1)/\(displayedImages.count)")
+ .font(.caption)
+ .foregroundColor(.white)
+ .padding(.horizontal, AppTheme.Padding.small)
+ .padding(.vertical, AppTheme.Padding.xSmall)
+ /*
+  .background(Color.black.opacity(0.6))
+  .clipShape(Capsule())
+  */
+ .background(.ultraThinMaterial, in: Capsule())
+ .padding(.trailing, AppTheme.Padding.large)
+ .padding(.top, AppTheme.Padding.large)
+ }
+ Spacer()
+ }
+ }
+ }
+ }
+ }
+ */
+
 struct PostImageCarousel: View {
     let imageURLs: [String]
     let onDoubleTap: () -> Void
@@ -537,50 +627,17 @@ struct PostImageCarousel: View {
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             .aspectRatio(1, contentMode: .fit)
             
-            // Indicador de página personalizado
-            if displayedImages.count > 1 {
-                VStack {
-                    Spacer()
-                    HStack(alignment: .center) {
-                        HStack(spacing: 6) {
-                            ForEach(0..<displayedImages.count, id: \.self) { index in
-                                Circle()
-                                    .fill(index == currentIndex ? Color.white : Color.white.opacity(0.5))
-                                    .frame(width: index == currentIndex ? 8 : 6,
-                                           height: index == currentIndex ? 8 : 6)
-                                    .animation(.easeInOut(duration: 0.2), value: currentIndex)
-                            }
-                        }
-                        .padding(.horizontal, AppTheme.Padding.medium)
-                        .padding(.vertical, AppTheme.Padding.small)
-                        //.background(Color.black.opacity(0.3))
-                        //.clipShape(Capsule())
-                        .padding(.bottom, AppTheme.Padding.large)
-                    }
-                }
-            }
+            ProximityPageIndicator(
+                totalCount: displayedImages.count,
+                currentIndex: currentIndex,
+                minimumCountToShow: 2
+            )
             
-            // Contador de imágenes
-            if displayedImages.count > 1 {
-                VStack {
-                    HStack {
-                        Spacer()
-                        Text("\(currentIndex + 1)/\(displayedImages.count)")
-                            .font(.caption)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, AppTheme.Padding.small)
-                            .padding(.vertical, AppTheme.Padding.xSmall)
-                        /*
-                            .background(Color.black.opacity(0.6))
-                            .clipShape(Capsule())
-                         */
-                            .background(.ultraThinMaterial, in: Capsule())
-                            .padding(.trailing, AppTheme.Padding.large)
-                            .padding(.top, AppTheme.Padding.large)
-                    }
-                    Spacer()
-                }
-            }
+            ImageCounterIndicator(
+                currentIndex: currentIndex,
+                totalCount: displayedImages.count,
+                minimumCountToShow: 2
+            )
         }
     }
 }
@@ -840,7 +897,7 @@ struct PostCommentsSheet: View {
                         TextField(localizationManager.localizedString(for: .addAComment), text: $newCommentText, axis: .vertical)
                             .lineLimit(1...4)
                             .textFieldStyle(PlainTextFieldStyle())
-                
+                        
                         // Botón enviar
                         Button(localizationManager.localizedString(for: .postTitle)) {
                             if !newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {

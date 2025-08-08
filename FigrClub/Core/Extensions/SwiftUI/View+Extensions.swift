@@ -8,6 +8,9 @@
 import Foundation
 import SwiftUI
 
+/// Extensions
+
+// MARK: - Theme Extensions
 extension View {
     /// Aplica el tema global a la vista (implementación auto-suficiente)
     func themed() -> some View {
@@ -35,6 +38,217 @@ extension View {
     }
 }
 
+// MARK: - Button Extensions
+extension View {
+    /// Aplica estilo de botón primario temático
+    func figrPrimaryButton() -> some View {
+        self.modifier(FigrPrimaryButtonModifier())
+    }
+    
+    /// Aplica estilo de botón secundario temático
+    func figrSecondaryButton() -> some View {
+        self.modifier(FigrSecondaryButtonModifier())
+    }
+    
+    /// Aplica estilo de botón outline temático
+    func figrOutlineButton() -> some View {
+        self.modifier(FigrOutlineButtonModifier())
+    }
+}
+
+// MARK: - Loading Extensions
+extension View {
+    /// Aplica overlay de loading temático
+    func figrLoading(_ isLoading: Bool) -> some View {
+        self.modifier(FigrLoadingModifier(isLoading: isLoading))
+    }
+    
+    /// Aplica shimmer effect temático
+    func figrShimmer(_ isActive: Bool = true) -> some View {
+        self.modifier(FigrShimmerModifier(isActive: isActive))
+    }
+}
+
+// MARK: - Navigation Extensions
+extension View {
+    /// Aplica estilo de navegación temático
+    func figrNavigation() -> some View {
+        self.modifier(FigrNavigationModifier())
+    }
+    
+    /// Aplica barra de navegación transparente temática
+    func figrTransparentNavigation() -> some View {
+        self.modifier(FigrTransparentNavigationModifier())
+    }
+}
+
+// MARK: - Accessibility Extensions
+extension View {
+    /// Aplica configuraciones de accesibilidad temática
+    func figrAccessibility() -> some View {
+        self.modifier(FigrAccessibilityModifier())
+    }
+}
+
+// MARK: - Animation Extensions
+extension View {
+    /// Aplica animación de aparición temática
+    func figrAppearAnimation() -> some View {
+        self.modifier(FigrAppearAnimationModifier())
+    }
+    
+    /// Aplica animación de tap temática
+    func figrTapAnimation() -> some View {
+        self.modifier(FigrTapAnimationModifier())
+    }
+}
+
+// MARK: - Layout Extensions
+extension View {
+    
+    func figrPadding(_ size: AppTheme.Padding.Size = .large) -> some View {
+        self.padding(size.value)
+    }
+    /// Aplica padding estándar de pantalla
+    func figrScreenPadding() -> some View {
+        self.padding(.horizontal, AppTheme.Padding.screenPadding)
+    }
+    
+    /// Aplica padding de sección
+    func figrSectionPadding() -> some View {
+        self.padding(.vertical, AppTheme.Padding.xLarge)
+    }
+    
+    /// Aplica espaciado estándar
+    func figrSpacing(_ size: AppTheme.Spacing.Size = .large) -> some View {
+        self.padding(size.value)
+    }
+    
+    /// Aplica estilo de tarjeta FigrClub
+    func figrCard() -> some View {
+        self.modifier(FigrCardModifier())
+    }
+    
+    /// Aplica padding de tarjeta FigrClub
+    func figrCardPadding(_ padding: CGFloat = AppTheme.Padding.large) -> some View {
+        self.padding(padding)
+    }
+    
+    /// Aplica sombra de tarjeta FigrClub
+    func figrCardShadow() -> some View {
+        self.shadow(
+            color: AppTheme.Shadow.cardShadowColor,
+            radius: AppTheme.Shadow.cardShadow.radius,
+            x: AppTheme.Shadow.cardShadow.x,
+            y: AppTheme.Shadow.cardShadow.y
+        )
+    }
+    
+    func figrElevatedCard() -> some View {
+        self.modifier(AppTheme.elevatedCardStyle)
+    }
+    
+    func figrProductCard() -> some View {
+        self.modifier(AppTheme.productCardStyle)
+    }
+    
+    func figrCardPadding() -> some View {
+        self.padding(AppTheme.Padding.large)
+    }
+    
+    func figrSectionSpacing() -> some View {
+        self.padding(.bottom, AppTheme.Padding.xLarge)
+    }
+    
+    func figrScreenContainer() -> some View {
+        self.modifier(ScreenContainerModifier())
+    }
+}
+
+// MARK: - Gradient Extensions
+extension View {
+    func gradientOverlay(
+        _ gradient: LinearGradient,
+        blendMode: BlendMode = .overlay
+    ) -> some View {
+        modifier(GradientOverlayModifier(gradient: gradient, blendMode: blendMode))
+    }
+    
+    func darkGradientOverlay() -> some View {
+        gradientOverlay(
+            LinearGradient(
+                colors: [Color.clear, Color.black.opacity(0.7)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+    }
+}
+
+// MARK: - Conditional Extensions
+extension View {
+    /// Aplica modificador condicionalmente
+    @ViewBuilder
+    func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
+    }
+    
+    /// Aplica modificador condicionalmente con else
+    @ViewBuilder
+    func `if`<TrueContent: View, FalseContent: View>(
+        _ condition: Bool,
+        if ifTransform: (Self) -> TrueContent,
+        else elseTransform: (Self) -> FalseContent
+    ) -> some View {
+        if condition {
+            ifTransform(self)
+        } else {
+            elseTransform(self)
+        }
+    }
+}
+
+// MARK: - Safe Area Extensions
+extension View {
+    /// Ignora safe area con color de fondo temático
+    func figrIgnoreSafeArea(_ regions: SafeAreaRegions = .all) -> some View {
+        self.modifier(FigrIgnoreSafeAreaModifier(regions: regions))
+    }
+}
+
+// MARK: - Keyboard Extensions
+extension View {
+    /// Maneja el teclado automáticamente
+    func figrKeyboardHandling() -> some View {
+        self.modifier(FigrKeyboardModifier())
+    }
+}
+
+// MARK: - Performance Extensions
+extension View {
+    /// Optimiza el renderizado para listas grandes
+    func figrListOptimization() -> some View {
+        self.modifier(FigrListOptimizationModifier())
+    }
+}
+
+// MARK: - Error Handling Extensions
+extension View {
+    /// Maneja errores con UI temática
+    func figrErrorHandling<ErrorType: Error>(
+        error: Binding<ErrorType?>,
+        onRetry: @escaping () -> Void = {}
+    ) -> some View {
+        self.modifier(FigrErrorHandlingModifier(error: error, onRetry: onRetry))
+    }
+}
+
+/// Modifiers
+
 // MARK: - Themed View Modifier (implementación auto-suficiente)
 struct ThemedView: ViewModifier {
     @StateObject private var themeManager = ThemeManager.shared
@@ -53,7 +267,6 @@ struct ThemedView: ViewModifier {
 }
 
 // MARK: - Themed Background Modifier
-
 struct ThemedBackgroundModifier: ViewModifier {
     @EnvironmentObject private var themeManager: ThemeManager
     
@@ -64,7 +277,6 @@ struct ThemedBackgroundModifier: ViewModifier {
 }
 
 // MARK: - Themed Card Modifier
-
 struct ThemedCardModifier: ViewModifier {
     @EnvironmentObject private var themeManager: ThemeManager
     
@@ -84,7 +296,6 @@ struct ThemedCardModifier: ViewModifier {
 }
 
 // MARK: - Text Color Level
-
 enum TextColorLevel {
     case primary
     case secondary
@@ -93,7 +304,6 @@ enum TextColorLevel {
 }
 
 // MARK: - Themed Text Color Modifier
-
 struct ThemedTextColorModifier: ViewModifier {
     @EnvironmentObject private var themeManager: ThemeManager
     let level: TextColorLevel
@@ -129,27 +339,7 @@ struct FigrCardModifier: ViewModifier {
     }
 }
 
-// MARK: - Button Extensions
-
-extension View {
-    /// Aplica estilo de botón primario temático
-    func figrPrimaryButton() -> some View {
-        self.modifier(FigrPrimaryButtonModifier())
-    }
-    
-    /// Aplica estilo de botón secundario temático
-    func figrSecondaryButton() -> some View {
-        self.modifier(FigrSecondaryButtonModifier())
-    }
-    
-    /// Aplica estilo de botón outline temático
-    func figrOutlineButton() -> some View {
-        self.modifier(FigrOutlineButtonModifier())
-    }
-}
-
 // MARK: - Custom Themed Text Field Modifier
-
 struct ThemedTextFieldModifier: ViewModifier {
     @EnvironmentObject private var themeManager: ThemeManager
     let isValid: Bool
@@ -257,20 +447,6 @@ struct FigrOutlineButtonModifier: ViewModifier {
     }
 }
 
-// MARK: - Loading Extensions
-
-extension View {
-    /// Aplica overlay de loading temático
-    func figrLoading(_ isLoading: Bool) -> some View {
-        self.modifier(FigrLoadingModifier(isLoading: isLoading))
-    }
-    
-    /// Aplica shimmer effect temático
-    func figrShimmer(_ isActive: Bool = true) -> some View {
-        self.modifier(FigrShimmerModifier(isActive: isActive))
-    }
-}
-
 struct FigrLoadingModifier: ViewModifier {
     @Environment(\.localizationManager) private var localizationManager
     @EnvironmentObject private var themeManager: ThemeManager
@@ -336,20 +512,6 @@ struct FigrShimmerModifier: ViewModifier {
     }
 }
 
-// MARK: - Navigation Extensions
-
-extension View {
-    /// Aplica estilo de navegación temático
-    func figrNavigation() -> some View {
-        self.modifier(FigrNavigationModifier())
-    }
-    
-    /// Aplica barra de navegación transparente temática
-    func figrTransparentNavigation() -> some View {
-        self.modifier(FigrTransparentNavigationModifier())
-    }
-}
-
 struct FigrNavigationModifier: ViewModifier {
     @EnvironmentObject private var themeManager: ThemeManager
     
@@ -387,15 +549,6 @@ struct FigrTransparentNavigationModifier: ViewModifier {
     }
 }
 
-// MARK: - Accessibility Extensions
-
-extension View {
-    /// Aplica configuraciones de accesibilidad temática
-    func figrAccessibility() -> some View {
-        self.modifier(FigrAccessibilityModifier())
-    }
-}
-
 struct FigrAccessibilityModifier: ViewModifier {
     @EnvironmentObject private var themeManager: ThemeManager
     
@@ -406,25 +559,97 @@ struct FigrAccessibilityModifier: ViewModifier {
     }
 }
 
-// MARK: - Font Size Category Extension
+struct FigrAppearAnimationModifier: ViewModifier {
+    @State private var appeared = false
+    
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(appeared ? 1.0 : 0.8)
+            .opacity(appeared ? 1.0 : 0.0)
+            .onAppear {
+                withAnimation(AppTheme.Animation.medium) {
+                    appeared = true
+                }
+            }
+    }
+}
 
-extension ThemeManager.FontSizePreference {
-    var sizeCategory: DynamicTypeSize {
-        switch self {
-        case .small:
-            return .small
-        case .medium:
-            return .medium
-        case .large:
-            return .large
-        case .extraLarge:
-            return .xLarge
-        }
+struct FigrTapAnimationModifier: ViewModifier {
+    @State private var isPressed = false
+    
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(isPressed ? 0.95 : 1.0)
+            .opacity(isPressed ? 0.8 : 1.0)
+            .onTapGesture {
+                withAnimation(AppTheme.Animation.buttonTap) {
+                    isPressed = true
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    withAnimation(AppTheme.Animation.buttonTap) {
+                        isPressed = false
+                    }
+                }
+            }
+    }
+}
+
+struct FigrIgnoreSafeAreaModifier: ViewModifier {
+    @EnvironmentObject private var themeManager: ThemeManager
+    let regions: SafeAreaRegions
+    
+    func body(content: Content) -> some View {
+        content
+            .background(themeManager.currentBackgroundColor.ignoresSafeArea(regions))
+    }
+}
+
+struct FigrKeyboardModifier: ViewModifier {
+    @State private var keyboardHeight: CGFloat = 0
+    
+    func body(content: Content) -> some View {
+        content
+            .padding(.bottom, keyboardHeight)
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { notification in
+                if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue {
+                    withAnimation(AppTheme.Animation.medium) {
+                        keyboardHeight = keyboardFrame.cgRectValue.height
+                    }
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+                withAnimation(AppTheme.Animation.medium) {
+                    keyboardHeight = 0
+                }
+            }
+    }
+}
+
+struct FigrListOptimizationModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .drawingGroup() // Agrupa el dibujo para mejor performance
+    }
+}
+
+struct FigrErrorHandlingModifier<ErrorType: Error>: ViewModifier {
+    @EnvironmentObject private var themeManager: ThemeManager
+    @Binding var error: ErrorType?
+    let onRetry: () -> Void
+    
+    func body(content: Content) -> some View {
+        content
+            .alert("Error", isPresented: .constant(error != nil)) {
+                Button("Reintentar", action: onRetry)
+                Button("Cerrar") { error = nil }
+            } message: {
+                Text(error?.localizedDescription ?? "Ha ocurrido un error inesperado")
+            }
     }
 }
 
 // MARK: - Debug Extensions
-
 #if DEBUG
 extension View {
     /// Imprime valores para debugging
@@ -497,296 +722,3 @@ struct DebugInfoView: View {
     }
 }
 #endif
-
-// MARK: - Animation Extensions
-
-extension View {
-    /// Aplica animación de aparición temática
-    func figrAppearAnimation() -> some View {
-        self.modifier(FigrAppearAnimationModifier())
-    }
-    
-    /// Aplica animación de tap temática
-    func figrTapAnimation() -> some View {
-        self.modifier(FigrTapAnimationModifier())
-    }
-}
-
-struct FigrAppearAnimationModifier: ViewModifier {
-    @State private var appeared = false
-    
-    func body(content: Content) -> some View {
-        content
-            .scaleEffect(appeared ? 1.0 : 0.8)
-            .opacity(appeared ? 1.0 : 0.0)
-            .onAppear {
-                withAnimation(AppTheme.Animation.medium) {
-                    appeared = true
-                }
-            }
-    }
-}
-
-struct FigrTapAnimationModifier: ViewModifier {
-    @State private var isPressed = false
-    
-    func body(content: Content) -> some View {
-        content
-            .scaleEffect(isPressed ? 0.95 : 1.0)
-            .opacity(isPressed ? 0.8 : 1.0)
-            .onTapGesture {
-                withAnimation(AppTheme.Animation.buttonTap) {
-                    isPressed = true
-                }
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    withAnimation(AppTheme.Animation.buttonTap) {
-                        isPressed = false
-                    }
-                }
-            }
-    }
-}
-
-// MARK: - Layout Extensions
-
-extension View {
-    
-    func figrPadding(_ size: AppTheme.Padding.Size = .large) -> some View {
-        self.padding(size.value)
-    }
-    /// Aplica padding estándar de pantalla
-    func figrScreenPadding() -> some View {
-        self.padding(.horizontal, AppTheme.Padding.screenPadding)
-    }
-    
-    /// Aplica padding de sección
-    func figrSectionPadding() -> some View {
-        self.padding(.vertical, AppTheme.Padding.xLarge)
-    }
-    
-    /// Aplica espaciado estándar
-    func figrSpacing(_ size: AppTheme.Spacing.Size = .large) -> some View {
-        self.padding(size.value)
-    }
-    
-    /// Aplica estilo de tarjeta FigrClub
-    /*
-     func figrCard() -> some View {
-     self.modifier(AppTheme.cardStyle)
-     }
-     */
-    
-    func figrCard() -> some View {
-        self.modifier(FigrCardModifier())
-    }
-    
-    /// Aplica padding de tarjeta FigrClub
-    func figrCardPadding(_ padding: CGFloat = AppTheme.Padding.large) -> some View {
-        self.padding(padding)
-    }
-    
-    /// Aplica sombra de tarjeta FigrClub
-    func figrCardShadow() -> some View {
-        self.shadow(
-            color: AppTheme.Shadow.cardShadowColor,
-            radius: AppTheme.Shadow.cardShadow.radius,
-            x: AppTheme.Shadow.cardShadow.x,
-            y: AppTheme.Shadow.cardShadow.y
-        )
-    }
-    
-    func figrElevatedCard() -> some View {
-        self.modifier(AppTheme.elevatedCardStyle)
-    }
-    
-    func figrProductCard() -> some View {
-        self.modifier(AppTheme.productCardStyle)
-    }
-    
-    func figrCardPadding() -> some View {
-        self.padding(AppTheme.Padding.large)
-    }
-    
-    func figrSectionSpacing() -> some View {
-        self.padding(.bottom, AppTheme.Padding.xLarge)
-    }
-    
-    func figrScreenContainer() -> some View {
-        self.modifier(ScreenContainerModifier())
-    }
-}
-
-// MARK: - Padding Size Extension
-
-extension AppTheme.Padding {
-    enum Size {
-        case xxxSmall, xxSmall, xSmall, small, medium, large, xLarge, xxLarge, xxxLarge
-        
-        var value: CGFloat {
-            switch self {
-                
-            case .xxxSmall:
-                return AppTheme.Padding.xxxSmall
-            case .xxSmall:
-                return AppTheme.Padding.xxSmall
-            case .xSmall:
-                return AppTheme.Padding.xSmall
-            case .small:
-                return AppTheme.Padding.small
-            case .medium:
-                return AppTheme.Padding.medium
-            case .large:
-                return AppTheme.Padding.large
-            case .xLarge:
-                return AppTheme.Padding.xLarge
-            case .xxLarge:
-                return AppTheme.Padding.xxLarge
-            case .xxxLarge:
-                return AppTheme.Padding.xxxLarge
-            }
-        }
-    }
-}
-
-// MARK: - Spacing Size Extension
-
-extension AppTheme.Spacing {
-    enum Size {
-        case xxSmall, xSmall, small, medium, large, xLarge, xxLarge, xxxLarge
-        
-        var value: CGFloat {
-            switch self {
-            case .xxSmall: return AppTheme.Spacing.xxSmall
-            case .xSmall: return AppTheme.Spacing.xSmall
-            case .small: return AppTheme.Spacing.small
-            case .medium: return AppTheme.Spacing.medium
-            case .large: return AppTheme.Spacing.large
-            case .xLarge: return AppTheme.Spacing.xLarge
-            case .xxLarge: return AppTheme.Spacing.xxLarge
-            case .xxxLarge: return AppTheme.Spacing.xxxLarge
-            }
-        }
-    }
-}
-
-// MARK: - Conditional Extensions
-
-extension View {
-    /// Aplica modificador condicionalmente
-    @ViewBuilder
-    func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
-        if condition {
-            transform(self)
-        } else {
-            self
-        }
-    }
-    
-    /// Aplica modificador condicionalmente con else
-    @ViewBuilder
-    func `if`<TrueContent: View, FalseContent: View>(
-        _ condition: Bool,
-        if ifTransform: (Self) -> TrueContent,
-        else elseTransform: (Self) -> FalseContent
-    ) -> some View {
-        if condition {
-            ifTransform(self)
-        } else {
-            elseTransform(self)
-        }
-    }
-}
-
-// MARK: - Safe Area Extensions
-
-extension View {
-    /// Ignora safe area con color de fondo temático
-    func figrIgnoreSafeArea(_ regions: SafeAreaRegions = .all) -> some View {
-        self.modifier(FigrIgnoreSafeAreaModifier(regions: regions))
-    }
-}
-
-struct FigrIgnoreSafeAreaModifier: ViewModifier {
-    @EnvironmentObject private var themeManager: ThemeManager
-    let regions: SafeAreaRegions
-    
-    func body(content: Content) -> some View {
-        content
-            .background(themeManager.currentBackgroundColor.ignoresSafeArea(regions))
-    }
-}
-
-// MARK: - Keyboard Extensions
-
-extension View {
-    /// Maneja el teclado automáticamente
-    func figrKeyboardHandling() -> some View {
-        self.modifier(FigrKeyboardModifier())
-    }
-}
-
-struct FigrKeyboardModifier: ViewModifier {
-    @State private var keyboardHeight: CGFloat = 0
-    
-    func body(content: Content) -> some View {
-        content
-            .padding(.bottom, keyboardHeight)
-            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { notification in
-                if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue {
-                    withAnimation(AppTheme.Animation.medium) {
-                        keyboardHeight = keyboardFrame.cgRectValue.height
-                    }
-                }
-            }
-            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
-                withAnimation(AppTheme.Animation.medium) {
-                    keyboardHeight = 0
-                }
-            }
-    }
-}
-
-// MARK: - Performance Extensions
-
-extension View {
-    /// Optimiza el renderizado para listas grandes
-    func figrListOptimization() -> some View {
-        self.modifier(FigrListOptimizationModifier())
-    }
-}
-
-struct FigrListOptimizationModifier: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .drawingGroup() // Agrupa el dibujo para mejor performance
-    }
-}
-
-// MARK: - Error Handling Extensions
-
-extension View {
-    /// Maneja errores con UI temática
-    func figrErrorHandling<ErrorType: Error>(
-        error: Binding<ErrorType?>,
-        onRetry: @escaping () -> Void = {}
-    ) -> some View {
-        self.modifier(FigrErrorHandlingModifier(error: error, onRetry: onRetry))
-    }
-}
-
-struct FigrErrorHandlingModifier<ErrorType: Error>: ViewModifier {
-    @EnvironmentObject private var themeManager: ThemeManager
-    @Binding var error: ErrorType?
-    let onRetry: () -> Void
-    
-    func body(content: Content) -> some View {
-        content
-            .alert("Error", isPresented: .constant(error != nil)) {
-                Button("Reintentar", action: onRetry)
-                Button("Cerrar") { error = nil }
-            } message: {
-                Text(error?.localizedDescription ?? "Ha ocurrido un error inesperado")
-            }
-    }
-}

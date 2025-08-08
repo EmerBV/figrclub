@@ -242,7 +242,7 @@ struct FigrNavigationStack<Content: View>: View {
                 // Fondo temático automático
                 themeManager.currentBackgroundColor
                     .ignoresSafeArea()
-
+                
                 content
             }
         }
@@ -522,4 +522,55 @@ struct ThemeEnvironment {
     
     // Aquí podrías agregar configuraciones dinámicas del tema
     // como preferencias del usuario, modo oscuro automático, etc.
+}
+
+// MARK: - Padding Size Extension
+extension AppTheme.Padding {
+    enum Size {
+        case xxxSmall, xxSmall, xSmall, small, medium, large, xLarge, xxLarge, xxxLarge
+        
+        var value: CGFloat {
+            switch self {
+                
+            case .xxxSmall:
+                return AppTheme.Padding.xxxSmall
+            case .xxSmall:
+                return AppTheme.Padding.xxSmall
+            case .xSmall:
+                return AppTheme.Padding.xSmall
+            case .small:
+                return AppTheme.Padding.small
+            case .medium:
+                return AppTheme.Padding.medium
+            case .large:
+                return AppTheme.Padding.large
+            case .xLarge:
+                return AppTheme.Padding.xLarge
+            case .xxLarge:
+                return AppTheme.Padding.xxLarge
+            case .xxxLarge:
+                return AppTheme.Padding.xxxLarge
+            }
+        }
+    }
+}
+
+// MARK: - Spacing Size Extension
+extension AppTheme.Spacing {
+    enum Size {
+        case xxSmall, xSmall, small, medium, large, xLarge, xxLarge, xxxLarge
+        
+        var value: CGFloat {
+            switch self {
+            case .xxSmall: return AppTheme.Spacing.xxSmall
+            case .xSmall: return AppTheme.Spacing.xSmall
+            case .small: return AppTheme.Spacing.small
+            case .medium: return AppTheme.Spacing.medium
+            case .large: return AppTheme.Spacing.large
+            case .xLarge: return AppTheme.Spacing.xLarge
+            case .xxLarge: return AppTheme.Spacing.xxLarge
+            case .xxxLarge: return AppTheme.Spacing.xxxLarge
+            }
+        }
+    }
 }
