@@ -34,6 +34,7 @@ struct ProductDetailView: View {
         // Por ahora usamos la misma imagen, pero en una implementación real
         // el producto tendría múltiples imágenes
         [product.imageURL, product.imageURL, product.imageURL]
+        //[product.imageURL]
     }
     
     var body: some View {
@@ -133,8 +134,8 @@ struct ProductDetailView: View {
             }
         }
         .frame(height: 400)
-        .tabViewStyle(.page(indexDisplayMode: .always))
-        .overlay(alignment: .bottomTrailing) {
+        .tabViewStyle(.page(indexDisplayMode: .automatic))
+        .overlay(alignment: .topTrailing) {
             Text("\(selectedImageIndex + 1)/\(productImages.count)")
                 .font(.caption)
                 .padding(.horizontal, AppTheme.Padding.small)

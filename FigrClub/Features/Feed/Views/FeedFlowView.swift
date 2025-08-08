@@ -45,20 +45,6 @@ struct FeedFlowView: View {
             .navigationBarHidden(true)
         }
         
-        // Navegación modal
-        /*
-         .sheet(isPresented: $navigationCoordinator.showingPostDetail) {
-         if let postId = navigationCoordinator.selectedPostId {
-         PostDetailSheet(postId: postId, user: user)
-         }
-         }
-         .sheet(isPresented: $navigationCoordinator.showingUserProfile) {
-         if let userId = navigationCoordinator.selectedUserId {
-         UserProfileSheet(userId: userId, currentUser: user)
-         }
-         }
-         */
-        
         // Alert de confirmación para logout
         .alert(localizationManager.localizedString(for: .logout), isPresented: $showLogoutConfirmation) {
             Button(localizationManager.localizedString(for: .cancel), role: .cancel) {
@@ -97,7 +83,7 @@ struct FeedFlowView: View {
                 Button {
                     // TODO: Navegar a notificaciones
                 } label: {
-                    Image(systemName: "heart")
+                    Image(systemName: "magnifyingglass")
                         .font(.title2)
                         .themedTextColor(.primary)
                 }
@@ -106,12 +92,13 @@ struct FeedFlowView: View {
                 Button {
                     // TODO: Navegar a mensajes
                 } label: {
-                    Image(systemName: "paperplane")
+                    Image(systemName: "bubble.right")
                         .font(.title2)
                         .themedTextColor(.primary)
                 }
                 
                 // Botón de logout
+                /*
                 Button {
                     showLogoutConfirmation = true
                 } label: {
@@ -119,6 +106,7 @@ struct FeedFlowView: View {
                         .font(.title2)
                         .themedTextColor(.primary)
                 }
+                 */
             }
         }
         .padding(.top, AppTheme.Padding.large)
@@ -558,13 +546,15 @@ struct PostImageCarousel: View {
                             ForEach(0..<displayedImages.count, id: \.self) { index in
                                 Circle()
                                     .fill(index == currentIndex ? Color.white : Color.white.opacity(0.5))
-                                    .frame(width: 6, height: 6)
+                                    .frame(width: index == currentIndex ? 8 : 6,
+                                           height: index == currentIndex ? 8 : 6)
+                                    .animation(.easeInOut(duration: 0.2), value: currentIndex)
                             }
                         }
                         .padding(.horizontal, AppTheme.Padding.medium)
                         .padding(.vertical, AppTheme.Padding.small)
-                        .background(Color.black.opacity(0.3))
-                        .clipShape(Capsule())
+                        //.background(Color.black.opacity(0.3))
+                        //.clipShape(Capsule())
                         .padding(.bottom, AppTheme.Padding.large)
                     }
                 }
@@ -580,8 +570,11 @@ struct PostImageCarousel: View {
                             .foregroundColor(.white)
                             .padding(.horizontal, AppTheme.Padding.small)
                             .padding(.vertical, AppTheme.Padding.xSmall)
+                        /*
                             .background(Color.black.opacity(0.6))
                             .clipShape(Capsule())
+                         */
+                            .background(.ultraThinMaterial, in: Capsule())
                             .padding(.trailing, AppTheme.Padding.large)
                             .padding(.top, AppTheme.Padding.large)
                     }
