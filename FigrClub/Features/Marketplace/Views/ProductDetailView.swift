@@ -16,9 +16,11 @@ struct ProductDetailView: View {
     @Environment(\.dismiss) private var dismiss
     
     @EnvironmentObject private var themeManager: ThemeManager
+    @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
     
     // Estados locales
     @State private var products: [MarketplaceProduct] = sampleProducts
+    @State private var similarProducts: [MarketplaceProduct] = []
     @State private var isFavorite = false
     @State private var selectedImageIndex = 0
     @State private var showingImageViewer = false
@@ -95,6 +97,7 @@ struct ProductDetailView: View {
         }
         .onAppear {
             setupMapLocation()
+            setupSimilarProducts()
         }
         .sheet(isPresented: $showingSellerProfile) {
             if let seller = createSellerUser() {
@@ -417,11 +420,12 @@ struct ProductDetailView: View {
             
             FigrHorizontalScrollView {
                 HStack(spacing: AppTheme.Spacing.medium) {
-                    ForEach(products.prefix(5)) { similarProduct in
-                        SimilarProductCard(product: similarProduct) {
-                            // Navegar a otro producto similar
-                            Logger.info("🛍️ Similar product tapped: \(similarProduct.title)")
+                    // Filtrar el producto actual de la lista de similares
+                    ForEach(similarProducts.filter { $0.id != product.id }.prefix(5)) { similarProduct in
+                        NavigationLink(destination: ProductDetailView(product: similarProduct)) {
+                            SimilarProductCard(product: similarProduct)
                         }
+                        .buttonStyle(PlainButtonStyle())
                     }
                 }
                 .padding(.horizontal, AppTheme.Padding.large)
@@ -544,6 +548,7 @@ struct ProductDetailView: View {
         )
     }
     
+    // MARK: - Private Methods
     private func setupMapLocation() {
         // Configurar coordenadas basadas en la ubicación del producto
         // En una implementación real, estas coordenadas vendrían del servidor
@@ -552,6 +557,10 @@ struct ProductDetailView: View {
             center: coordinates,
             span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
         )
+    }
+    
+    private func setupSimilarProducts() {
+        similarProducts = products.filter(\.isSimilar)
     }
     
     private func getCoordinatesForLocation(_ location: String?) -> CLLocationCoordinate2D {
@@ -722,7 +731,7 @@ struct DetailReviewCard: View {
                     Text(review.userName)
                         .themedFont(.titleSmall)
                         .themedTextColor(.primary)
-                        //.fontWeight(.medium)
+                    //.fontWeight(.medium)
                     
                     HStack(spacing: AppTheme.Spacing.xxSmall) {
                         ForEach(0..<5) { index in
@@ -788,22 +797,22 @@ enum ReportReason: CaseIterable {
     case other
     
     /*
-    var displayName: String {
-        switch self {
-        case .inappropriateContent:
-            return "Contenido inapropiado"
-        case .scamOrFraud:
-            return "Estafa o fraude"
-        case .counterfeits:
-            return "Producto falsificado"
-        case .incorrectInformation:
-            return "Información incorrecta"
-        case .prohibitedItem:
-            return "Artículo prohibido"
-        case .other:
-            return "Otro motivo"
-        }
-    }
+     var displayName: String {
+     switch self {
+     case .inappropriateContent:
+     return "Contenido inapropiado"
+     case .scamOrFraud:
+     return "Estafa o fraude"
+     case .counterfeits:
+     return "Producto falsificado"
+     case .incorrectInformation:
+     return "Información incorrecta"
+     case .prohibitedItem:
+     return "Artículo prohibido"
+     case .other:
+     return "Otro motivo"
+     }
+     }
      */
     
     var localizedStringKey: LocalizedStringKey {
@@ -827,37 +836,33 @@ enum ReportReason: CaseIterable {
 // MARK: - Similar Product Card
 struct SimilarProductCard: View {
     let product: MarketplaceProduct
-    let action: () -> Void
     
     @Environment(\.localizationManager) private var localizationManager
     
     var body: some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
-                KFImage(URL(string: product.imageURL))
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 140, height: 140)
-                    .clipped()
-                    .cornerRadius(AppTheme.CornerRadius.medium)
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
+            KFImage(URL(string: product.imageURL))
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 140, height: 140)
+                .clipped()
+                .cornerRadius(AppTheme.CornerRadius.medium)
+            
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xxSmall) {
+                Text(product.title)
+                    .themedFont(.buttonXSmall)
+                    .themedTextColor(.primary)
+                    .lineLimit(2)
+                    .frame(height: 28, alignment: .top)
+                    .multilineTextAlignment(.leading)
                 
-                VStack(alignment: .leading, spacing: AppTheme.Spacing.xxSmall) {
-                    Text(product.title)
-                        .themedFont(.buttonXSmall)
-                        .themedTextColor(.primary)
-                        .lineLimit(2)
-                        .frame(height: 28, alignment: .top)
-                        .multilineTextAlignment(.leading)
-                    
-                    Text(localizationManager.currencyString(from: product.price))
-                        .themedFont(.bodySmall)
-                        .foregroundColor(Color.figrBlueAccent)
-                }
-                .padding(AppTheme.Padding.xxSmall)
+                Text(localizationManager.currencyString(from: product.price))
+                    .themedFont(.bodySmall)
+                    .foregroundColor(Color.figrBlueAccent)
             }
-            .frame(width: 140)
+            .padding(AppTheme.Padding.xxSmall)
         }
-        .buttonStyle(PlainButtonStyle())
+        .frame(width: 140)
     }
 }
 

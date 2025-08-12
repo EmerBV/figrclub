@@ -30,16 +30,10 @@ struct MarketplaceFlowView: View {
                 categoriesSection
                 productsSection
             }
-            //.navigationBarHidden(true)
             .navigationBarBackButtonHidden()
         }
         .sheet(isPresented: $showFilters) {
             FiltersSheet(selectedCategory: $selectedCategory)
-        }
-        .sheet(isPresented: $navigationCoordinator.showingProductDetail) {
-            if let product = navigationCoordinator.selectedProduct {
-                ProductDetailView(product: product)
-            }
         }
         .onAppear {
             setupFeaturedProducts()
@@ -144,10 +138,10 @@ struct MarketplaceFlowView: View {
             FigrHorizontalScrollView {
                 HStack(spacing: AppTheme.Spacing.large) {
                     ForEach(featuredProducts.prefix(5)) { product in
-                        FeaturedProductCard(product: product) {
-                            navigationCoordinator.showProductDetail(product)
-                            Logger.info("🛍️ Featured product tapped: \(product.title)")
+                        NavigationLink(destination: ProductDetailView(product: product)) {
+                            FeaturedProductCard(product: product)
                         }
+                        .buttonStyle(PlainButtonStyle())
                     }
                 }
                 .padding(.horizontal, AppTheme.Padding.large)
@@ -179,10 +173,10 @@ struct MarketplaceFlowView: View {
                 spacing: AppTheme.Spacing.large
             ) {
                 ForEach(filteredProducts) { product in
-                    ProductCard(product: product) {
-                        navigationCoordinator.showProductDetail(product)
-                        Logger.info("🛍️ Product tapped: \(product.title)")
+                    NavigationLink(destination: ProductDetailView(product: product)) {
+                        ProductCard(product: product)
                     }
+                    .buttonStyle(PlainButtonStyle())
                 }
             }
             .padding(.horizontal, AppTheme.Padding.large)
@@ -246,171 +240,163 @@ struct CategoryChip: View {
 // MARK: - Featured Product Card
 struct FeaturedProductCard: View {
     let product: MarketplaceProduct
-    let action: () -> Void
     
     @Environment(\.localizationManager) private var localizationManager
     
     var body: some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
-                // Imagen del producto
-                ZStack(alignment: .topTrailing) {
-                    KFImage(URL(string: product.imageURL))
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 160, height: 160)
-                        .clipped()
-                        .cornerRadius(AppTheme.CornerRadius.medium)
-                    
-                    // Badge de destacado
-                    Text("⭐")
-                        .font(.system(size: 12))
-                        .figrSpacing(.xSmall)
-                        .background(Color.figrSecondary)
-                        .cornerRadius(6)
-                        .offset(x: -6, y: 6)
-                }
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
+            // Imagen del producto
+            ZStack(alignment: .topTrailing) {
+                KFImage(URL(string: product.imageURL))
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 160, height: 160)
+                    .clipped()
+                    .cornerRadius(AppTheme.CornerRadius.medium)
                 
-                // Información del producto
-                VStack(alignment: .leading, spacing: AppTheme.Spacing.xSmall) {
-                    Text(product.title)
-                        .themedFont(.titleSmallSemibold)
-                        .themedTextColor(.primary)
-                        .lineLimit(2)
-                        .frame(height: 34, alignment: .top)
-                        .multilineTextAlignment(.leading)
-                    
-                    Text(localizationManager.currencyString(from: product.price))
-                        .themedFont(.priceSmallBold)
-                        .foregroundColor(Color.figrBlueAccent)
-                    
-                    // Condición del producto
-                    /*
-                    Text(product.condition.displayName)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, AppTheme.Padding.smallPadding)
-                        .padding(.vertical, AppTheme.Padding.xxxSmall)
-                        .background(
-                            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xSmall)
-                                .fill(product.condition.color)
-                        )
-                    
-                    HStack(spacing: 4) {
-                        KFImage(URL(string: product.sellerProfileImage))
-                            .profileImageStyle(size: 16)
-                        
-                        Text(product.sellerName)
-                            .themedFont(.bodyXSmall)
-                            .themedTextColor(.secondary)
-                            .lineLimit(1)
-                    }
-                     */
-                }
-                .figrSpacing(.xSmall)
-                .frame(width: 160, alignment: .leading)
+                // Badge de destacado
+                Text("⭐")
+                    .font(.system(size: 12))
+                    .figrSpacing(.xSmall)
+                    .background(Color.figrSecondary)
+                    .cornerRadius(6)
+                    .offset(x: -6, y: 6)
             }
-            .frame(width: 160)
+            
+            // Información del producto
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xSmall) {
+                Text(product.title)
+                    .themedFont(.titleSmallSemibold)
+                    .themedTextColor(.primary)
+                    .lineLimit(2)
+                    .frame(height: 34, alignment: .top)
+                    .multilineTextAlignment(.leading)
+                
+                Text(localizationManager.currencyString(from: product.price))
+                    .themedFont(.priceSmallBold)
+                    .foregroundColor(Color.figrBlueAccent)
+                
+                // Condición del producto
+                /*
+                 Text(product.condition.displayName)
+                 .font(.system(size: 11, weight: .medium))
+                 .foregroundColor(.white)
+                 .padding(.horizontal, AppTheme.Padding.smallPadding)
+                 .padding(.vertical, AppTheme.Padding.xxxSmall)
+                 .background(
+                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xSmall)
+                 .fill(product.condition.color)
+                 )
+                 
+                 HStack(spacing: 4) {
+                 KFImage(URL(string: product.sellerProfileImage))
+                 .profileImageStyle(size: 16)
+                 
+                 Text(product.sellerName)
+                 .themedFont(.bodyXSmall)
+                 .themedTextColor(.secondary)
+                 .lineLimit(1)
+                 }
+                 */
+            }
+            .figrSpacing(.xSmall)
+            .frame(width: 160, alignment: .leading)
         }
-        .buttonStyle(PlainButtonStyle())
+        .frame(width: 160)
     }
 }
 
 // MARK: - Product Card
 struct ProductCard: View {
     let product: MarketplaceProduct
-    let action: () -> Void
     
     @State private var isFavorite = false
     @Environment(\.localizationManager) private var localizationManager
     
     var body: some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
-                // Imagen del producto
-                ZStack(alignment: .topTrailing) {
-                    KFImage(URL(string: product.imageURL))
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(height: 180)
-                        .clipped()
-                        .cornerRadius(AppTheme.CornerRadius.medium)
-                    
-                    // Botón de favorito
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            isFavorite.toggle()
-                        }
-                    } label: {
-                        Image(systemName: isFavorite ? "heart.fill" : "heart")
-                            .font(.system(size: 16))
-                            .foregroundColor(isFavorite ? .red : .white)
-                            .padding(AppTheme.Spacing.small)
-                            .background(
-                                Circle()
-                                    .fill(Color.black.opacity(0.3))
-                            )
-                    }
-                    .offset(x: -8, y: 8)
-                }
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
+            // Imagen del producto
+            ZStack(alignment: .topTrailing) {
+                KFImage(URL(string: product.imageURL))
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(height: 180)
+                    .clipped()
+                    .cornerRadius(AppTheme.CornerRadius.medium)
                 
-                // Información del producto
-                VStack(alignment: .leading, spacing: AppTheme.Spacing.xSmall) {
-                    Text(product.title)
-                        .themedFont(.titleSmallSemibold)
-                        .themedTextColor(.primary)
-                        .lineLimit(2)
-                        .frame(height: 34, alignment: .top)
-                        .multilineTextAlignment(.leading)
-                    
-                    Text(localizationManager.currencyString(from: product.price))
-                        .themedFont(.priceSmallBold)
-                        .foregroundColor(Color.figrBlueAccent)
-                    
-                    // Condición del producto
-                    /*
-                    Text(product.condition.displayName)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, AppTheme.Padding.smallPadding)
-                        .padding(.vertical, AppTheme.Padding.xxxSmall)
-                        .background(
-                            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xSmall)
-                                .fill(product.condition.color)
-                        )
-                    
-                    HStack(spacing: 4) {
-                        KFImage(URL(string: product.sellerProfileImage))
-                            .profileImageStyle(size: 16)
-                        
-                        Text(product.sellerName)
-                            .themedFont(.bodyXSmall)
-                            .themedTextColor(.secondary)
-                            .lineLimit(1)
-                        
-                        Spacer()
-                        
-                        if let location = product.location {
-                            HStack(spacing: 2) {
-                                Image(systemName: "location.fill")
-                                    .font(.system(size: 10))
-                                    .themedTextColor(.secondary)
-                                
-                                Text(location)
-                                    .font(.system(size: 10))
-                                    .themedTextColor(.secondary)
-                                    .lineLimit(1)
-                            }
-                        }
+                // Botón de favorito
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isFavorite.toggle()
                     }
-                     */
+                } label: {
+                    Image(systemName: isFavorite ? "heart.fill" : "heart")
+                        .font(.system(size: 16))
+                        .foregroundColor(isFavorite ? .red : .white)
+                        .padding(AppTheme.Spacing.small)
+                        .background(
+                            Circle()
+                                .fill(Color.black.opacity(0.3))
+                        )
                 }
-                .padding(AppTheme.Padding.xSmall)
-                .frame(width: 180, alignment: .leading)
+                .offset(x: -8, y: 8)
             }
-            .frame(width: 180)
+            
+            // Información del producto
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xSmall) {
+                Text(product.title)
+                    .themedFont(.titleSmallSemibold)
+                    .themedTextColor(.primary)
+                    .lineLimit(2)
+                    .frame(height: 34, alignment: .top)
+                    .multilineTextAlignment(.leading)
+                
+                Text(localizationManager.currencyString(from: product.price))
+                    .themedFont(.priceSmallBold)
+                    .foregroundColor(Color.figrBlueAccent)
+                
+                // Condición del producto
+                /*
+                 Text(product.condition.displayName)
+                 .font(.system(size: 11, weight: .medium))
+                 .foregroundColor(.white)
+                 .padding(.horizontal, AppTheme.Padding.smallPadding)
+                 .padding(.vertical, AppTheme.Padding.xxxSmall)
+                 .background(
+                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xSmall)
+                 .fill(product.condition.color)
+                 )
+                 
+                 HStack(spacing: 4) {
+                 KFImage(URL(string: product.sellerProfileImage))
+                 .profileImageStyle(size: 16)
+                 
+                 Text(product.sellerName)
+                 .themedFont(.bodyXSmall)
+                 .themedTextColor(.secondary)
+                 .lineLimit(1)
+                 
+                 Spacer()
+                 
+                 if let location = product.location {
+                 HStack(spacing: 2) {
+                 Image(systemName: "location.fill")
+                 .font(.system(size: 10))
+                 .themedTextColor(.secondary)
+                 
+                 Text(location)
+                 .font(.system(size: 10))
+                 .themedTextColor(.secondary)
+                 .lineLimit(1)
+                 }
+                 }
+                 }
+                 */
+            }
+            .padding(AppTheme.Padding.xSmall)
+            .frame(width: 180, alignment: .leading)
         }
-        .buttonStyle(PlainButtonStyle())
+        .frame(width: 180)
     }
 }
 
@@ -504,6 +490,10 @@ struct MarketplaceProduct: Identifiable {
         // Por ahora, consideramos destacados los productos con precio > 50€
         // En una implementación real, esto sería una propiedad del servidor
         return price > 50.0
+    }
+    
+    var isSimilar: Bool {
+        return category == .anime
     }
     
     // Método para crear un producto de ejemplo

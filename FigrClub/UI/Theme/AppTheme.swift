@@ -249,6 +249,30 @@ struct FigrNavigationStack<Content: View>: View {
     }
 }
 
+struct FigrNavigationStackWithPath<Content: View>: View {
+    let content: Content
+    let path: Binding<NavigationPath>
+    
+    init(path: Binding<NavigationPath>, @ViewBuilder content: () -> Content) {
+        self.content = content()
+        self.path = path
+    }
+    
+    @EnvironmentObject private var themeManager: ThemeManager
+    
+    var body: some View {
+        NavigationStack(path: path) {
+            ZStack {
+                // Fondo temático automático
+                themeManager.currentBackgroundColor
+                    .ignoresSafeArea()
+                
+                content
+            }
+        }
+    }
+}
+
 struct FigrNavigationView<Content: View>: View {
     let content: Content
     

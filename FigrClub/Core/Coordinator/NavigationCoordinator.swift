@@ -132,12 +132,12 @@ class NavigationCoordinator: ObservableObject {
         showingSettings = false
         showingEditProfile = false
         showingCreatePost = false
-        showingProductDetail = false // Añadir producto
+        showingProductDetail = false
         
         selectedPostId = nil
         selectedUserId = nil
         selectedUserForDetail = nil
-        selectedProduct = nil // Añadir producto
+        selectedProduct = nil
         
         navigationStack.removeAll()
     }

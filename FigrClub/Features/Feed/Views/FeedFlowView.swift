@@ -59,6 +59,7 @@ struct FeedFlowView: View {
             
             Spacer()
             
+            /*
             HStack(spacing: 20) {
                 // Botón de notificaciones
                 Button {
@@ -77,6 +78,15 @@ struct FeedFlowView: View {
                         .font(.title2)
                         .themedTextColor(.primary)
                 }
+            }
+             */
+            
+            Button {
+                // TODO: Buscar perfiles
+            } label: {
+                Image(systemName: "magnifyingglass")
+                    .font(.title2)
+                    .themedTextColor(.primary)
             }
         }
         .padding(.top, AppTheme.Padding.large)
