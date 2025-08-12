@@ -12,6 +12,7 @@ import UIKit
 @MainActor
 class NavigationCoordinator: ObservableObject {
     // Estados de navegación modal/sheet
+    @Published var showingProfileSearch = false
     @Published var showingPostDetail = false
     @Published var showingUserProfile = false
     @Published var showingUserProfileDetail = false
@@ -30,6 +31,12 @@ class NavigationCoordinator: ObservableObject {
     private var navigationStack: [String] = []
     
     // MARK: - Navigation Methods
+    func showProfileSearch() {
+        Logger.info("🧭 NavigationCoordinator: Showing profile search")
+        showingProfileSearch = true
+        trackNavigation("profileSearch")
+    }
+    
     func showPostDetail(_ postId: String) {
         Logger.info("🧭 NavigationCoordinator: Showing post detail: \(postId)")
         selectedPostId = postId
@@ -77,6 +84,12 @@ class NavigationCoordinator: ObservableObject {
     }
     
     // MARK: - Dismiss Methods
+    func dismissProfileSearch() {
+        Logger.info("🧭 NavigationCoordinator: Dismissing profile search")
+        showingProfileSearch = false
+        removeFromNavigationStack("profileSearch")
+    }
+    
     func dismissPostDetail() {
         Logger.info("🧭 NavigationCoordinator: Dismissing post detail")
         showingPostDetail = false
@@ -133,6 +146,7 @@ class NavigationCoordinator: ObservableObject {
         showingEditProfile = false
         showingCreatePost = false
         showingProductDetail = false
+        showingProfileSearch = false
         
         selectedPostId = nil
         selectedUserId = nil
@@ -161,7 +175,8 @@ class NavigationCoordinator: ObservableObject {
         showingSettings ||
         showingEditProfile ||
         showingCreatePost ||
-        showingProductDetail
+        showingProductDetail ||
+        showingProfileSearch
     }
     
     var currentNavigationCount: Int {
@@ -197,6 +212,8 @@ class NavigationCoordinator: ObservableObject {
             dismissEditProfile()
         } else if lastNavigation.hasPrefix("createPost") {
             dismissCreatePost()
+        } else if lastNavigation.hasPrefix("profileSearch") {
+            dismissProfileSearch()
         }
     }
 }

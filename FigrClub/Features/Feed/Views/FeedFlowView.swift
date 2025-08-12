@@ -26,6 +26,7 @@ struct FeedFlowView: View {
     // Estado local para UI
     @State private var posts: [SamplePost] = samplePosts
     @State private var stories: [SampleStory] = sampleStories
+    @State private var showingProfileSearch = false
     
     var body: some View {
         FigrNavigationStack {
@@ -41,6 +42,9 @@ struct FeedFlowView: View {
                 }
             }
             .navigationBarHidden(true)
+        }
+        .sheet(isPresented: $showingProfileSearch) {
+            ProfileSearchView(currentUser: user)
         }
         .onAppear {
             Logger.info("✅ FeedFlowView: Appeared for user: \(user.username)")
@@ -82,7 +86,7 @@ struct FeedFlowView: View {
              */
             
             Button {
-                // TODO: Buscar perfiles
+                showingProfileSearch = true
             } label: {
                 Image(systemName: "magnifyingglass")
                     .font(.title2)

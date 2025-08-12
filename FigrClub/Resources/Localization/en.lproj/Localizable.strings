@@ -218,6 +218,18 @@
 "post_title" = "Post";
 "like_button_title" = "Like";
 "reply_button_title" = "Reply";
+"search_profiles_placeholder" = "Search for profiles...";
+"recent_searches" = "Recent Searches";
+"clear_all" = "Clear All";
+"suggested_users" = "Suggested Users";
+"searching_profiles" = "Searching profiles...";
+"search_results" = "Results";
+"results_found" = "found";
+"no_profiles_found" = "No profiles found";
+"try_different_search" = "Try searching with different keywords";
+"followers" = "followers";
+"posts" = "posts";
+"follow" = "Follow";
 
 // MARK: - Create
 "create_post" = "POST";

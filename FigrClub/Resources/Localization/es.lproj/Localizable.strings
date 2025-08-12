@@ -218,6 +218,18 @@
 "post_title" = "Publicar";
 "like_button_title" = "Me gusta";
 "reply_button_title" = "Responder";
+"search_profiles_placeholder" = "Buscar perfiles...";
+"recent_searches" = "Búsquedas Recientes";
+"clear_all" = "Limpiar Todo";
+"suggested_users" = "Usuarios Sugeridos";
+"searching_profiles" = "Buscando perfiles...";
+"search_results" = "Resultados";
+"results_found" = "encontrados";
+"no_profiles_found" = "No se encontraron perfiles";
+"try_different_search" = "Intenta buscar con diferentes palabras clave";
+"followers" = "seguidores";
+"posts" = "posts";
+"follow" = "Seguir";
 
 // MARK: - Create
 "create_post" = "PUBLICACIÓN";
