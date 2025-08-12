@@ -415,7 +415,7 @@ struct ProductDetailView: View {
                 .themedTextColor(.primary)
                 .padding(.horizontal, AppTheme.Padding.large)
             
-            ScrollView(.horizontal, showsIndicators: false) {
+            FigrHorizontalScrollView {
                 HStack(spacing: AppTheme.Spacing.medium) {
                     ForEach(products.prefix(5)) { similarProduct in
                         SimilarProductCard(product: similarProduct) {
@@ -843,7 +843,7 @@ struct SimilarProductCard: View {
                 
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.xxSmall) {
                     Text(product.title)
-                        .font(.system(size: 12, weight: .medium))
+                        .themedFont(.buttonXSmall)
                         .themedTextColor(.primary)
                         .lineLimit(2)
                         .frame(height: 28, alignment: .top)
@@ -853,6 +853,7 @@ struct SimilarProductCard: View {
                         .themedFont(.bodySmall)
                         .foregroundColor(Color.figrBlueAccent)
                 }
+                .padding(AppTheme.Padding.xxSmall)
             }
             .frame(width: 140)
         }

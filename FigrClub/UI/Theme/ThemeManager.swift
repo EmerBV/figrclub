@@ -205,10 +205,10 @@ extension EnvironmentValues {
 enum ThemedFontType {
     case displayLarge, displayMedium, displaySmall
     case headlineLarge, headlineMedium, headlineSmall
-    case titleLarge, titleMedium, titleSmall
+    case titleLarge, titleMedium, titleSmall, titleSmallSemibold
     case bodyLarge, bodyMedium, bodySmall, bodyXSmall
-    case buttonLarge, buttonMedium, buttonSmall
-    case priceLarge, priceMedium, priceSmall
+    case buttonLarge, buttonMedium, buttonSmall, buttonXSmall
+    case priceLarge, priceMedium, priceSmall, priceSmallBold
 }
 
 // MARK: - Themed Font Modifier
@@ -243,6 +243,8 @@ struct ThemedFontModifier: ViewModifier {
             return .scaledForTheme(baseSize: 16, weight: .medium, scaleFactor: scaleFactor)
         case .titleSmall:
             return .scaledForTheme(baseSize: 14, weight: .medium, scaleFactor: scaleFactor)
+        case .titleSmallSemibold:
+            return .scaledForTheme(baseSize: 14, weight: .semibold, scaleFactor: scaleFactor)
         case .bodyLarge:
             return .scaledForTheme(baseSize: 17, weight: .regular, scaleFactor: scaleFactor)
         case .bodyMedium:
@@ -257,12 +259,16 @@ struct ThemedFontModifier: ViewModifier {
             return .scaledForTheme(baseSize: 16, weight: .medium, scaleFactor: scaleFactor)
         case .buttonSmall:
             return .scaledForTheme(baseSize: 14, weight: .medium, scaleFactor: scaleFactor)
+        case .buttonXSmall:
+            return .scaledForTheme(baseSize: 12, weight: .medium, scaleFactor: scaleFactor)
         case .priceLarge:
             return Font.custom("SF Mono", size: 20 * scaleFactor).weight(.bold)
         case .priceMedium:
             return Font.custom("SF Mono", size: 18 * scaleFactor).weight(.semibold)
         case .priceSmall:
             return Font.custom("SF Mono", size: 16 * scaleFactor).weight(.medium)
+        case .priceSmallBold:
+            return Font.custom("SF Mono", size: 16 * scaleFactor).weight(.bold)
         }
     }
 }

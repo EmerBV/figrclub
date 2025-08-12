@@ -30,7 +30,8 @@ struct MarketplaceFlowView: View {
                 categoriesSection
                 productsSection
             }
-            .navigationBarHidden(true)
+            //.navigationBarHidden(true)
+            .navigationBarBackButtonHidden()
         }
         .sheet(isPresented: $showFilters) {
             FiltersSheet(selectedCategory: $selectedCategory)
@@ -259,13 +260,13 @@ struct FeaturedProductCard: View {
                         .aspectRatio(contentMode: .fill)
                         .frame(width: 160, height: 160)
                         .clipped()
-                        .cornerRadius(12)
+                        .cornerRadius(AppTheme.CornerRadius.medium)
                     
                     // Badge de destacado
                     Text("⭐")
                         .font(.system(size: 12))
                         .figrSpacing(.xSmall)
-                        .background(Color.yellow)
+                        .background(Color.figrSecondary)
                         .cornerRadius(6)
                         .offset(x: -6, y: 6)
                 }
@@ -273,19 +274,27 @@ struct FeaturedProductCard: View {
                 // Información del producto
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.xSmall) {
                     Text(product.title)
-                        .font(.system(size: 14, weight: .semibold))
+                        .themedFont(.titleSmallSemibold)
                         .themedTextColor(.primary)
                         .lineLimit(2)
                         .frame(height: 34, alignment: .top)
                         .multilineTextAlignment(.leading)
                     
                     Text(localizationManager.currencyString(from: product.price))
-                    /*
-                     .font(.system(size: 16, weight: .bold))
-                     .foregroundColor(.blue)
-                     */
-                        .themedFont(.priceMedium)
+                        .themedFont(.priceSmallBold)
                         .foregroundColor(Color.figrBlueAccent)
+                    
+                    // Condición del producto
+                    /*
+                    Text(product.condition.displayName)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, AppTheme.Padding.smallPadding)
+                        .padding(.vertical, AppTheme.Padding.xxxSmall)
+                        .background(
+                            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xSmall)
+                                .fill(product.condition.color)
+                        )
                     
                     HStack(spacing: 4) {
                         KFImage(URL(string: product.sellerProfileImage))
@@ -296,6 +305,7 @@ struct FeaturedProductCard: View {
                             .themedTextColor(.secondary)
                             .lineLimit(1)
                     }
+                     */
                 }
                 .figrSpacing(.xSmall)
                 .frame(width: 160, alignment: .leading)
@@ -347,21 +357,18 @@ struct ProductCard: View {
                 // Información del producto
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.xSmall) {
                     Text(product.title)
-                        .font(.system(size: 14, weight: .semibold))
+                        .themedFont(.titleSmallSemibold)
                         .themedTextColor(.primary)
                         .lineLimit(2)
                         .frame(height: 34, alignment: .top)
                         .multilineTextAlignment(.leading)
                     
                     Text(localizationManager.currencyString(from: product.price))
-                    /*
-                     .font(.system(size: 16, weight: .bold))
-                     .foregroundColor(.blue)
-                     */
-                        .themedFont(.priceMedium)
+                        .themedFont(.priceSmallBold)
                         .foregroundColor(Color.figrBlueAccent)
                     
                     // Condición del producto
+                    /*
                     Text(product.condition.displayName)
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.white)
@@ -396,19 +403,14 @@ struct ProductCard: View {
                             }
                         }
                     }
+                     */
                 }
                 .padding(AppTheme.Padding.xSmall)
+                .frame(width: 180, alignment: .leading)
             }
+            .frame(width: 180)
         }
         .buttonStyle(PlainButtonStyle())
-        //.themedCard()
-        /*
-         .background(
-         RoundedRectangle(cornerRadius: 12)
-         .fill(Color(.systemBackground))
-         .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
-         )
-         */
     }
 }
 

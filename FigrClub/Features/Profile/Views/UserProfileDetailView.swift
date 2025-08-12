@@ -43,7 +43,8 @@ struct UserProfileDetailView: View {
                         .padding(.horizontal, AppTheme.Padding.large)
                 }
             }
-            .navigationBarHidden(false)
+            //.navigationBarHidden(false)
+            .navigationBarBackButtonHidden(false)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: { dismiss() }) {
@@ -71,7 +72,6 @@ struct UserProfileDetailView: View {
             }
             //.themedBackground()
         }
-        .navigationBarBackButtonHidden()
         .onAppear {
             loadUserProducts()
         }
@@ -328,7 +328,7 @@ struct UserProfileDetailView: View {
     
     // MARK: - On Sale Content
     private var onSaleContent: some View {
-        VStack(spacing: AppTheme.Spacing.large) {
+        FigrVStack {
             // Search Section
             searchSection
             
