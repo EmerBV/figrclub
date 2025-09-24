@@ -14,6 +14,8 @@ class NavigationCoordinator: ObservableObject {
     // Estados de navegación modal/sheet
     @Published var showingProfileSearch = false
     @Published var showingPostDetail = false
+    @Published var showingPostOptions = false
+    @Published var showingPostComments = false
     @Published var showingUserProfile = false
     @Published var showingUserProfileDetail = false
     @Published var showingSettings = false
@@ -42,6 +44,18 @@ class NavigationCoordinator: ObservableObject {
         selectedPostId = postId
         showingPostDetail = true
         trackNavigation("postDetail_\(postId)")
+    }
+    
+    func showPostOptions() {
+        Logger.info("🧭 NavigationCoordinator: Showing post options")
+        showingPostOptions = true
+        trackNavigation("postOptions")
+    }
+    
+    func showPostComments() {
+        Logger.info("🧭 NavigationCoordinator: Showing post comments")
+        showingPostComments = true
+        trackNavigation("postComments")
     }
     
     func showUserProfile(_ userId: String) {
@@ -97,6 +111,18 @@ class NavigationCoordinator: ObservableObject {
         removeFromNavigationStack("postDetail")
     }
     
+    func dismissPostOptions() {
+        Logger.info("🧭 NavigationCoordinator: Dismissing post options")
+        showingPostOptions = false
+        removeFromNavigationStack("postOptions")
+    }
+    
+    func dismissPostComments() {
+        Logger.info("🧭 NavigationCoordinator: Dismissing post comments")
+        showingPostComments = false
+        removeFromNavigationStack("postComments")
+    }
+    
     func dismissUserProfile() {
         Logger.info("🧭 NavigationCoordinator: Dismissing user profile")
         showingUserProfile = false
@@ -139,14 +165,16 @@ class NavigationCoordinator: ObservableObject {
     func dismissAll() {
         Logger.info("🧭 NavigationCoordinator: Dismissing all presentations")
         
+        showingProfileSearch = false
         showingPostDetail = false
+        showingPostOptions = false
+        showingPostComments = false
         showingUserProfile = false
         showingUserProfileDetail = false
         showingSettings = false
         showingEditProfile = false
         showingCreatePost = false
         showingProductDetail = false
-        showingProfileSearch = false
         
         selectedPostId = nil
         selectedUserId = nil
@@ -169,14 +197,16 @@ class NavigationCoordinator: ObservableObject {
     
     // MARK: - State Queries
     var hasActiveNavigation: Bool {
-        return showingPostDetail ||
+        return showingProfileSearch ||
+        showingPostDetail ||
+        showingPostOptions ||
+        showingPostComments ||
         showingUserProfile ||
         showingUserProfileDetail ||
         showingSettings ||
         showingEditProfile ||
         showingCreatePost ||
-        showingProductDetail ||
-        showingProfileSearch
+        showingProductDetail
     }
     
     var currentNavigationCount: Int {
@@ -198,8 +228,14 @@ class NavigationCoordinator: ObservableObject {
         Logger.info("🧭 NavigationCoordinator: Going back from: \(lastNavigation)")
         
         // Dismiss based on last navigation
-        if lastNavigation.hasPrefix("postDetail") {
+        if lastNavigation.hasPrefix("profileSearch") {
+            dismissProfileSearch()
+        } else if lastNavigation.hasPrefix("postDetail") {
             dismissPostDetail()
+        } else if lastNavigation.hasPrefix("postOptions") {
+            dismissPostOptions()
+        } else if lastNavigation.hasPrefix("postComments") {
+            dismissPostComments()
         } else if lastNavigation.hasPrefix("userProfile") {
             dismissUserProfile()
         } else if lastNavigation.hasPrefix("userProfileDetail") {
@@ -212,8 +248,6 @@ class NavigationCoordinator: ObservableObject {
             dismissEditProfile()
         } else if lastNavigation.hasPrefix("createPost") {
             dismissCreatePost()
-        } else if lastNavigation.hasPrefix("profileSearch") {
-            dismissProfileSearch()
         }
     }
 }

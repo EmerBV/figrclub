@@ -45,14 +45,6 @@ struct ProfileFlowView: View {
         .sheet(isPresented: $navigationCoordinator.showingSettings) {
             SettingsView(user: user)
         }
-        .sheet(isPresented: $navigationCoordinator.showingUserProfileDetail) {
-            if let selectedUser = navigationCoordinator.selectedUserForDetail {
-                UserProfileDetailView(user: selectedUser)
-            }
-        }
-        .sheet(isPresented: $navigationCoordinator.showingEditProfile) {
-            EditProfileView(user: user)
-        }
         .onReceive(authStateManager.$authState) { authState in
             if case .unauthenticated = authState {
                 isLoggingOut = false
@@ -102,10 +94,7 @@ struct ProfileFlowView: View {
                 
                 Spacer()
                 
-                // Botón de navegación
-                Button(action: {
-                    navigationCoordinator.showUserProfileDetail(user: user)
-                }) {
+                NavigationLink(destination: UserProfileDetailView(user: user)) {
                     Image(systemName: "chevron.right")
                         .font(.caption)
                         .themedTextColor(.secondary)

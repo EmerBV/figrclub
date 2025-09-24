@@ -14,6 +14,7 @@ struct UserProfileDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.localizationManager) private var localizationManager
     
+    @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
     @EnvironmentObject private var themeManager: ThemeManager
     
     @State private var selectedTab: ProfileTab = .onSale
@@ -43,11 +44,13 @@ struct UserProfileDetailView: View {
                         .padding(.horizontal, AppTheme.Padding.large)
                 }
             }
-            //.navigationBarHidden(false)
-            .navigationBarBackButtonHidden(false)
+            .navigationBarHidden(false)
+            //.navigationBarBackButtonHidden(false)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: { dismiss() }) {
+                    Button {
+                        dismiss()
+                    } label: {
                         Image(systemName: "arrow.left")
                             .font(.title2)
                             .themedTextColor(.primary)
@@ -56,13 +59,17 @@ struct UserProfileDetailView: View {
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     HStack(spacing: AppTheme.Spacing.medium) {
-                        Button(action: { /* Editar perfil */ }) {
+                        Button {
+                            navigationCoordinator.showEditProfile()
+                        } label: {
                             Image(systemName: "pencil")
                                 .font(.title2)
                                 .themedTextColor(.primary)
                         }
                         
-                        Button(action: { /* Compartir perfil */ }) {
+                        Button {
+                            /* Compartir perfil */
+                        } label: {
                             Image(systemName: "square.and.arrow.up")
                                 .font(.title2)
                                 .themedTextColor(.primary)
@@ -71,9 +78,13 @@ struct UserProfileDetailView: View {
                 }
             }
             //.themedBackground()
+            .navigationBarBackButtonHidden()
         }
         .onAppear {
             loadUserProducts()
+        }
+        .sheet(isPresented: $navigationCoordinator.showingEditProfile) {
+            EditProfileView(user: user)
         }
     }
     

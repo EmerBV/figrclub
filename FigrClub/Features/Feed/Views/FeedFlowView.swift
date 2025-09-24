@@ -26,7 +26,6 @@ struct FeedFlowView: View {
     // Estado local para UI
     @State private var posts: [SamplePost] = samplePosts
     @State private var stories: [SampleStory] = sampleStories
-    @State private var showingProfileSearch = false
     
     var body: some View {
         FigrNavigationStack {
@@ -43,7 +42,7 @@ struct FeedFlowView: View {
             }
             .navigationBarHidden(true)
         }
-        .sheet(isPresented: $showingProfileSearch) {
+        .sheet(isPresented: $navigationCoordinator.showingProfileSearch) {
             ProfileSearchView(currentUser: user)
         }
         .onAppear {
@@ -86,7 +85,7 @@ struct FeedFlowView: View {
              */
             
             Button {
-                showingProfileSearch = true
+                navigationCoordinator.showProfileSearch()
             } label: {
                 Image(systemName: "magnifyingglass")
                     .font(.title2)
@@ -272,14 +271,16 @@ struct PostView: View {
             timestampView
                 .padding(.horizontal, AppTheme.Padding.large)
         }
-        .sheet(isPresented: $showPostOptions) {
+        .sheet(isPresented: $navigationCoordinator.showingPostOptions) {
             PostOptionsSheet(post: post, currentUser: currentUser)
                 .presentationDetents([.fraction(0.7)])
         }
-        .sheet(isPresented: $showComments) {
+        .sheet(isPresented: $navigationCoordinator.showingPostComments) {
             PostCommentsSheet(post: post, currentUser: currentUser)
                 .presentationDetents([.fraction(0.7)])
         }
+        
+        
     }
     
     private var postHeader: some View {
@@ -304,7 +305,7 @@ struct PostView: View {
             
             // Botón de más opciones
             Button {
-                showPostOptions = true
+                navigationCoordinator.showPostOptions()
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 16, weight: .bold))
@@ -343,7 +344,7 @@ struct PostView: View {
             
             // Comentar
             Button {
-                showComments = true
+                navigationCoordinator.showPostComments()
             } label: {
                 Image(systemName: "bubble.right")
                     .font(.title2)
@@ -409,7 +410,7 @@ struct PostView: View {
             if post.commentsCount > 2 {
                 HStack {
                     Button {
-                        showComments = true
+                        navigationCoordinator.showPostComments()
                     } label: {
                         Text(localizationManager.localizedString(for: .seeAllComments, arguments: post.commentsCount))
                             .font(.system(size: 14))
