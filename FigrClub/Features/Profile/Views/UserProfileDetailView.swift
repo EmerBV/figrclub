@@ -44,7 +44,7 @@ struct UserProfileDetailView: View {
                         .padding(.horizontal, AppTheme.Padding.large)
                 }
             }
-            .navigationBarHidden(false)
+            //.navigationBarHidden(false)
             //.navigationBarBackButtonHidden(false)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {

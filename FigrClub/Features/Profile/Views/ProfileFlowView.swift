@@ -42,9 +42,21 @@ struct ProfileFlowView: View {
         } message: {
             Text(localizationManager.localizedString(for: .areYouSureToLogout))
         }
+        
+        /*
         .sheet(isPresented: $navigationCoordinator.showingSettings) {
             SettingsView(user: user)
         }
+         */
+        
+        /*
+        .fullScreenCover(isPresented: $navigationCoordinator.showingSettings) {
+            SettingsView(user: user)
+                .environmentObject(themeManager)
+                .environment(\.localizationManager, localizationManager)
+        }
+         */
+        
         .onReceive(authStateManager.$authState) { authState in
             if case .unauthenticated = authState {
                 isLoggingOut = false
@@ -144,101 +156,8 @@ struct ProfileFlowView: View {
         }
     }
     
-    // MARK: - Options Section
-    private var optionsSection: some View {
-        VStack(spacing: 0) {
-            // Sección CONTENIDO
-            sectionHeader(localizationManager.localizedString(for: .contentString).uppercased())
-            
-            optionRow(
-                icon: "square.grid.3x3.fill",
-                title: localizationManager.localizedString(for: .myPostsString),
-                action: { /* Navegar a mis posts */ }
-            )
-            
-            optionRow(
-                icon: "play.rectangle.fill",
-                title: localizationManager.localizedString(for: .myReelsString),
-                action: { /* Navegar a mis reels */ }
-            )
-            
-            optionRow(
-                icon: "dot.radiowaves.left.and.right",
-                title: localizationManager.localizedString(for: .myLiveStreamsString),
-                action: { /* Navegar a mis directos */ }
-            )
-            
-            // Sección TRANSACCIONES
-            sectionHeader(localizationManager.localizedString(for: .transactionsString).uppercased())
-            
-            optionRow(
-                icon: "cart.fill",
-                title: localizationManager.localizedString(for: .shoppingsString),
-                action: { /* Navegar a compras */ }
-            )
-            
-            optionRow(
-                icon: "tag.fill",
-                title: localizationManager.localizedString(for: .salesString),
-                action: { /* Navegar a ventas */ }
-            )
-            
-            /*
-             optionRow(
-             icon: "creditcard.fill",
-             title: "Monedero",
-             action: { /* Navegar a monedero */ }
-             )
-             
-             optionRow(
-             icon: "leaf.fill",
-             title: "Tu impacto positivo",
-             action: { /* Navegar a impacto */ }
-             )
-             */
-            
-            // Sección CUENTA
-            sectionHeader(localizationManager.localizedString(for: .accountString).uppercased())
-            
-            /*
-             optionRow(
-             icon: "star.fill",
-             title: "FigrClub PRO",
-             action: { /* Navegar a PRO */ }
-             )
-             */
-            
-            optionRow(
-                icon: "heart.fill",
-                title: localizationManager.localizedString(for: .favoritesString),
-                action: { /* Navegar a favoritos */ }
-            )
-            
-            optionRow(
-                icon: "gearshape.fill",
-                title: localizationManager.localizedString(for: .settings),
-                action: { navigationCoordinator.showSettings() }
-            )
-            
-            /*
-             // Sección FIGRCLUB AL HABLA
-             sectionHeader("FIGRCLUB AL HABLA")
-             
-             optionRow(
-             icon: "bubble.left.and.bubble.right.fill",
-             title: "Chat de la comunidad",
-             action: { /* Navegar a chat */ }
-             )
-             */
-            
-            // Botón de cerrar sesión
-            logoutButton
-                .padding(.bottom, AppTheme.Padding.xLarge)
-        }
-    }
-    
-    // MARK: - Section Header
-    private func sectionHeader(_ title: String) -> some View {
+    // MARK: - Header Section
+    private func headerSection(_ title: String) -> some View {
         HStack {
             Text(title)
                 .font(.caption.weight(.medium))
@@ -252,36 +171,107 @@ struct ProfileFlowView: View {
         .padding(.bottom, AppTheme.Padding.small)
     }
     
-    // MARK: - Option Row
-    private func optionRow(icon: String, title: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: AppTheme.Spacing.medium) {
-                Image(systemName: icon)
-                    .font(.title3)
-                    .themedTextColor(.primary)
-                    .frame(width: 24, height: 24)
-                
-                Text(title)
-                    .font(.body)
-                    .themedTextColor(.primary)
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .themedTextColor(.secondary)
-            }
-            .padding(.horizontal, AppTheme.Padding.large)
-            .padding(.vertical, AppTheme.Padding.medium)
-            /*
-            .background(
-                Rectangle()
-                    .fill(themeManager.currentBackgroundColor)
-                    .contentShape(Rectangle())
+    // MARK: - Options Section
+    private var optionsSection: some View {
+        VStack(spacing: 0) {
+            // Sección CONTENIDO
+            headerSection(localizationManager.localizedString(for: .contentString).uppercased())
+            
+            ProfileOptionRow(
+                icon: "square.grid.3x3.fill",
+                title: localizationManager.localizedString(for: .myPostsString),
+                action: { /* Navegar a mis posts */ }
             )
+            
+            ProfileOptionRow(
+                icon: "play.rectangle.fill",
+                title: localizationManager.localizedString(for: .myReelsString),
+                action: { /* Navegar a mis reels */ }
+            )
+            
+            ProfileOptionRow(
+                icon: "dot.radiowaves.left.and.right",
+                title: localizationManager.localizedString(for: .myLiveStreamsString),
+                action: { /* Navegar a mis directos */ }
+            )
+            
+            // Sección TRANSACCIONES
+            headerSection(localizationManager.localizedString(for: .transactionsString).uppercased())
+            
+            ProfileOptionRow(
+                icon: "cart.fill",
+                title: localizationManager.localizedString(for: .shoppingsString),
+                action: { /* Navegar a compras */ }
+            )
+            
+            ProfileOptionRow(
+                icon: "tag.fill",
+                title: localizationManager.localizedString(for: .salesString),
+                action: { /* Navegar a ventas */ }
+            )
+            
+            /*
+             ProfileOptionRow(
+             icon: "creditcard.fill",
+             title: "Monedero",
+             action: { /* Navegar a monedero */ }
+             )
+             
+             ProfileOptionRow(
+             icon: "leaf.fill",
+             title: "Tu impacto positivo",
+             action: { /* Navegar a impacto */ }
+             )
              */
+            
+            // Sección CUENTA
+            headerSection(localizationManager.localizedString(for: .accountString).uppercased())
+            
+            /*
+             ProfileOptionRow(
+             icon: "star.fill",
+             title: "FigrClub PRO",
+             action: { /* Navegar a PRO */ }
+             )
+             */
+            
+            ProfileOptionRow(
+                icon: "heart.fill",
+                title: localizationManager.localizedString(for: .favoritesString),
+                action: { /* Navegar a favoritos */ }
+            )
+            
+            // Usando NavigationLink para la navegación sin que salga el modal
+            ProfileOptionRow(
+                icon: "gearshape.fill",
+                title: localizationManager.localizedString(for: .settings),
+                destination: SettingsView(user: user)
+            )
+            
+            // Ejemplo usando action (comentado el anterior para mostrar ambas opciones)
+            /*
+            ProfileOptionRow(
+                icon: "gearshape.fill",
+                title: localizationManager.localizedString(for: .settings),
+                action: { navigationCoordinator.showSettings() }
+            )
+            */
+            
+            /*
+             // Sección FIGRCLUB AL HABLA
+             headerSection("FIGRCLUB AL HABLA")
+             
+             ProfileOptionRow(
+             icon: "bubble.left.and.bubble.right.fill",
+             title: "Chat de la comunidad",
+             action: { /* Navegar a chat */ }
+             )
+             */
+            
+            // Botón de cerrar sesión
+            logoutButton
+                .padding(.bottom, AppTheme.Padding.xLarge)
         }
-        .buttonStyle(PlainButtonStyle())
     }
     
     // MARK: - Logout Button
@@ -344,28 +334,59 @@ struct ProfileFlowView: View {
 struct SettingsView: View {
     let user: User
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var themeManager: ThemeManager
+    @Environment(\.localizationManager) private var localizationManager
     
     var body: some View {
         FigrNavigationStack {
-            VStack {
-                Text("Configuración")
-                    .font(.title)
-                
-                Text("Próximamente...")
-                    .themedTextColor(.secondary)
-                
-                Spacer()
+            FigrVerticalScrollView {
+                VStack(spacing: AppTheme.Spacing.large) {
+                    // Aquí puedes agregar el contenido de configuración cuando esté listo
+                    VStack(spacing: AppTheme.Spacing.medium) {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 60))
+                            .themedTextColor(.secondary)
+                        
+                        Text(localizationManager.localizedString(for: .settings))
+                            .font(.title.weight(.bold))
+                            .themedTextColor(.primary)
+                        
+                        Text("Próximamente...")
+                            .font(.body)
+                            .themedTextColor(.secondary)
+                    }
+                    .padding(.top, AppTheme.Padding.xLarge)
+                    
+                    Spacer()
+                }
+                .padding(.horizontal, AppTheme.Padding.large)
             }
-            .padding()
-            .navigationTitle("Configuración")
+            .navigationTitle(localizationManager.localizedString(for: .settings))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                /*
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cerrar") {
+                    Button {
                         dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            //.font(.title2)
+                            .themedTextColor(.primary)
                     }
                 }
+                 */
+                
+                 ToolbarItem(placement: .navigationBarLeading) {
+                     Button {
+                         dismiss()
+                     } label: {
+                         Image(systemName: "arrow.left")
+                             .font(.title2)
+                             .themedTextColor(.primary)
+                     }
+                 }
             }
+            .navigationBarBackButtonHidden()
         }
     }
 }
