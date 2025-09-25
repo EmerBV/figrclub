@@ -63,25 +63,25 @@ struct FeedFlowView: View {
             Spacer()
             
             /*
-            HStack(spacing: 20) {
-                // Botón de notificaciones
-                Button {
-                    // TODO: Buscar perfiles
-                } label: {
-                    Image(systemName: "magnifyingglass")
-                        .font(.title2)
-                        .themedTextColor(.primary)
-                }
-                
-                // Botón de mensajes
-                Button {
-                    // TODO: Navegar a mensajes
-                } label: {
-                    Image(systemName: "bubble.right")
-                        .font(.title2)
-                        .themedTextColor(.primary)
-                }
-            }
+             HStack(spacing: 20) {
+             // Botón de notificaciones
+             Button {
+             // TODO: Buscar perfiles
+             } label: {
+             Image(systemName: "magnifyingglass")
+             .font(.title2)
+             .themedTextColor(.primary)
+             }
+             
+             // Botón de mensajes
+             Button {
+             // TODO: Navegar a mensajes
+             } label: {
+             Image(systemName: "bubble.right")
+             .font(.title2)
+             .themedTextColor(.primary)
+             }
+             }
              */
             
             Button {
@@ -588,11 +588,9 @@ struct PostOptionsSheet: View {
                         PostOptionRow(
                             icon: "info.circle",
                             title: localizationManager.localizedString(for: .aboutThisAccountTitle),
-                            subtitle: localizationManager.localizedString(for: .aboutThisAccountSubtitle)
-                        ) {
-                            // TODO: Implementar info de cuenta
-                            dismiss()
-                        }
+                            subtitle: localizationManager.localizedString(for: .aboutThisAccountSubtitle),
+                            destination: AccountInfoView()
+                        )
                         
                         PostOptionRow(
                             icon: "exclamationmark.triangle",
@@ -611,41 +609,6 @@ struct PostOptionsSheet: View {
             .navigationTitle("")
             .navigationBarHidden(true)
         }
-    }
-}
-
-// MARK: - Post Option Row
-struct PostOptionRow: View {
-    let icon: String
-    let title: String
-    let subtitle: String
-    var isDestructive: Bool = false
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 16) {
-                Image(systemName: icon)
-                    .font(.title2)
-                    .foregroundColor(isDestructive ? .red : .primary)
-                    .frame(width: 24)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(isDestructive ? .red : .primary)
-                    
-                    Text(subtitle)
-                        .font(.system(size: 14))
-                        .themedTextColor(.secondary)
-                }
-                
-                Spacer()
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, AppTheme.Padding.large)
-        }
-        .buttonStyle(PlainButtonStyle())
     }
 }
 
