@@ -99,11 +99,14 @@ struct ProductDetailView: View {
             setupMapLocation()
             setupSimilarProducts()
         }
+        // Comento este bloque ya que no quiero que salga como un modal UserProfileDetailView
+        /*
         .sheet(isPresented: $showingSellerProfile) {
             if let seller = createSellerUser() {
                 UserProfileDetailView(user: seller)
             }
         }
+         */
         .sheet(isPresented: $showingContactSeller) {
             ContactSellerView(product: product)
         }
@@ -195,53 +198,107 @@ struct ProductDetailView: View {
     
     // MARK: - Seller Info Section
     private var sellerInfoSection: some View {
+        // Para que la vista UserProfileDetailView salga como modal
+        /*
+         VStack(spacing: AppTheme.Spacing.medium) {
+         Button {
+         showingSellerProfile = true
+         } label: {
+         HStack(spacing: AppTheme.Spacing.medium) {
+         KFImage(URL(string: product.sellerProfileImage))
+         .profileImageStyle(size: 50)
+         
+         VStack(alignment: .leading, spacing: AppTheme.Spacing.xxSmall) {
+         Text(product.sellerName)
+         .themedFont(.titleMedium)
+         .themedTextColor(.primary)
+         
+         HStack(spacing: AppTheme.Spacing.xxSmall) {
+         ForEach(0..<5) { index in
+         Image(systemName: "star.fill")
+         .font(.caption2)
+         .foregroundColor(index < 4 ? .yellow : .gray)
+         }
+         
+         Text("4.8")
+         .themedFont(.bodySmall)
+         .themedTextColor(.secondary)
+         
+         Text("(24 reseñas)")
+         .themedFont(.bodySmall)
+         .themedTextColor(.secondary)
+         }
+         
+         if let location = product.location {
+         Text(location)
+         .themedFont(.bodyXSmall)
+         .themedTextColor(.secondary)
+         }
+         }
+         
+         Spacer()
+         
+         Image(systemName: "chevron.right")
+         .font(.caption)
+         .themedTextColor(.secondary)
+         }
+         }
+         .buttonStyle(PlainButtonStyle())
+         
+         Divider()
+         .background(themeManager.currentBorderColor)
+         }
+         .padding(.horizontal, AppTheme.Padding.large)
+         */
+        
+        // Para que haga un push hacia UserProfileDetailView
         VStack(spacing: AppTheme.Spacing.medium) {
-            Button {
-                showingSellerProfile = true
-            } label: {
-                HStack(spacing: AppTheme.Spacing.medium) {
-                    KFImage(URL(string: product.sellerProfileImage))
-                        .profileImageStyle(size: 50)
-                    
-                    VStack(alignment: .leading, spacing: AppTheme.Spacing.xxSmall) {
-                        Text(product.sellerName)
-                            .themedFont(.titleMedium)
-                            .themedTextColor(.primary)
+            if let seller = createSellerUser() {
+                NavigationLink(destination: UserProfileDetailView(user: seller)) {
+                    HStack(spacing: AppTheme.Spacing.medium) {
+                        KFImage(URL(string: product.sellerProfileImage))
+                            .profileImageStyle(size: 50)
                         
-                        HStack(spacing: AppTheme.Spacing.xxSmall) {
-                            ForEach(0..<5) { index in
-                                Image(systemName: "star.fill")
-                                    .font(.caption2)
-                                    .foregroundColor(index < 4 ? .yellow : .gray)
+                        VStack(alignment: .leading, spacing: AppTheme.Spacing.xxSmall) {
+                            Text(product.sellerName)
+                                .themedFont(.titleMedium)
+                                .themedTextColor(.primary)
+                            
+                            HStack(spacing: AppTheme.Spacing.xxSmall) {
+                                ForEach(0..<5) { index in
+                                    Image(systemName: "star.fill")
+                                        .font(.caption2)
+                                        .foregroundColor(index < 4 ? .yellow : .gray)
+                                }
+                                
+                                Text("4.8")
+                                    .themedFont(.bodySmall)
+                                    .themedTextColor(.secondary)
+                                
+                                Text("(24 reseñas)")
+                                    .themedFont(.bodySmall)
+                                    .themedTextColor(.secondary)
                             }
                             
-                            Text("4.8")
-                                .themedFont(.bodySmall)
-                                .themedTextColor(.secondary)
-                            
-                            Text("(24 reseñas)")
-                                .themedFont(.bodySmall)
-                                .themedTextColor(.secondary)
+                            if let location = product.location {
+                                Text(location)
+                                    .themedFont(.bodyXSmall)
+                                    .themedTextColor(.secondary)
+                            }
                         }
                         
-                        if let location = product.location {
-                            Text(location)
-                                .themedFont(.bodyXSmall)
-                                .themedTextColor(.secondary)
-                        }
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .themedTextColor(.secondary)
                     }
                     
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .themedTextColor(.secondary)
                 }
+                
+                Divider()
+                    .background(themeManager.currentBorderColor)
             }
-            .buttonStyle(PlainButtonStyle())
-            
-            Divider()
-                .background(themeManager.currentBorderColor)
         }
         .padding(.horizontal, AppTheme.Padding.large)
     }
