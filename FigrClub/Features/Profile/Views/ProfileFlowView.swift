@@ -341,7 +341,6 @@ struct SettingsView: View {
         FigrNavigationStack {
             FigrVerticalScrollView {
                 VStack(spacing: AppTheme.Spacing.large) {
-                    // Aquí puedes agregar el contenido de configuración cuando esté listo
                     VStack(spacing: AppTheme.Spacing.medium) {
                         Image(systemName: "gearshape.fill")
                             .font(.system(size: 60))

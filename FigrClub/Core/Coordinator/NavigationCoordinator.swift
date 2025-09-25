@@ -7,6 +7,40 @@
 
 import Foundation
 import UIKit
+import SwiftUI
+
+// MARK: - Navigation Destination
+enum NavigationDestination: Hashable {
+    case accountInfo
+    case userProfile(String)
+    case postDetail(String)
+    
+    func hash(into hasher: inout Hasher) {
+        switch self {
+        case .accountInfo:
+            hasher.combine("accountInfo")
+        case .userProfile(let userId):
+            hasher.combine("userProfile")
+            hasher.combine(userId)
+        case .postDetail(let postId):
+            hasher.combine("postDetail")
+            hasher.combine(postId)
+        }
+    }
+    
+    static func == (lhs: NavigationDestination, rhs: NavigationDestination) -> Bool {
+        switch (lhs, rhs) {
+        case (.accountInfo, .accountInfo):
+            return true
+        case (.userProfile(let lhsId), .userProfile(let rhsId)):
+            return lhsId == rhsId
+        case (.postDetail(let lhsId), .postDetail(let rhsId)):
+            return lhsId == rhsId
+        default:
+            return false
+        }
+    }
+}
 
 // MARK: - Navigation Coordinator
 @MainActor
@@ -28,6 +62,12 @@ class NavigationCoordinator: ObservableObject {
     @Published var selectedPostId: String?
     @Published var selectedUserId: String?
     @Published var selectedUserForDetail: User?
+    
+    // Navigation Path para manejar push navigation
+    @Published var navigationPath = NavigationPath()
+    
+    // Tracking de destinations actuales (para evitar duplicados)
+    private var currentDestinations: Set<NavigationDestination> = []
     
     // Estado de la navegación
     private var navigationStack: [String] = []
@@ -95,6 +135,93 @@ class NavigationCoordinator: ObservableObject {
         selectedProduct = product
         showingProductDetail = true
         trackNavigation("productDetail_\(product.id)")
+    }
+    
+    // MARK: - Push Navigation Methods
+    
+    // Para navegar a AccountInfoView con push navigation
+    func navigateToAccountInfo() {
+        Logger.info("🧭 NavigationCoordinator: Navigating to AccountInfo via push")
+        
+        let destination = NavigationDestination.accountInfo
+        
+        // Verificar si ya está en el path
+        if currentDestinations.contains(destination) {
+            Logger.warning("⚠️ NavigationCoordinator: AccountInfo already in navigation path")
+            dismissPostOptions() // Solo cerrar el sheet
+            return
+        }
+        
+        // Primero cerramos el sheet de PostOptions
+        dismissPostOptions()
+        
+        // Pequeño delay para permitir que el sheet se cierre completamente
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            self.navigationPath.append(destination)
+            self.currentDestinations.insert(destination)
+            Logger.info("✅ NavigationCoordinator: AccountInfo added to navigation path")
+        }
+    }
+    
+    /// Navega a perfil de usuario con push navigation
+    func navigateToUserProfile(_ userId: String) {
+        Logger.info("🧭 NavigationCoordinator: Navigating to UserProfile via push: \(userId)")
+        
+        let destination = NavigationDestination.userProfile(userId)
+        
+        if currentDestinations.contains(destination) {
+            Logger.warning("⚠️ NavigationCoordinator: UserProfile already in navigation path")
+            return
+        }
+        
+        navigationPath.append(destination)
+        currentDestinations.insert(destination)
+        Logger.info("✅ NavigationCoordinator: UserProfile added to navigation path")
+    }
+    
+    /// Navega a detalle de post con push navigation
+    func navigateToPostDetail(_ postId: String) {
+        Logger.info("🧭 NavigationCoordinator: Navigating to PostDetail via push: \(postId)")
+        
+        let destination = NavigationDestination.postDetail(postId)
+        
+        if currentDestinations.contains(destination) {
+            Logger.warning("⚠️ NavigationCoordinator: PostDetail already in navigation path")
+            return
+        }
+        
+        navigationPath.append(destination)
+        currentDestinations.insert(destination)
+        Logger.info("✅ NavigationCoordinator: PostDetail added to navigation path")
+    }
+    
+    // MARK: - Navigation Path Management
+    
+    /// Limpia el NavigationPath completamente
+    func clearNavigationPath() {
+        Logger.info("🧭 NavigationCoordinator: Clearing navigation path")
+        navigationPath = NavigationPath()
+        currentDestinations.removeAll()
+    }
+    
+    /// Hace pop de la última vista en el NavigationPath
+    func popLastDestination() {
+        Logger.info("🧭 NavigationCoordinator: Popping last destination")
+        if navigationPath.count > 0 {
+            navigationPath.removeLast()
+            // TODO: -
+            // Actualizar currentDestinations - esto es una aproximación
+            // En una implementación más robusta, mantendrías un array paralelo
+            if navigationPath.count == 0 {
+                currentDestinations.removeAll()
+            }
+        }
+    }
+    
+    /// Método para ser llamado cuando una vista desaparece (desde onDisappear)
+    func destinationDidDisappear(_ destination: NavigationDestination) {
+        currentDestinations.remove(destination)
+        Logger.debug("🧭 NavigationCoordinator: Destination removed from tracking: \(destination)")
     }
     
     // MARK: - Dismiss Methods
@@ -181,12 +308,21 @@ class NavigationCoordinator: ObservableObject {
         selectedUserForDetail = nil
         selectedProduct = nil
         
+        // Limpiar NavigationPath y tracking
+        navigationPath = NavigationPath()
+        currentDestinations.removeAll()
         navigationStack.removeAll()
     }
     
     // MARK: - Navigation Stack Management
     private func trackNavigation(_ identifier: String) {
         navigationStack.append(identifier)
+        
+        // Limitar el stack de tracking para evitar crecimiento infinito
+        if navigationStack.count > 20 {
+            navigationStack.removeFirst(navigationStack.count - 20)
+        }
+        
         Logger.debug("🧭 NavigationCoordinator: Navigation stack: \(navigationStack)")
     }
     
@@ -206,7 +342,8 @@ class NavigationCoordinator: ObservableObject {
         showingSettings ||
         showingEditProfile ||
         showingCreatePost ||
-        showingProductDetail
+        showingProductDetail ||
+        navigationPath.count > 0
     }
     
     var currentNavigationCount: Int {

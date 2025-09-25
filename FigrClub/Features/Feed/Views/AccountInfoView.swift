@@ -13,44 +13,41 @@ struct AccountInfoView: View {
     @Environment(\.localizationManager) private var localizationManager
     
     var body: some View {
-        FigrNavigationStack {
-            FigrVerticalScrollView {
-                VStack(spacing: AppTheme.Spacing.large) {
-                    // Aquí puedes agregar el contenido de configuración cuando esté listo
-                    VStack(spacing: AppTheme.Spacing.medium) {
-                        Image(systemName: "gearshape.fill")
-                            .font(.system(size: 60))
-                            .themedTextColor(.secondary)
-                        
-                        Text("Sobre esta cuenta")
-                            .font(.title.weight(.bold))
-                            .themedTextColor(.primary)
-                        
-                        Text("Próximamente...")
-                            .font(.body)
-                            .themedTextColor(.secondary)
-                    }
-                    .padding(.top, AppTheme.Padding.xLarge)
+        FigrVerticalScrollView {
+            VStack(spacing: AppTheme.Spacing.large) {
+                VStack(spacing: AppTheme.Spacing.medium) {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 60))
+                        .themedTextColor(.secondary)
                     
-                    Spacer()
+                    Text("Sobre esta cuenta")
+                        .font(.title.weight(.bold))
+                        .themedTextColor(.primary)
+                    
+                    Text("Próximamente...")
+                        .font(.body)
+                        .themedTextColor(.secondary)
                 }
-                .padding(.horizontal, AppTheme.Padding.large)
+                .padding(.top, AppTheme.Padding.xLarge)
+                
+                Spacer()
             }
-            .navigationTitle("Sobre esta cuenta")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                 ToolbarItem(placement: .navigationBarLeading) {
-                     Button {
-                         dismiss()
-                     } label: {
-                         Image(systemName: "arrow.left")
-                             .font(.title2)
-                             .themedTextColor(.primary)
-                     }
-                 }
-            }
-            .navigationBarBackButtonHidden()
+            .padding(.horizontal, AppTheme.Padding.large)
         }
+        .navigationTitle("Sobre esta cuenta")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "arrow.left")
+                        .font(.title2)
+                        .themedTextColor(.primary)
+                }
+            }
+        }
+        .navigationBarBackButtonHidden()
     }
 }
 

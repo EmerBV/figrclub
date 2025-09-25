@@ -28,7 +28,7 @@ struct FeedFlowView: View {
     @State private var stories: [SampleStory] = sampleStories
     
     var body: some View {
-        FigrNavigationStack {
+        FigrNavigationStackWithPath(path: $navigationCoordinator.navigationPath) {
             FigrRefreshableScrollView(refreshAction: refreshFeed) {
                 LazyVStack(spacing: 0) {
                     headerSection
@@ -41,6 +41,11 @@ struct FeedFlowView: View {
                 }
             }
             .navigationBarHidden(true)
+            //.navigationBarTitleDisplayMode(.automatic)
+            // Manejar las rutas de navegación con el enum NavigationDestination
+            .navigationDestination(for: NavigationDestination.self) { destination in
+                destinationView(for: destination)
+            }
         }
         .sheet(isPresented: $navigationCoordinator.showingProfileSearch) {
             ProfileSearchView(currentUser: user)
@@ -113,16 +118,59 @@ struct FeedFlowView: View {
         .padding(.bottom, AppTheme.Padding.large)
     }
     
-    // MARK: - Private Methods
-    private func refreshFeed() async {
-        Logger.info("🔄 FeedFlowView: Refreshing feed")
+    @ViewBuilder
+    private func destinationView(for destination: NavigationDestination) -> some View {
+        switch destination {
+        case .accountInfo:
+            AccountInfoView()
+                .onAppear {
+                    Logger.info("📱 FeedFlowView: AccountInfoView appeared")
+                }
+                .onDisappear {
+                    Logger.info("📱 FeedFlowView: AccountInfoView disappeared")
+                    // IMPORTANTE: Notificar al coordinator que la vista desapareció
+                    navigationCoordinator.destinationDidDisappear(.accountInfo)
+                }
+            
+        default:
+            EmptyView()
+        }
         
-        // Simular carga
-        try? await Task.sleep(for: .seconds(1))
-        
-        // Aquí se cargarían los posts reales desde el servidor
-        Logger.info("✅ FeedFlowView: Feed refreshed")
+        /*
+         case .userProfile(let userId):
+         // Aquí puedes crear la vista de perfil de usuario
+         UserProfileView(userId: userId)
+         .onAppear {
+         Logger.info("📱 FeedFlowView: UserProfileView appeared for user: \(userId)")
+         }
+         .onDisappear {
+         Logger.info("📱 FeedFlowView: UserProfileView disappeared")
+         navigationCoordinator.destinationDidDisappear(.userProfile(userId))
+         }
+         
+         case .postDetail(let postId):
+         // Aquí puedes crear la vista de detalle de post
+         PostDetailView(postId: postId)
+         .onAppear {
+         Logger.info("📱 FeedFlowView: PostDetailView appeared for post: \(postId)")
+         }
+         .onDisappear {
+         Logger.info("📱 FeedFlowView: PostDetailView disappeared")
+         navigationCoordinator.destinationDidDisappear(.postDetail(postId))
+         }
+         */
     }
+}
+
+// MARK: - Private Methods
+private func refreshFeed() async {
+    Logger.info("🔄 FeedFlowView: Refreshing feed")
+    
+    // Simular carga
+    try? await Task.sleep(for: .seconds(1))
+    
+    // Aquí se cargarían los posts reales desde el servidor
+    Logger.info("✅ FeedFlowView: Feed refreshed")
 }
 
 struct UserStoryView: View {
@@ -553,61 +601,69 @@ struct PostOptionsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.localizationManager) private var localizationManager
     
+    @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
+    
     var body: some View {
-        FigrNavigationStack {
+        VStack(spacing: 0) {
+            // Handle visual
+            RoundedRectangle(cornerRadius: 2.5)
+                .fill(Color.secondary.opacity(0.3))
+                .frame(width: 36, height: 5)
+                .padding(.top, AppTheme.Padding.medium)
+                .padding(.bottom, AppTheme.Padding.large)
+            
+            // Opciones
             VStack(spacing: 0) {
-                // Handle visual
-                RoundedRectangle(cornerRadius: 2.5)
-                    .fill(Color.secondary.opacity(0.3))
-                    .frame(width: 36, height: 5)
-                    .padding(.top, AppTheme.Padding.medium)
-                    .padding(.bottom, AppTheme.Padding.large)
+                PostOptionRow(
+                    icon: "bookmark",
+                    title: localizationManager.localizedString(for: .save),
+                    subtitle: localizationManager.localizedString(for: .addToSavedItemsSubtitle)
+                ) {
+                    // TODO: Implementar guardar post
+                    dismiss()
+                }
                 
-                // Opciones
-                VStack(spacing: 0) {
+                if post.username != currentUser.username {
                     PostOptionRow(
-                        icon: "bookmark",
-                        title: localizationManager.localizedString(for: .save),
-                        subtitle: localizationManager.localizedString(for: .addToSavedItemsSubtitle)
+                        icon: "person.badge.minus",
+                        title: localizationManager.localizedString(for: .unfollowTitle),
+                        subtitle: localizationManager.localizedString(for: .unfollowSubtitle, arguments: post.username),
+                        isDestructive: true
                     ) {
-                        // TODO: Implementar guardar post
+                        // TODO: Implementar dejar de seguir
                         dismiss()
                     }
                     
-                    if post.username != currentUser.username {
-                        PostOptionRow(
-                            icon: "person.badge.minus",
-                            title: localizationManager.localizedString(for: .unfollowTitle),
-                            subtitle: localizationManager.localizedString(for: .unfollowSubtitle, arguments: post.username),
-                            isDestructive: true
-                        ) {
-                            // TODO: Implementar dejar de seguir
-                            dismiss()
-                        }
-                        
-                        PostOptionRow(
-                            icon: "info.circle",
-                            title: localizationManager.localizedString(for: .aboutThisAccountTitle),
-                            subtitle: localizationManager.localizedString(for: .aboutThisAccountSubtitle),
-                            destination: AccountInfoView()
-                        )
-                        
-                        PostOptionRow(
-                            icon: "exclamationmark.triangle",
-                            title: localizationManager.localizedString(for: .reportTitle),
-                            subtitle: localizationManager.localizedString(for: .reportSubtitle),
-                            isDestructive: true
-                        ) {
-                            // TODO: Implementar reportar post
-                            dismiss()
-                        }
+                    /*
+                     PostOptionRow(
+                     icon: "info.circle",
+                     title: localizationManager.localizedString(for: .aboutThisAccountTitle),
+                     subtitle: localizationManager.localizedString(for: .aboutThisAccountSubtitle),
+                     destination: AccountInfoView()
+                     )
+                     */
+                    
+                    PostOptionRow(
+                        icon: "info.circle",
+                        title: localizationManager.localizedString(for: .aboutThisAccountTitle),
+                        subtitle: localizationManager.localizedString(for: .aboutThisAccountSubtitle)
+                    ) {
+                        navigationCoordinator.navigateToAccountInfo() // ✅ Esto hace push
+                    }
+                    
+                    PostOptionRow(
+                        icon: "exclamationmark.triangle",
+                        title: localizationManager.localizedString(for: .reportTitle),
+                        subtitle: localizationManager.localizedString(for: .reportSubtitle),
+                        isDestructive: true
+                    ) {
+                        // TODO: Implementar reportar post
+                        dismiss()
                     }
                 }
-                
-                Spacer()
             }
-            .navigationTitle("")
-            .navigationBarHidden(true)
+            
+            Spacer()
         }
     }
 }

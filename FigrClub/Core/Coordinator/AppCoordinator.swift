@@ -196,9 +196,9 @@ enum MainTab: Int, CaseIterable, Identifiable {
         switch self {
         case .feed: return "Feed"
         case .marketplace: return "Marketplace"
-        case .create: return "Crear"
-        case .notifications: return "Notificaciones"
-        case .profile: return "Perfil"
+        case .create: return "Create Post"
+        case .notifications: return "Notifications"
+        case .profile: return "Profile"
         }
     }
     

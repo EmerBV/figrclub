@@ -74,6 +74,7 @@ struct PostOptionRow<Destination: View>: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, AppTheme.Padding.large)
+        .contentShape(Rectangle())
     }
     
     /*
